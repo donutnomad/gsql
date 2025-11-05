@@ -44,7 +44,7 @@ func collectDB(t *testing.T) gsql.IDB {
 		t.Fatal(err)
 	}
 
-	return gsql.NewDefaultGormDB(_db)
+	return NewDefaultGormDB(_db)
 }
 
 type U2 struct {

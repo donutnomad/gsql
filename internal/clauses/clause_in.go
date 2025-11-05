@@ -1,6 +1,9 @@
-package utils
+package clauses
 
-import "gorm.io/gorm/clause"
+import (
+	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/utils"
+)
 
 // IN Whether a value is within a set of values
 type IN struct {
@@ -27,7 +30,7 @@ func (in IN) Build(builder clause.Builder) {
 		fallthrough
 	default:
 		writeString(" IN ")
-		addVarAutoBracket(builder, in.Values)
+		utils.AddVarAutoBracket(builder, in.Values)
 	}
 }
 
@@ -50,17 +53,6 @@ func (in IN) NegationBuild(builder clause.Builder) {
 		fallthrough
 	default:
 		writeString(" NOT IN ")
-		addVarAutoBracket(builder, in.Values)
-	}
-}
-
-func addVarAutoBracket(builder clause.Builder, values []any) {
-	needBracket := IsNeedBracket(values)
-	if needBracket {
-		_ = builder.WriteByte('(')
-	}
-	builder.AddVar(builder, values...)
-	if needBracket {
-		_ = builder.WriteByte(')')
+		utils.AddVarAutoBracket(builder, in.Values)
 	}
 }

@@ -7,10 +7,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func TableName(name string) Table {
@@ -37,11 +36,8 @@ func FieldExpr(expr field.Expression, alias string) field.IField {
 	return field.NewBaseFromSql(expr, alias)
 }
 
-func Expr(sql string, args ...any) field.Expression {
-	return clause.Expr{
-		SQL:  sql,
-		Vars: args,
-	}
+func Expr(sql string, args ...any) clause.Expression {
+	return clause.Expr{SQL: sql, Vars: args}
 }
 
 func DefineTempTable[Model any, ModelT any](types ModelT, builder *QueryBuilder) templateTable[ModelT, Model] {
@@ -144,7 +140,9 @@ func txTable(quote func(field string) string, name string, args ...any) (expr *c
 	return
 }
 
-func addSelects(stmt *gorm.Statement, selects []field.IField) {
+func addSelects(stmt interface {
+	AddClause(v clause.Interface)
+}, distinct bool, selects []field.IField) {
 	if len(selects) == 0 {
 		return
 	}
@@ -162,14 +160,14 @@ func addSelects(stmt *gorm.Statement, selects []field.IField) {
 	}
 
 	stmt.AddClause(clause.Select{
-		Distinct: stmt.Distinct,
+		Distinct: distinct,
 		Expression: columnClause{
 			commaExpr: clause.CommaExpression{
 				Exprs: lo.Map(selects, func(item field.IField, index int) clause.Expression {
 					return item.ToExpr()
 				}),
 			},
-			distinct: stmt.Distinct,
+			distinct: distinct,
 		},
 	})
 }

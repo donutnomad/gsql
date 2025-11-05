@@ -3,10 +3,10 @@ package field
 import (
 	"fmt"
 
-	"github.com/donutnomad/gsql/internal/utils"
+	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/clauses"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
-	"gorm.io/gorm/clause"
 )
 
 // =, !=, IN, NOT IN, >, >=, <, <=
@@ -200,10 +200,8 @@ func (f comparableImpl[T]) BetweenOpt(rng interface {
 	return clause.And(notNilExpr(opFunc(opFrom, rng.FromValue()), opFunc(opTo, rng.ToValue()))...)
 }
 
-func notNilExpr(input ...clause.Expression) []clause.Expression {
-	return lo.Filter(input, func(item clause.Expression, index int) bool {
-		return item != nil
-	})
+func (f comparableImpl[T]) operateField(other IField, operator string) Expression {
+	return f.operateValue(other.ToExpr(), operator)
 }
 
 func (f comparableImpl[T]) operateValue(value any, operator string) Expression {
@@ -226,15 +224,11 @@ func (f comparableImpl[T]) operateValue2(column any, value any, operator string)
 	case "<=":
 		expr = clause.Lte{Column: column, Value: value}
 	case "IN":
-		expr = utils.IN{Column: column, Values: []any{value}}
+		expr = clauses.IN{Column: column, Values: []any{value}}
 	case "NOT IN":
-		expr = clause.Not(utils.IN{Column: column, Values: []any{value}})
+		expr = clause.Not(clauses.IN{Column: column, Values: []any{value}})
 	default:
 		panic(fmt.Sprintf("invalid operator %s", operator))
 	}
 	return expr
-}
-
-func (f comparableImpl[T]) operateField(other IField, operator string) Expression {
-	return f.operateValue2(f.ToColumn(), other.ToExpr(), operator)
 }

@@ -8,11 +8,10 @@ import (
 	"slices"
 	"time"
 
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
-	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
 
@@ -83,14 +82,14 @@ func (b *insertBuilderWithValues[T]) DuplicateUpdate(columns ...field.IField) *i
 	return b
 }
 
-func (b *insertBuilderWithValues[T]) Exec(db IDB) error {
+func (b *insertBuilderWithValues[T]) Exec(db IGormDB) error {
 	_, err := b.ExecWithResult(db)
 	return err
 }
 
-func (b *insertBuilderWithValues[T]) ExecWithResult(db IDB) (int64, error) {
+func (b *insertBuilderWithValues[T]) ExecWithResult(db IGormDB) (int64, error) {
 	var tx = db.Model(lo.Empty[T]())
-	addSelects(tx.Statement, b.selectColumns)
+	addSelects(tx.Statement, tx.Statement.Distinct, b.selectColumns)
 	if b.ignore {
 		tx = tx.Clauses(clause.Insert{
 			Modifier: "IGNORE",
@@ -141,7 +140,7 @@ func (b *insertBuilderWithValues[T]) ExecWithResult(db IDB) (int64, error) {
 	return ret.RowsAffected, ret.Error
 }
 
-func processerExec(pClauses []string, db *gorm.DB) *gorm.DB {
+func processerExec(pClauses []string, db *GormDB) *GormDB {
 	// call scopes
 	//for len(db.Statement.scopes) > 0 {
 	//	db = db.executeScopes()
@@ -158,7 +157,7 @@ func processerExec(pClauses []string, db *gorm.DB) *gorm.DB {
 		resetBuildClauses = true
 	}
 
-	if optimizer, ok := db.Statement.Dest.(gorm.StatementModifier); ok {
+	if optimizer, ok := db.Statement.Dest.(StatementModifier); ok {
 		optimizer.ModifyStatement(stmt)
 	}
 
@@ -191,7 +190,7 @@ func processerExec(pClauses []string, db *gorm.DB) *gorm.DB {
 			stmt.ReflectValue = stmt.ReflectValue.Elem()
 		}
 		if !stmt.ReflectValue.IsValid() {
-			db.AddError(gorm.ErrInvalidValue)
+			db.AddError(ErrInvalidValue)
 		}
 	}
 
@@ -247,12 +246,12 @@ func (b *insertBuilderWithSelect[T]) DuplicateUpdate(columns ...field.IField) *i
 	return b
 }
 
-func (b *insertBuilderWithSelect[T]) Exec(db IDB) error {
+func (b *insertBuilderWithSelect[T]) Exec(db IGormDB) error {
 	_, err := b.ExecWithResult(db)
 	return err
 }
 
-func (b *insertBuilderWithSelect[T]) ExecWithResult(db IDB) (int64, error) {
+func (b *insertBuilderWithSelect[T]) ExecWithResult(db IGormDB) (int64, error) {
 	var tx = db.Model(lo.Empty[T]())
 	if len(b.selectColumns) > 0 {
 		tx = tx.Select(lo.Map(b.selectColumns, func(item field.IField, index int) string {

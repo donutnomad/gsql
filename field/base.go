@@ -1,8 +1,10 @@
 package field
 
 import (
+	"fmt"
+
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/utils"
-	"gorm.io/gorm/clause"
 )
 
 // FieldFlag 字段标志位
@@ -25,7 +27,7 @@ type Base struct {
 }
 
 func NewBase(tableName, name string, flags ...FieldFlag) *Base {
-	var flag FieldFlag = FlagNone
+	var flag = FlagNone
 	if len(flags) > 0 {
 		flag = flags[0]
 	}
@@ -68,13 +70,17 @@ func (f Base) IsExpr() bool {
 	return f.sql != nil
 }
 
-// ToColumn 转换为clause.Column对象，只有非expr模式才支持导出
+// ToColumn 转换为clause.Column对象，只有函数和窗口函数才可以导出
+// 使用在=,!=,>,<,等场景
 func (f Base) ToColumn() clause.Column {
 	if f.sql != nil {
-		var s = utils.NewMemoryBuilder()
-		f.sql.Build(s)
-		var sql = s.SQL.String()
-		if len(s.Vars) == 0 && isLiteralFunctionName(sql) {
+		var mb = utils.NewMemoryBuilder()
+		f.sql.Build(mb)
+		var sql = mb.SQL.String()
+		if utils.IsLiteralFunctionName(sql) { // like: FROM_UNIXTIME OR JSON_EXTRACT
+			if len(mb.Vars) > 0 {
+				sql = utils.Dialector.Explain(sql, mb.Vars...)
+			}
 			return clause.Column{
 				Table: "",
 				Name:  sql,
@@ -84,6 +90,11 @@ func (f Base) ToColumn() clause.Column {
 		}
 		panic("expr field cannot to column")
 	}
+	//		if utils.IsLiteralFunctionName(sql) || utils.IsWindowFunction(sql) {
+	//			if len(mb.Vars) > 0 {
+	//				sql = utils.Dialector.Explain(sql, mb.Vars...)
+	//			}
+	//		}
 	return NewColumnClause(f).Column
 }
 
@@ -106,7 +117,10 @@ func (f Base) Name() string {
 }
 
 func (f Base) FullName() string {
-	return fieldName(f.tableName, f.columnName)
+	if f.tableName == "" {
+		return fmt.Sprintf("`%s`", f.columnName)
+	}
+	return fmt.Sprintf("`%s`.`%s`", f.tableName, f.columnName)
 }
 
 func (f Base) Alias() string {
@@ -129,4 +143,9 @@ func (f Base) AsPrefix(prefix string) IField {
 
 func (f Base) AsSuffix(suffix string) IField {
 	return f.As(f.columnName + suffix)
+}
+
+// Build Implements clause.Expression
+func (f Base) Build(builder clause.Builder) {
+	f.ToExpr().Build(builder)
 }

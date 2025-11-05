@@ -7,13 +7,11 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/logger"
 )
 
 type ScopeFuncG[Model any] func(b *QueryBuilderG[Model])
@@ -148,7 +146,7 @@ func (b *QueryBuilderG[T]) Clone() *QueryBuilderG[T] {
 }
 
 func (b *QueryBuilderG[T]) Order(column field.IField, asc ...bool) *QueryBuilderG[T] {
-	b.orders = append(b.orders, order{column, optional(asc, true)})
+	b.orders = append(b.orders, order{column, utils.Optional(asc, true)})
 	return b
 }
 
@@ -378,9 +376,11 @@ func (b *QueryBuilderG[T]) Count(db IDB) (count int64, _ error) {
 }
 
 func (b *QueryBuilderG[T]) Exist(db IDB) (bool, error) {
-	var count int64
-	tx := b.Clone().Limit(1).build(db).Count(&count)
-	return count > 0, tx.Error
+	count, err := b.Count(db)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (b *QueryBuilderG[T]) Take(db IDB) (*T, error) {
@@ -420,14 +420,14 @@ func (b *QueryBuilderG[T]) AsF(asName ...string) field.IField {
 	} else {
 		b.selects = b.selects[0:1]
 	}
-	return FieldExpr(b.ToExpr(), optional(asName, ""))
+	return FieldExpr(b.ToExpr(), utils.Optional(asName, ""))
 }
 
 func (b *QueryBuilderG[T]) firstLast(db IDB, order, desc bool) (*T, error) {
 	var dest T
 	err := firstLast(b, db, order, desc, &dest)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
@@ -436,8 +436,8 @@ func (b *QueryBuilderG[T]) firstLast(db IDB, order, desc bool) (*T, error) {
 }
 
 func (b *QueryBuilderG[T]) ToExpr() clause.Expr {
-	tx := &gorm.DB{
-		Config: &gorm.Config{
+	tx := &GormDB{
+		Config: &Config{
 			ClauseBuilders: map[string]clause.ClauseBuilder{
 				"CTE": func(c clause.Clause, builder clause.Builder) {
 					if cte, ok := c.Expression.(CTEClause); ok {
@@ -447,7 +447,7 @@ func (b *QueryBuilderG[T]) ToExpr() clause.Expr {
 			},
 			Dialector: dialector,
 		},
-		Statement: &gorm.Statement{
+		Statement: &Statement{
 			Clauses:      map[string]clause.Clause{},
 			BuildClauses: queryClauses,
 		},
@@ -459,12 +459,12 @@ func (b *QueryBuilderG[T]) ToExpr() clause.Expr {
 }
 
 func (b *QueryBuilderG[T]) Debug() *QueryBuilderG[T] {
-	b.logLevel = int(logger.Info)
+	b.logLevel = int(LogLevelInfo)
 	return b
 }
 
-func (b *QueryBuilderG[T]) build(db IDB) *gorm.DB {
-	tx := db.Session(&gorm.Session{
+func (b *QueryBuilderG[T]) build(db IDB) *GormDB {
+	tx := db.Session(&Session{
 		Initialized: true,
 	})
 	m := maps.Clone(tx.Config.ClauseBuilders)
@@ -478,7 +478,7 @@ func (b *QueryBuilderG[T]) build(db IDB) *gorm.DB {
 	return tx
 }
 
-func (b *QueryBuilderG[T]) buildStmt(stmt *gorm.Statement, quote func(field string) string) {
+func (b *QueryBuilderG[T]) buildStmt(stmt *Statement, quote func(field string) string) {
 	if b.unscoped {
 		stmt.Unscoped = true
 	}
@@ -511,7 +511,7 @@ func (b *QueryBuilderG[T]) buildStmt(stmt *gorm.Statement, quote func(field stri
 			}
 		}
 	}
-	addSelects(stmt, b.selects)
+	addSelects(stmt, b.distinct, b.selects)
 	if len(b.wheres) > 0 {
 		stmt.AddClause(clause.Where{Exprs: b.wheres})
 	}

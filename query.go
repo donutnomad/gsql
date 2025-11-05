@@ -3,11 +3,10 @@ package gsql
 import (
 	"slices"
 
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/utils"
 	"golang.org/x/exp/constraints"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm/logger"
 )
 
 type QueryBuilder QueryBuilderG[any]
@@ -80,7 +79,7 @@ func (b *QueryBuilder) Clone() *QueryBuilder {
 	}
 }
 
-func (b *QueryBuilder) build(db IDB) *gorm.DB {
+func (b *QueryBuilder) build(db IDB) *GormDB {
 	return b.as().build(db)
 }
 
@@ -89,7 +88,12 @@ func (b *QueryBuilder) Order(column field.IField, asc ...bool) *QueryBuilder {
 	return b
 }
 
-// -------- group by / having --------
+func (b *QueryBuilder) OrderBy(fields ...FieldOrder) *QueryBuilder {
+	b.as().OrderBy(fields...)
+	return b
+}
+
+// GroupBy -------- group by / having --------
 func (b *QueryBuilder) GroupBy(cols ...field.IField) *QueryBuilder {
 	b.as().GroupBy(cols...)
 	return b
@@ -100,7 +104,7 @@ func (b *QueryBuilder) Having(exprs ...field.Expression) *QueryBuilder {
 	return b
 }
 
-// -------- locking --------
+// ForUpdate -------- locking --------
 func (b *QueryBuilder) ForUpdate() *QueryBuilder {
 	b.as().ForUpdate()
 	return b
@@ -273,9 +277,7 @@ func (b *QueryBuilder) Count(db IDB) (count int64, _ error) {
 }
 
 func (b *QueryBuilder) Exist(db IDB) (bool, error) {
-	var count int64
-	tx := b.Clone().Limit(1).build(db).Count(&count)
-	return count > 0, tx.Error
+	return b.as().Exist(db)
 }
 
 func (b *QueryBuilder) Take(db IDB, dest any) error {
@@ -291,7 +293,7 @@ func (b *QueryBuilder) Last(db IDB, dest any) error {
 }
 
 func (b *QueryBuilder) Debug() *QueryBuilder {
-	b.logLevel = int(logger.Info)
+	b.logLevel = int(LogLevelInfo)
 	return b
 }
 
@@ -313,5 +315,5 @@ func (b *QueryBuilder) AsF(asName ...string) field.IField {
 	} else {
 		b.selects = b.selects[0:1]
 	}
-	return FieldExpr(b.ToExpr(), optional(asName, ""))
+	return FieldExpr(b.ToExpr(), utils.Optional(asName, ""))
 }

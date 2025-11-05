@@ -2,10 +2,11 @@ package gsql
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
-	"gorm.io/gorm/clause"
 )
 
 var Star field.IField = field.NewBase("", "*")
@@ -1090,6 +1091,25 @@ func INET_NTOA(expr field.Expression) field.ExpressionTo {
 }
 
 // ==================== JSON 函数 ====================
+
+// JSON_EXTRACT 从 JSON 文档中提取数据，使用 JSON 路径表达式定位元素
+// SELECT JSON_EXTRACT('{"name":"John","age":30}', '$.name');
+// SELECT JSON_EXTRACT(data, '$.user.email') FROM profiles;
+// SELECT JSON_EXTRACT(config, '$.settings[0]') FROM applications;
+// SELECT JSON_EXTRACT(metadata, '$[0].id', '$[1].id') FROM logs;
+// 路径语法: $ 表示根, .key 访问对象键, [n] 访问数组索引, [*] 访问所有数组元素
+func JSON_EXTRACT(column string, paths ...string) field.ExpressionTo {
+	var vars []any
+	var placeholders []string
+	for _, path := range paths {
+		placeholders = append(placeholders, "?")
+		vars = append(vars, path)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_EXTRACT(%s, %s)", column, strings.Join(placeholders, ", ")),
+		Vars: vars,
+	}}
+}
 
 // JSON_OBJECT 创建 JSON 对象，接受成对的键值参数（key1, value1, key2, value2, ...）
 // SELECT JSON_OBJECT('name', 'John', 'age', 30);
