@@ -1,7 +1,7 @@
 package field
 
 import (
-	"gorm.io/gorm/clause"
+	"github.com/donutnomad/gsql/clause"
 )
 
 type pointerImpl struct {

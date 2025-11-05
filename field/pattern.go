@@ -5,8 +5,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/clauses"
+	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/mo"
-	"gorm.io/gorm/clause"
 )
 
 type patternImpl[T any] struct {
@@ -14,7 +16,7 @@ type patternImpl[T any] struct {
 }
 
 func (f patternImpl[T]) Like(value T, escape ...byte) Expression {
-	return f.operateValue(value, "LIKE", optional(escape, 0), func(value string) string { return value })
+	return f.operateValue(value, "LIKE", utils.Optional(escape, 0), func(value string) string { return value })
 }
 
 func (f patternImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) Expression {
@@ -25,7 +27,7 @@ func (f patternImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) Expression {
 }
 
 func (f patternImpl[T]) NotLike(value T, escape ...byte) Expression {
-	return f.operateValue(value, "NOT LIKE", optional(escape, 0), func(value string) string {
+	return f.operateValue(value, "NOT LIKE", utils.Optional(escape, 0), func(value string) string {
 		return value
 	})
 }
@@ -99,9 +101,9 @@ func (f patternImpl[T]) anyToString(value any) string {
 func (f patternImpl[T]) operateValue(value any, operator string, escape byte, valueFormatter func(value string) string) Expression {
 	var expr clause.Expression = clause.Like{
 		Column: f.ToColumn(),
-		Value: escapeClause{
-			value:  valueFormatter(f.anyToString(value)),
-			escape: escape,
+		Value: clauses.EscapeClause{
+			Value:  valueFormatter(f.anyToString(value)),
+			Escape: escape,
 		},
 	}
 	if strings.HasPrefix(operator, "NOT") {

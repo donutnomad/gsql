@@ -1,9 +1,9 @@
 package gsql
 
 import (
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
-	"gorm.io/gorm/clause"
 )
 
 // UnionAll 结果集中允许有重复行

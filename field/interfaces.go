@@ -1,8 +1,9 @@
 package field
 
 import (
+	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/mo"
-	"gorm.io/gorm/clause"
 )
 
 type Range[T any] struct {
@@ -180,7 +181,7 @@ func (f Comparable[T]) Build(builder clause.Builder) {
 }
 
 func (f Comparable[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) Comparable[T] {
-	return NewComparable[T](tableName.TableName(), optional(fieldNames, f.Base.Name()))
+	return NewComparable[T](tableName.TableName(), utils.Optional(fieldNames, f.Base.Name()))
 }
 
 func (f Comparable[T]) WithName(fieldName string) Comparable[T] {
@@ -202,9 +203,7 @@ func (f Comparable[T]) FromUnixTime() Comparable[T] {
 	return NewComparableWith[T](*b)
 }
 
-// TODO: 缺少一个BETWEEN操作符
 // TODO: 增加一个Blob类型(支持比较 + LIKE(字符串操作))
-// TODO: 增加一个JSON类型（=,!=,LIKE操作符)
 // TODO: 增加一个空间类型（不支持比较)
 
 // | 数据类型类别       | 具体数据类型 (示例)                                | `=`    | `!=` (`<>`) | `>` `<` `>=` `<=` | `BETWEEN` (`AND`) | `LIKE` ( `%` `_` ) | `IN` (`()`) | `IS NULL` (`IS NOT NULL`) | 备注                                                              |

@@ -1,8 +1,8 @@
 package gsql
 
 import (
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"gorm.io/gorm/clause"
 )
 
 // CTEDefinition 表示单个 CTE 定义

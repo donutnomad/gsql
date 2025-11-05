@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/donutnomad/gsql/clause"
 	"github.com/samber/lo"
-	"gorm.io/gorm/clause"
 )
 
 type BaseFields []IField

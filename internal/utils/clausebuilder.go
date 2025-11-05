@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/donutnomad/gsql/clause"
 	mysql2 "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
 

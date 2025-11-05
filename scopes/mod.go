@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
-	"gorm.io/gorm/clause"
 )
 
 type Range[T any] = field.Range[T]
