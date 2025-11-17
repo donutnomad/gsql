@@ -81,3 +81,56 @@ func IsString(s any) bool {
 	typ := reflect.TypeOf(s)
 	return typ.Kind() == reflect.String
 }
+
+// IsFunctionCall 检测字符串是否是一个函数调用表达式
+// 例如: JSON_ARRAY((?,?)), CONCAT(?, ?), UPPER(name) 等
+func IsFunctionCall(s string) bool {
+	if len(s) < 3 {
+		return false
+	}
+
+	// 必须以 ) 结尾
+	if s[len(s)-1] != ')' {
+		return false
+	}
+
+	// 找到第一个 ( 的位置
+	openIndex := -1
+	for i := 0; i < len(s); i++ {
+		if s[i] == '(' {
+			openIndex = i
+			break
+		}
+	}
+
+	// 必须有左括号，且左括号前面有内容（函数名）
+	if openIndex <= 0 {
+		return false
+	}
+
+	// 检查函数名部分（左括号之前）是否都是大写字母或下划线
+	funcName := s[:openIndex]
+	for _, r := range funcName {
+		if !((r >= 'A' && r <= 'Z') || r == '_') {
+			return false
+		}
+	}
+
+	// 检查括号是否平衡
+	openCount := 0
+	closeCount := 0
+	for i := openIndex; i < len(s); i++ {
+		if s[i] == '(' {
+			openCount++
+		} else if s[i] == ')' {
+			closeCount++
+		}
+		// 右括号不能超过左括号
+		if closeCount > openCount {
+			return false
+		}
+	}
+
+	// 左右括号数量必须相等
+	return openCount == closeCount && openCount > 0
+}

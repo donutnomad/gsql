@@ -332,7 +332,7 @@ func (b *QueryBuilderG[T]) Create(db IDB, value *T) DBResult {
 	builder.from = nil
 	builder.selects = nil
 	builder.wheres = nil
-	builder.from = TableName2("")
+	builder.from = TN("")
 	ret := builder.build(db).Create(value)
 	return DBResult{
 		ret.Error,
@@ -488,7 +488,7 @@ func (b *QueryBuilderG[T]) buildStmt(stmt *Statement, quote func(field string) s
 	}
 	stmt.Distinct = b.distinct
 	if v, ok := b.from.(ICompactFrom); ok {
-		stmt.TableExpr = &clause.Expr{SQL: "(?) AS " + v.TableName(), Vars: []any{v.ToExpr()}}
+		stmt.TableExpr = lo.ToPtr(clause.Expr{SQL: "(?) AS " + v.TableName(), Vars: []any{v.ToExpr()}}.Compat())
 		stmt.Table = v.TableName()
 	} else {
 		tn := b.from.TableName()

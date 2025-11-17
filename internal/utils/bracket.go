@@ -66,7 +66,7 @@ func IsNeedParenthesesExpr(expr clause.Expression) bool {
 		if IsNumber(arg) || IsString(arg) {
 			return false
 		}
-	} else if IsLiteralFunctionName(sql) {
+	} else if IsFunctionCall(sql) {
 		return false
 	}
 	//else if strings.Contains(sql, "AS") || strings.Contains(sql, "as") {

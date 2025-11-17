@@ -43,8 +43,30 @@ const (
 	CastTypeYear CastType = "YEAR" // 年份
 )
 
+// Deprecated: 使用 Lit 替代。
+// Primitive 已被弃用，请使用更简洁的 Lit 函数。
 func Primitive[T primitive](value T) field.ExpressionTo {
+	return Lit(value)
+}
+
+func Lit[T primitive](value T) field.ExpressionTo {
+	return Val(value)
+}
+
+func Val[T any](value T) field.ExpressionTo {
 	return ExprTo{Expr("?", value)}
+}
+
+func Slice[T any](value ...T) field.ExpressionTo {
+	return Val(value)
+}
+
+func Eq(val1 field.ExpressionTo, val2 field.ExpressionTo) field.Expression {
+	return Expr("? = ?", val1, val2)
+}
+
+func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) field.Expression {
+	return Expr("? != ?", val1, val2)
 }
 
 func Mul(expr1, expr2 field.Expression) field.ExpressionTo {
@@ -1098,15 +1120,19 @@ func INET_NTOA(expr field.Expression) field.ExpressionTo {
 // SELECT JSON_EXTRACT(config, '$.settings[0]') FROM applications;
 // SELECT JSON_EXTRACT(metadata, '$[0].id', '$[1].id') FROM logs;
 // 路径语法: $ 表示根, .key 访问对象键, [n] 访问数组索引, [*] 访问所有数组元素
-func JSON_EXTRACT(column string, paths ...string) field.ExpressionTo {
-	var vars []any
-	var placeholders []string
+func JSON_EXTRACT(column field.Expression, paths ...string) field.ExpressionTo {
+	var vars = make([]any, 0, len(paths)+1)
+	var placeholders = make([]string, 0, len(paths)+1)
+
+	vars = append(vars, column)
+	placeholders = append(placeholders, "?")
 	for _, path := range paths {
 		placeholders = append(placeholders, "?")
 		vars = append(vars, path)
 	}
+
 	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_EXTRACT(%s, %s)", column, strings.Join(placeholders, ", ")),
+		SQL:  fmt.Sprintf("JSON_EXTRACT(%s)", strings.Join(placeholders, ", ")),
 		Vars: vars,
 	}}
 }
@@ -1155,4 +1181,357 @@ func (j *jsonObjectBuilder) Build(builder clause.Builder) {
 
 func (j *jsonObjectBuilder) AsF(name ...string) field.IField {
 	return j.toExpr().AsF(name...)
+}
+
+// JSON_ARRAY 创建 JSON 数组，接受多个值作为数组元素
+// SELECT JSON_ARRAY(1, 2, 3);
+// SELECT JSON_ARRAY('a', 'b', 'c');
+// SELECT JSON_ARRAY(users.id, users.name, users.email) FROM users;
+// SELECT JSON_ARRAY(NULL, 'value', 123, true);
+func JSON_ARRAY(values ...field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_ARRAY(?)"),
+		Vars: lo.ToAnySlice(values),
+	}}
+}
+
+// JSON_UNQUOTE 去除 JSON 值的引号，通常与 JSON_EXTRACT 配合使用
+// SELECT JSON_UNQUOTE('"Hello World"');
+// SELECT JSON_UNQUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
+// SELECT JSON_UNQUOTE(JSON_EXTRACT(config, '$.email')) FROM settings;
+// SELECT JSON_UNQUOTE(json_col->'$.field') FROM table;
+func JSON_UNQUOTE(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_UNQUOTE(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_QUOTE 为字符串添加引号，使其成为有效的 JSON 字符串值
+// SELECT JSON_QUOTE('Hello World');
+// SELECT JSON_QUOTE(users.name) FROM users;
+// SELECT JSON_QUOTE('He said "Hi"');
+// SELECT JSON_QUOTE(CONCAT(first_name, ' ', last_name)) FROM users;
+func JSON_QUOTE(str field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_QUOTE(?)",
+		Vars: []any{str},
+	}}
+}
+
+// JSON_CONTAINS 检查 JSON 文档是否在指定路径包含候选值，可选路径参数
+// SELECT JSON_CONTAINS('{"a":1,"b":2}', '1', '$.a');
+// SELECT JSON_CONTAINS('[1,2,3]', '2');
+// SELECT * FROM users WHERE JSON_CONTAINS(tags, '"vip"');
+// SELECT * FROM products WHERE JSON_CONTAINS(features, '{"color":"red"}', '$.attributes');
+func JSON_CONTAINS(target, candidate field.Expression, path ...string) field.ExpressionTo {
+	if len(path) > 0 {
+		return ExprTo{clause.Expr{
+			SQL:  "JSON_CONTAINS(?, ?, ?)",
+			Vars: []any{target, candidate, path[0]},
+		}}
+	}
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_CONTAINS(?, ?)",
+		Vars: []any{target, candidate},
+	}}
+}
+
+// JSON_CONTAINS_PATH 检查 JSON 文档中是否存在指定路径，mode 可以是 'one' 或 'all'
+// SELECT JSON_CONTAINS_PATH('{"a":1,"b":2}', 'one', '$.a', '$.c');
+// SELECT JSON_CONTAINS_PATH('{"a":1,"b":2}', 'all', '$.a', '$.b');
+// SELECT * FROM users WHERE JSON_CONTAINS_PATH(data, 'one', '$.email', '$.phone');
+// SELECT * FROM profiles WHERE JSON_CONTAINS_PATH(metadata, 'all', '$.name', '$.age');
+func JSON_CONTAINS_PATH(json field.Expression, mode string, paths ...string) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json, mode)
+	placeholders := "?, ?"
+	for _, path := range paths {
+		placeholders += ", ?"
+		vars = append(vars, path)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_CONTAINS_PATH(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_KEYS 返回 JSON 对象的顶级键或指定路径的键，结果为 JSON 数组
+// SELECT JSON_KEYS('{"a":1,"b":2}');
+// SELECT JSON_KEYS('{"a":{"x":1,"y":2},"b":3}', '$.a');
+// SELECT JSON_KEYS(data) FROM users;
+// SELECT JSON_KEYS(config, '$.settings') FROM applications;
+func JSON_KEYS(json field.Expression, path ...string) field.ExpressionTo {
+	if len(path) > 0 {
+		return ExprTo{clause.Expr{
+			SQL:  "JSON_KEYS(?, ?)",
+			Vars: []any{json, path[0]},
+		}}
+	}
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_KEYS(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_LENGTH 返回 JSON 文档的长度（对象的键数量或数组的元素数量），可指定路径
+// SELECT JSON_LENGTH('[1,2,3]');
+// SELECT JSON_LENGTH('{"a":1,"b":2}');
+// SELECT JSON_LENGTH(data, '$.items') FROM orders;
+// SELECT * FROM products WHERE JSON_LENGTH(attributes) > 5;
+func JSON_LENGTH(json field.Expression, path ...string) field.ExpressionTo {
+	if len(path) > 0 {
+		return ExprTo{clause.Expr{
+			SQL:  "JSON_LENGTH(?, ?)",
+			Vars: []any{json, path[0]},
+		}}
+	}
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_LENGTH(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_SET 在 JSON 文档中设置值，路径存在则替换，不存在则插入
+// SELECT JSON_SET('{"a":1}', '$.a', 10, '$.b', 20);
+// UPDATE users SET data = JSON_SET(data, '$.status', 'active') WHERE id = 1;
+// SELECT JSON_SET(config, '$.enabled', true) FROM settings;
+// UPDATE products SET metadata = JSON_SET(metadata, '$.price', 99.99, '$.stock', 100);
+func JSON_SET(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json)
+	placeholders := "?"
+	for _, val := range pathValuePairs {
+		placeholders += ", ?"
+		vars = append(vars, val)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_SET(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_INSERT 在 JSON 文档中插入值，仅当路径不存在时插入
+// SELECT JSON_INSERT('{"a":1}', '$.a', 10, '$.b', 20);
+// UPDATE users SET data = JSON_INSERT(data, '$.created_at', NOW()) WHERE id = 1;
+// SELECT JSON_INSERT(config, '$.new_field', 'value') FROM settings;
+// UPDATE products SET metadata = JSON_INSERT(metadata, '$.views', 0);
+func JSON_INSERT(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json)
+	placeholders := "?"
+	for _, val := range pathValuePairs {
+		placeholders += ", ?"
+		vars = append(vars, val)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_INSERT(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_REPLACE 在 JSON 文档中替换值，仅当路径存在时替换
+// SELECT JSON_REPLACE('{"a":1,"b":2}', '$.a', 10, '$.c', 30);
+// UPDATE users SET data = JSON_REPLACE(data, '$.status', 'inactive') WHERE id = 1;
+// SELECT JSON_REPLACE(config, '$.version', '2.0') FROM settings;
+// UPDATE products SET metadata = JSON_REPLACE(metadata, '$.price', price * 1.1);
+func JSON_REPLACE(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json)
+	placeholders := "?"
+	for _, val := range pathValuePairs {
+		placeholders += ", ?"
+		vars = append(vars, val)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_REPLACE(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_REMOVE 从 JSON 文档中移除指定路径的元素
+// SELECT JSON_REMOVE('{"a":1,"b":2}', '$.b');
+// SELECT JSON_REMOVE('[1,2,3]', '$[1]');
+// UPDATE users SET data = JSON_REMOVE(data, '$.temp_field') WHERE id = 1;
+// UPDATE products SET metadata = JSON_REMOVE(metadata, '$.deprecated', '$.old_price');
+func JSON_REMOVE(json field.Expression, paths ...string) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json)
+	placeholders := "?"
+	for _, path := range paths {
+		placeholders += ", ?"
+		vars = append(vars, path)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_REMOVE(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_ARRAY_APPEND 向 JSON 数组的指定路径追加值
+// SELECT JSON_ARRAY_APPEND('[1,2]', '$', 3);
+// SELECT JSON_ARRAY_APPEND('{"a":[1,2]}', '$.a', 3);
+// UPDATE users SET tags = JSON_ARRAY_APPEND(tags, '$', 'new_tag') WHERE id = 1;
+// UPDATE products SET images = JSON_ARRAY_APPEND(images, '$', 'image.jpg');
+func JSON_ARRAY_APPEND(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json)
+	placeholders := "?"
+	for _, val := range pathValuePairs {
+		placeholders += ", ?"
+		vars = append(vars, val)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_ARRAY_APPEND(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_ARRAY_INSERT 向 JSON 数组的指定位置插入值
+// SELECT JSON_ARRAY_INSERT('[1,3]', '$[1]', 2);
+// SELECT JSON_ARRAY_INSERT('{"a":[1,3]}', '$.a[1]', 2);
+// UPDATE users SET tags = JSON_ARRAY_INSERT(tags, '$[0]', 'priority') WHERE id = 1;
+// UPDATE products SET images = JSON_ARRAY_INSERT(images, '$[0]', 'cover.jpg');
+func JSON_ARRAY_INSERT(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json)
+	placeholders := "?"
+	for _, val := range pathValuePairs {
+		placeholders += ", ?"
+		vars = append(vars, val)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_ARRAY_INSERT(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_MERGE_PRESERVE 合并多个 JSON 文档，保留所有重复的键（已废弃，使用 JSON_MERGE_PRESERVE）
+// SELECT JSON_MERGE_PRESERVE('{"a":1}', '{"b":2}');
+// SELECT JSON_MERGE_PRESERVE('[1,2]', '[3,4]');
+// SELECT JSON_MERGE_PRESERVE(config, '{"new_key":"value"}') FROM settings;
+// UPDATE users SET data = JSON_MERGE_PRESERVE(data, '{"updated_at":"2024-01-01"}');
+func JSON_MERGE_PRESERVE(jsons ...field.Expression) field.ExpressionTo {
+	placeholders := ""
+	for i := range jsons {
+		if i > 0 {
+			placeholders += ", "
+		}
+		placeholders += "?"
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_MERGE_PRESERVE(%s)", placeholders),
+		Vars: lo.ToAnySlice(jsons),
+	}}
+}
+
+// JSON_MERGE_PATCH 使用 RFC 7396 语义合并 JSON 文档，后面的文档会覆盖前面的键
+// SELECT JSON_MERGE_PATCH('{"a":1,"b":2}', '{"a":10}');
+// SELECT JSON_MERGE_PATCH('{"a":1}', '{"b":2}', '{"c":3}');
+// UPDATE users SET data = JSON_MERGE_PATCH(data, '{"status":"active"}') WHERE id = 1;
+// SELECT JSON_MERGE_PATCH(default_config, user_config) FROM settings;
+func JSON_MERGE_PATCH(jsons ...field.Expression) field.ExpressionTo {
+	placeholders := ""
+	for i := range jsons {
+		if i > 0 {
+			placeholders += ", "
+		}
+		placeholders += "?"
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_MERGE_PATCH(%s)", placeholders),
+		Vars: lo.ToAnySlice(jsons),
+	}}
+}
+
+// JSON_VALID 检查值是否为有效的 JSON 文档，返回 1 表示有效，0 表示无效
+// SELECT JSON_VALID('{"a":1}');
+// SELECT JSON_VALID('invalid json');
+// SELECT * FROM users WHERE JSON_VALID(data) = 1;
+// SELECT id, JSON_VALID(metadata) as is_valid FROM products;
+func JSON_VALID(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_VALID(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_TYPE 返回 JSON 值的类型（OBJECT, ARRAY, INTEGER, DOUBLE, STRING, BOOLEAN, NULL）
+// SELECT JSON_TYPE('{"a":1}');
+// SELECT JSON_TYPE('[1,2,3]');
+// SELECT JSON_TYPE(JSON_EXTRACT(data, '$.field')) FROM users;
+// SELECT path, JSON_TYPE(JSON_EXTRACT(config, path)) FROM configs;
+func JSON_TYPE(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_TYPE(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_DEPTH 返回 JSON 文档的最大深度，空数组/对象或标量值的深度为 1
+// SELECT JSON_DEPTH('{"a":{"b":{"c":1}}}');
+// SELECT JSON_DEPTH('[1,[2,[3]]]');
+// SELECT JSON_DEPTH(data) as depth FROM users;
+// SELECT * FROM products WHERE JSON_DEPTH(metadata) > 3;
+func JSON_DEPTH(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_DEPTH(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_PRETTY 以易读的格式打印 JSON 文档（带缩进和换行）
+// SELECT JSON_PRETTY('{"a":1,"b":2}');
+// SELECT JSON_PRETTY(data) FROM users LIMIT 1;
+// SELECT JSON_PRETTY(JSON_OBJECT('name', 'John', 'age', 30));
+// SELECT id, JSON_PRETTY(config) as formatted FROM settings;
+func JSON_PRETTY(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_PRETTY(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_SEARCH 在 JSON 文档中搜索字符串值，返回匹配路径
+// mode: 'one' 返回第一个匹配，'all' 返回所有匹配
+// SELECT JSON_SEARCH('{"a":"abc","b":"def"}', 'one', 'abc');
+// SELECT JSON_SEARCH('["abc","def","abc"]', 'all', 'abc');
+// SELECT JSON_SEARCH(data, 'one', 'admin', NULL, '$**.role') FROM users;
+// SELECT * FROM products WHERE JSON_SEARCH(tags, 'one', 'electronics') IS NOT NULL;
+func JSON_SEARCH(json field.Expression, mode string, searchStr any, escape ...any) field.ExpressionTo {
+	var vars []any
+	vars = append(vars, json, mode, searchStr)
+	placeholders := "?, ?, ?"
+	for _, esc := range escape {
+		placeholders += ", ?"
+		vars = append(vars, esc)
+	}
+	return ExprTo{clause.Expr{
+		SQL:  fmt.Sprintf("JSON_SEARCH(%s)", placeholders),
+		Vars: vars,
+	}}
+}
+
+// JSON_STORAGE_SIZE 返回存储 JSON 文档所需的字节数（MySQL 5.7.22+）
+// SELECT JSON_STORAGE_SIZE('{"a":1}');
+// SELECT JSON_STORAGE_SIZE('[1,2,3,4,5]');
+// SELECT id, JSON_STORAGE_SIZE(data) as size FROM users;
+// SELECT AVG(JSON_STORAGE_SIZE(metadata)) as avg_size FROM products;
+func JSON_STORAGE_SIZE(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_STORAGE_SIZE(?)",
+		Vars: []any{json},
+	}}
+}
+
+// JSON_STORAGE_FREE 返回 JSON 列值的二进制表示中部分更新后释放的空间（MySQL 8.0.13+）
+// SELECT JSON_STORAGE_FREE(data) FROM users;
+// SELECT id, JSON_STORAGE_FREE(metadata) as free_space FROM products;
+// SELECT SUM(JSON_STORAGE_FREE(config)) as total_free FROM settings;
+// SELECT * FROM logs WHERE JSON_STORAGE_FREE(details) > 1024;
+func JSON_STORAGE_FREE(json field.Expression) field.ExpressionTo {
+	return ExprTo{clause.Expr{
+		SQL:  "JSON_STORAGE_FREE(?)",
+		Vars: []any{json},
+	}}
 }

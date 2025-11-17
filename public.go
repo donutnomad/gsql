@@ -12,20 +12,27 @@ import (
 	"github.com/samber/lo"
 )
 
+// Deprecated: 使用 TN 替代。
 func TableName(name string) Table {
 	return Table{Name: name}
 }
 
+// Deprecated: 使用 TN 替代。
 func TableName2(name string) Table2 {
-	return Table2{Name: name}
+	return TN(name)
+}
+
+// TN TableName
+func TN(tableName string) Table2 {
+	return Table2{Name: tableName}
 }
 
 func MapPattern[OUT any, IN any](input field.Pattern[IN]) field.Pattern[OUT] {
-	return field.NewPatternWith[OUT](input.Base)
+	return field.NewPatternFrom[OUT](input.Base)
 }
 
 func MapComparable[OUT any, IN any](input field.Comparable[IN]) field.Comparable[OUT] {
-	return field.NewComparableWith[OUT](input.Base)
+	return field.NewComparableFrom[OUT](input.Base)
 }
 
 func Field(sql string, args ...any) field.IField {
@@ -114,9 +121,9 @@ var (
 
 var tableRegexp = regexp.MustCompile(`(?i)(?:.+? AS (\w+)\s*(?:$|,)|^\w+\s+(\w+)$)`)
 
-func txTable(quote func(field string) string, name string, args ...any) (expr *clause.Expr, table string) {
+func txTable(quote func(field string) string, name string, args ...any) (expr *clause.RawExpr, table string) {
 	if strings.Contains(name, " ") || strings.Contains(name, "`") || len(args) > 0 {
-		expr = &clause.Expr{SQL: name, Vars: args}
+		expr = lo.ToPtr(clause.Expr{SQL: name, Vars: args}.Compat())
 		if results := tableRegexp.FindStringSubmatch(name); len(results) == 3 {
 			if results[1] != "" {
 				table = results[1]
@@ -128,13 +135,13 @@ func txTable(quote func(field string) string, name string, args ...any) (expr *c
 		if name != "DUAL" {
 			name = quote(name)
 		}
-		expr = &clause.Expr{SQL: name}
+		expr = lo.ToPtr(clause.Expr{SQL: name}.Compat())
 		table = tables[1]
 	} else if name != "" {
 		if name != "DUAL" {
 			name = quote(name)
 		}
-		expr = &clause.Expr{SQL: name}
+		expr = lo.ToPtr(clause.Expr{SQL: name}.Compat())
 		table = name
 	}
 	return

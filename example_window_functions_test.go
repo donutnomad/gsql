@@ -87,24 +87,25 @@ func TestGG(t *testing.T) {
 
 func TestDD(t *testing.T) {
 	b := utils.NewMemoryBuilder()
-	gsql.JSON_EXTRACT("aaa", "$.name").Build(b)
+	bookF := gsql.Expr("book")
+
+	gsql.JSON_EXTRACT(bookF, "$.name").Build(b)
 	fmt.Println(b.SQL.String())
 	fmt.Println(b.Vars)
-	f := field.NewComparableWithField[string](
-		gsql.FieldExpr(gsql.JSON_EXTRACT("book", "$.name"), ""),
+	f := field.NewComparableFrom[string](
+		gsql.JSON_EXTRACT(bookF, "$.name").AsF(),
 	)
 	_ = f
-	f1 := field.NewComparableWithField[string](
+	f1 := field.NewComparableFrom[string](
 		gsql.Field("JSON_EXTRACT(book, '$.name')"),
 	)
 	_ = f1
-	//	d1 := gsql.Select().
-	//		From(gsql.TableName2("bbb")).
-	//		Where(
-	//			f1.Eq("aaa"),
-	//		)
-	s := gsql.Select().From(
-		gsql.TableName2("books")).Where(f.Eq("2")).ToSQL()
+	s := gsql.Select().From(gsql.TN("books")).Where(
+		gsql.Eq(
+			gsql.JSON_EXTRACT(bookF, "$.name"),
+			gsql.Lit("2"),
+		),
+	).ToSQL()
 	fmt.Println(s)
 
 	// 创建字段

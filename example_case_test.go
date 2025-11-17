@@ -141,7 +141,7 @@ func TestCaseExample_NestedCase(t *testing.T) {
 	// 场景：嵌套 CASE 表达式
 	userType := field.NewPattern[string]("", "user_type")
 	createdAt := field.NewPattern[time.Time]("", "created_at")
-	monthCreatedAt := field.NewComparableWithField[int](gsql.MONTH(createdAt).AsF())
+	monthCreatedAt := field.NewComparableFrom[int](gsql.MONTH(createdAt).AsF())
 
 	// 季节性折扣
 	seasonDiscount := gsql.Case().

@@ -95,20 +95,21 @@ type Pattern[T any] struct {
 
 func NewPattern[T any](tableName, name string, flags ...FieldFlag) Pattern[T] {
 	b := NewBase(tableName, name, flags...)
-	return Pattern[T]{
-		Base:           *b,
-		comparableImpl: comparableImpl[T]{IField: b},
-		patternImpl:    patternImpl[T]{IField: b},
-		pointerImpl:    pointerImpl{IField: b},
-	}
+	return NewPatternFrom[T](*b)
 }
 
-func NewPatternWith[T any](b Base) Pattern[T] {
+func NewPatternFrom[T any](field IField) Pattern[T] {
+	var base Base
+	if v, ok := field.(Base); ok {
+		base = v
+	} else {
+		base = *NewBaseFromSql(field.ToExpr(), "")
+	}
 	return Pattern[T]{
-		Base:           b,
-		comparableImpl: comparableImpl[T]{IField: b},
-		patternImpl:    patternImpl[T]{IField: b},
-		pointerImpl:    pointerImpl{IField: b},
+		Base:           base,
+		comparableImpl: comparableImpl[T]{IField: base},
+		patternImpl:    patternImpl[T]{IField: base},
+		pointerImpl:    pointerImpl{IField: base},
 	}
 }
 
@@ -127,7 +128,7 @@ func (f Pattern[T]) WithName(name string) Pattern[T] {
 func (f Pattern[T]) WithAlias(alias string) Pattern[T] {
 	b := f.Base
 	b.alias = alias
-	return NewPatternWith[T](b)
+	return NewPatternFrom[T](b)
 }
 
 func (f Pattern[T]) FieldType() T {
@@ -147,27 +148,25 @@ type Comparable[T any] struct {
 
 func NewComparable[T any](tableName, name string, flags ...FieldFlag) Comparable[T] {
 	b := NewBase(tableName, name, flags...)
-	return Comparable[T]{
-		Base:           *b,
-		comparableImpl: comparableImpl[T]{IField: b},
-		pointerImpl:    pointerImpl{IField: b},
-	}
+	return NewComparableFrom[T](b)
 }
 
-func NewComparableWith[T any](b Base) Comparable[T] {
-	return Comparable[T]{
-		Base:           b,
-		comparableImpl: comparableImpl[T]{IField: b},
-		pointerImpl:    pointerImpl{IField: b},
-	}
-}
-
+// Deprecated: 使用 NewComparableFrom 替代。
 func NewComparableWithField[T any](field IField) Comparable[T] {
-	b := *NewBaseFromSql(field.ToExpr(), "")
+	return NewComparableFrom[T](field)
+}
+
+func NewComparableFrom[T any](field IField) Comparable[T] {
+	var base Base
+	if v, ok := field.(Base); ok {
+		base = v
+	} else {
+		base = *NewBaseFromSql(field.ToExpr(), "")
+	}
 	return Comparable[T]{
-		Base:           b,
-		comparableImpl: comparableImpl[T]{IField: b},
-		pointerImpl:    pointerImpl{IField: b},
+		Base:           base,
+		comparableImpl: comparableImpl[T]{IField: base},
+		pointerImpl:    pointerImpl{IField: base},
 	}
 }
 
@@ -191,7 +190,7 @@ func (f Comparable[T]) WithName(fieldName string) Comparable[T] {
 func (f Comparable[T]) WithAlias(alias string) Comparable[T] {
 	b := f.Base
 	b.alias = alias
-	return NewComparableWith[T](b)
+	return NewComparableFrom[T](b)
 }
 
 // FromUnixTime 将Unix时间戳转换为DATETIME类型
@@ -200,7 +199,7 @@ func (f Comparable[T]) FromUnixTime() Comparable[T] {
 		SQL:  "FROM_UNIXTIME(?)",
 		Vars: []any{f},
 	}, "")
-	return NewComparableWith[T](*b)
+	return NewComparableFrom[T](*b)
 }
 
 // TODO: 增加一个Blob类型(支持比较 + LIKE(字符串操作))

@@ -248,7 +248,7 @@ func (b *QueryBuilder) Create(db IDB, value any) DBResult {
 	builder := b.Clone()
 	builder.selects = nil
 	builder.wheres = nil
-	builder.from = TableName2("")
+	builder.from = TN("")
 	ret := builder.build(db).Create(value)
 	return DBResult{
 		ret.Error,

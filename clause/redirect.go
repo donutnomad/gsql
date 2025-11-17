@@ -1,6 +1,12 @@
 package clause
 
-import "gorm.io/gorm/clause"
+import (
+	"database/sql"
+	"database/sql/driver"
+	"reflect"
+
+	"gorm.io/gorm/clause"
+)
 
 // Expression expression interface
 type Expression = clause.Expression
@@ -11,7 +17,89 @@ type Writer = clause.Writer
 
 // Builder builder interface
 type Builder = clause.Builder
-type Expr = clause.Expr
+
+type RawExpr = clause.Expr
+
+//type Expr = clause.Expr
+
+// Expr raw expression
+type Expr struct {
+	SQL                string
+	Vars               []interface{}
+	WithoutParentheses bool
+}
+
+func (expr Expr) Compat() clause.Expr {
+	return clause.Expr{
+		SQL:                expr.SQL,
+		Vars:               expr.Vars,
+		WithoutParentheses: expr.WithoutParentheses,
+	}
+}
+
+// Build build raw expression
+func (expr Expr) Build(builder Builder) {
+	var (
+		afterParenthesis bool
+		idx              int
+	)
+	if len(expr.Vars) == 1 {
+		val := expr.Vars[0]
+		v0, ok := val.(interface{ ToExpr() clause.Expression })
+		if ok {
+			val = v0.ToExpr()
+		}
+		if v, ok := val.(Expr); ok {
+			if v.SQL == "?" {
+				expr.Vars = v.Vars
+			}
+		}
+	}
+
+	for _, v := range []byte(expr.SQL) {
+		if v == '?' && len(expr.Vars) > idx {
+			if afterParenthesis || expr.WithoutParentheses {
+				if _, ok := expr.Vars[idx].(driver.Valuer); ok {
+					builder.AddVar(builder, expr.Vars[idx])
+				} else {
+					switch rv := reflect.ValueOf(expr.Vars[idx]); rv.Kind() {
+					case reflect.Slice, reflect.Array:
+						if rv.Len() == 0 {
+							builder.AddVar(builder, nil)
+						} else {
+							for i := 0; i < rv.Len(); i++ {
+								if i > 0 {
+									builder.WriteByte(',')
+								}
+								builder.AddVar(builder, rv.Index(i).Interface())
+							}
+						}
+					default:
+						builder.AddVar(builder, expr.Vars[idx])
+					}
+				}
+			} else {
+				builder.AddVar(builder, expr.Vars[idx])
+			}
+
+			idx++
+		} else {
+			if v == '(' {
+				afterParenthesis = true
+			} else {
+				afterParenthesis = false
+			}
+			builder.WriteByte(v)
+		}
+	}
+
+	if idx < len(expr.Vars) {
+		for _, v := range expr.Vars[idx:] {
+			builder.AddVar(builder, sql.NamedArg{Value: v})
+		}
+	}
+}
+
 type OrConditions = clause.OrConditions
 type AndConditions = clause.AndConditions
 type NotConditions = clause.NotConditions
