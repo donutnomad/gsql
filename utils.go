@@ -15,10 +15,9 @@ import (
 	"gorm.io/gorm/utils"
 )
 
-var logLevel = LogLevelWarn
-
+// Debug
+// Deprecated: 无效
 func Debug() {
-	logLevel = LogLevelInfo
 }
 
 func getQuoteFunc() func(field string) string {

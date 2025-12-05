@@ -25,7 +25,7 @@ type RawExpr = clause.Expr
 // Expr raw expression
 type Expr struct {
 	SQL                string
-	Vars               []interface{}
+	Vars               []any
 	WithoutParentheses bool
 }
 

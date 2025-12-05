@@ -44,7 +44,7 @@ const jsonPrefix = "$."
 //
 //	// In PostgreSQL, path is `{age}`, `{name}`, `{orgs,orga}`, `{tags, 0}`, `{tags, 1}`.
 //	DB.UpdateColumn("attr", JSONSet("attr").Set("{orgs, orga}", "bar"))
-func (jsonSet *JSONSetExpression) Set(path string, value interface{}) *JSONSetExpression {
+func (jsonSet *JSONSetExpression) Set(path string, value any) *JSONSetExpression {
 	jsonSet.mutex.Lock()
 	jsonSet.path2value[path] = value
 	jsonSet.mutex.Unlock()

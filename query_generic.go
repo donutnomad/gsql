@@ -11,7 +11,9 @@ import (
 	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
+	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
+	"gorm.io/gorm/logger"
 )
 
 type ScopeFuncG[Model any] func(b *QueryBuilderG[Model])
@@ -475,6 +477,11 @@ func (b *QueryBuilderG[T]) build(db IDB) *GormDB {
 	}
 	tx.Config.ClauseBuilders = m
 	b.buildStmt(tx.Statement, getQuoteFunc())
+	if b.logLevel > 0 {
+		tx = tx.Session(&gorm.Session{
+			Logger: tx.Logger.LogMode(logger.LogLevel(b.logLevel)),
+		})
+	}
 	return tx
 }
 
