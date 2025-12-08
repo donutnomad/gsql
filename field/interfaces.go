@@ -99,12 +99,7 @@ func NewPattern[T any](tableName, name string, flags ...FieldFlag) Pattern[T] {
 }
 
 func NewPatternFrom[T any](field IField) Pattern[T] {
-	var base Base
-	if v, ok := field.(Base); ok {
-		base = v
-	} else {
-		base = *NewBaseFromSql(field.ToExpr(), "")
-	}
+	base := ifieldToBase(field)
 	return Pattern[T]{
 		Base:           base,
 		comparableImpl: comparableImpl[T]{IField: base},
@@ -157,12 +152,7 @@ func NewComparableWithField[T any](field IField) Comparable[T] {
 }
 
 func NewComparableFrom[T any](field IField) Comparable[T] {
-	var base Base
-	if v, ok := field.(Base); ok {
-		base = v
-	} else {
-		base = *NewBaseFromSql(field.ToExpr(), "")
-	}
+	base := ifieldToBase(field)
 	return Comparable[T]{
 		Base:           base,
 		comparableImpl: comparableImpl[T]{IField: base},
@@ -200,6 +190,18 @@ func (f Comparable[T]) FromUnixTime() Comparable[T] {
 		Vars: []any{f},
 	}, "")
 	return NewComparableFrom[T](*b)
+}
+
+func ifieldToBase(field IField) Base {
+	var base Base
+	if v, ok := field.(Base); ok {
+		base = v
+	} else if v, ok := field.(*Base); ok {
+		base = *v
+	} else {
+		base = *NewBaseFromSql(field.ToExpr(), "")
+	}
+	return base
 }
 
 // TODO: 增加一个Blob类型(支持比较 + LIKE(字符串操作))
