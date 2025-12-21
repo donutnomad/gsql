@@ -1,6 +1,5 @@
 package gsql
 
-import "C"
 import (
 	"errors"
 	"fmt"

@@ -2,12 +2,30 @@ package gsql
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
 )
+
+// 白名单：允许的时间间隔单位
+var allowedIntervalUnits = map[string]bool{
+	"MICROSECOND": true, "SECOND": true, "MINUTE": true, "HOUR": true,
+	"DAY": true, "WEEK": true, "MONTH": true, "QUARTER": true, "YEAR": true,
+	"SECOND_MICROSECOND": true, "MINUTE_MICROSECOND": true, "MINUTE_SECOND": true,
+	"HOUR_MICROSECOND": true, "HOUR_SECOND": true, "HOUR_MINUTE": true,
+	"DAY_MICROSECOND": true, "DAY_SECOND": true, "DAY_MINUTE": true, "DAY_HOUR": true,
+	"YEAR_MONTH": true,
+}
+
+// 白名单：允许的字符集
+var allowedCharsets = map[string]bool{
+	"utf8": true, "utf8mb4": true, "latin1": true,
+	"gbk": true, "ascii": true, "binary": true,
+	"ucs2": true, "utf16": true, "utf32": true,
+}
 
 var Star field.IField = field.NewBase("", "*")
 
@@ -402,8 +420,30 @@ func DAYOFYEAR(date field.Expression) field.ExpressionTo {
 // SELECT * FROM orders WHERE DATE_ADD(order_date, INTERVAL 30 DAY) > NOW();
 // 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
 func DATE_ADD(date field.Expression, interval string) field.ExpressionTo {
+	// 解析并验证 interval 格式 (例如: "1 DAY")
+	parts := strings.Fields(interval)
+	if len(parts) != 2 {
+		panic("DATE_ADD: invalid interval format, expected '<number> <unit>' (e.g., '1 DAY')")
+	}
+
+	// 验证数字部分
+	num, err := strconv.Atoi(parts[0])
+	if err != nil {
+		panic(fmt.Sprintf("DATE_ADD: interval value must be a number, got: %s", parts[0]))
+	}
+
+	// 验证单位部分
+	unit := strings.ToUpper(parts[1])
+	if !allowedIntervalUnits[unit] {
+		panic(fmt.Sprintf("DATE_ADD: invalid interval unit: %s", unit))
+	}
+
+	// 使用验证后的值重新构建 interval，而不是使用原始输入
+	// 这样可以防止恶意输入绕过验证
+	safeInterval := fmt.Sprintf("%d %s", num, unit)
+
 	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("DATE_ADD(?, INTERVAL %s)", interval),
+		SQL:  fmt.Sprintf("DATE_ADD(?, INTERVAL %s)", safeInterval),
 		Vars: []any{date},
 	}}
 }
@@ -415,8 +455,30 @@ func DATE_ADD(date field.Expression, interval string) field.ExpressionTo {
 // SELECT * FROM logs WHERE log_date >= DATE_SUB(NOW(), INTERVAL 7 DAY);
 // 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
 func DATE_SUB(date field.Expression, interval string) field.ExpressionTo {
+	// 解析并验证 interval 格式 (例如: "1 DAY")
+	parts := strings.Fields(interval)
+	if len(parts) != 2 {
+		panic("DATE_SUB: invalid interval format, expected '<number> <unit>' (e.g., '1 DAY')")
+	}
+
+	// 验证数字部分
+	num, err := strconv.Atoi(parts[0])
+	if err != nil {
+		panic(fmt.Sprintf("DATE_SUB: interval value must be a number, got: %s", parts[0]))
+	}
+
+	// 验证单位部分
+	unit := strings.ToUpper(parts[1])
+	if !allowedIntervalUnits[unit] {
+		panic(fmt.Sprintf("DATE_SUB: invalid interval unit: %s", unit))
+	}
+
+	// 使用验证后的值重新构建 interval，而不是使用原始输入
+	// 这样可以防止恶意输入绕过验证
+	safeInterval := fmt.Sprintf("%d %s", num, unit)
+
 	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("DATE_SUB(?, INTERVAL %s)", interval),
+		SQL:  fmt.Sprintf("DATE_SUB(?, INTERVAL %s)", safeInterval),
 		Vars: []any{date},
 	}}
 }
@@ -452,6 +514,12 @@ func TIMEDIFF(expr1, expr2 field.Expression) field.ExpressionTo {
 // SELECT * FROM orders WHERE TIMESTAMPDIFF(DAY, order_date, NOW()) > 30;
 // 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
 func TIMESTAMPDIFF(unit string, expr1, expr2 field.Expression) field.ExpressionTo {
+	// 验证单位参数
+	unit = strings.ToUpper(strings.TrimSpace(unit))
+	if !allowedIntervalUnits[unit] {
+		panic(fmt.Sprintf("TIMESTAMPDIFF: invalid unit: %s", unit))
+	}
+
 	return ExprTo{clause.Expr{
 		SQL:  fmt.Sprintf("TIMESTAMPDIFF(%s, ?, ?)", unit),
 		Vars: []any{expr1, expr2},
@@ -941,9 +1009,10 @@ func MIN(expr field.Expression) field.ExpressionTo {
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
 func GROUP_CONCAT(expr field.Expression, separator ...string) field.ExpressionTo {
 	if len(separator) > 0 {
+		// 使用参数化查询代替字符串拼接
 		return ExprTo{clause.Expr{
-			SQL:  fmt.Sprintf("GROUP_CONCAT(? SEPARATOR '%s')", separator[0]),
-			Vars: []any{expr},
+			SQL:  "GROUP_CONCAT(? SEPARATOR ?)",
+			Vars: []any{expr, separator[0]},
 		}}
 	}
 	return ExprTo{clause.Expr{
@@ -1035,6 +1104,12 @@ func CONVERT(expr field.Expression, dataType CastType) field.ExpressionTo {
 // SELECT CONVERT(text USING utf8) FROM messages;
 // 常用字符集: utf8, utf8mb4, latin1, gbk, ascii, binary
 func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
+	// 验证字符集参数
+	charset = strings.ToLower(strings.TrimSpace(charset))
+	if !allowedCharsets[charset] {
+		panic(fmt.Sprintf("CONVERT_CHARSET: invalid or unsupported charset: %s", charset))
+	}
+
 	return ExprTo{clause.Expr{
 		SQL:  fmt.Sprintf("CONVERT(? USING %s)", charset),
 		Vars: []any{expr},
