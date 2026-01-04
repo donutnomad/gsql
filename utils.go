@@ -28,6 +28,8 @@ func getQuoteFunc() func(field string) string {
 	}
 }
 
+var QueryCallbacks []func(*gorm.DB)
+
 func Scan(
 	logLevel int,
 	db *GormDB,
@@ -59,6 +61,10 @@ func Scan(
 			_ = tx.AddError(dbErr)
 		}
 		_ = tx.AddError(rows.Close())
+	}
+
+	for _, fn := range QueryCallbacks {
+		fn(tx)
 	}
 
 	currentLogger.Trace(tx.Statement.Context, newLogger.BeginAt, func() (string, int64) {
