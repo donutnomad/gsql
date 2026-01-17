@@ -1,6 +1,7 @@
 package tutorial
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -983,5 +984,278 @@ func TestInter_IndexHint(t *testing.T) {
 		if len(results) != 2 {
 			t.Errorf("Expected 2 results, got %d", len(results))
 		}
+	})
+}
+
+// ==================== Typed Expression Tests ====================
+
+// TestTypedExpr_Comparisons tests typed expressions (IntExpr, FloatExpr) with comparison methods
+// These expressions are returned by aggregate functions like COUNT, SUM, AVG and can be used
+// directly in HAVING clauses with type-safe comparison methods.
+func TestTypedExpr_Comparisons(t *testing.T) {
+	o := OrderSchema
+	p := ProductSchema
+	setupTable(t, o.ModelType())
+	setupTable(t, p.ModelType())
+	db := getDB()
+
+	// Insert test data for orders
+	orders := []Order{
+		{CustomerID: 1, OrderDate: time.Now(), TotalPrice: 100.00, Status: "completed"},
+		{CustomerID: 1, OrderDate: time.Now(), TotalPrice: 200.00, Status: "completed"},
+		{CustomerID: 2, OrderDate: time.Now(), TotalPrice: 150.00, Status: "pending"},
+		{CustomerID: 2, OrderDate: time.Now(), TotalPrice: 250.00, Status: "completed"},
+		{CustomerID: 3, OrderDate: time.Now(), TotalPrice: 50.00, Status: "pending"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Insert test data for products
+	products := []Product{
+		{Name: "iPhone", Category: "Electronics", Price: 999.99, Stock: 100},
+		{Name: "MacBook", Category: "Electronics", Price: 1999.99, Stock: 50},
+		{Name: "AirPods", Category: "Electronics", Price: 199.99, Stock: 200},
+		{Name: "T-Shirt", Category: "Clothing", Price: 29.99, Stock: 500},
+		{Name: "Jeans", Category: "Clothing", Price: 79.99, Stock: 300},
+	}
+	if err := db.Create(&products).Error; err != nil {
+		t.Fatalf("Failed to create products: %v", err)
+	}
+
+	// Test: COUNT().Gt(value) generates correct SQL
+	t.Run("COUNT_Gt", func(t *testing.T) {
+		// MySQL: SELECT orders.customer_id, COUNT(*) AS order_count
+		//        FROM orders
+		//        GROUP BY orders.customer_id
+		//        HAVING COUNT(*) > 1
+		var results []struct {
+			CustomerID uint64 `gorm:"column:customer_id"`
+			OrderCount int64  `gorm:"column:order_count"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.COUNT().Gt(1)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Customers 1 and 2 have more than 1 order
+		if len(results) != 2 {
+			t.Errorf("Expected 2 customers with > 1 order, got %d", len(results))
+		}
+
+		// Also verify ToSQL output
+		sql := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.COUNT().Gt(1)).
+			ToSQL()
+
+		t.Logf("COUNT().Gt SQL: %s", sql)
+		if !strings.Contains(sql, "HAVING") {
+			t.Error("SQL should contain HAVING clause")
+		}
+		if !strings.Contains(sql, "COUNT(*)") {
+			t.Error("SQL should contain COUNT(*)")
+		}
+	})
+
+	// Test: SUM().Gte(value) generates correct SQL
+	t.Run("SUM_Gte", func(t *testing.T) {
+		// MySQL: SELECT orders.customer_id, SUM(orders.total_price) AS total
+		//        FROM orders
+		//        GROUP BY orders.customer_id
+		//        HAVING SUM(orders.total_price) >= 300
+		var results []struct {
+			CustomerID uint64  `gorm:"column:customer_id"`
+			Total      float64 `gorm:"column:total"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.SUM(o.TotalPrice.ToExpr()).Gte(300.0)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Customer 1: 300, Customer 2: 400 - both >= 300
+		if len(results) != 2 {
+			t.Errorf("Expected 2 customers with total >= 300, got %d", len(results))
+		}
+
+		// Verify ToSQL output
+		sql := gsql.Select(
+			o.CustomerID,
+			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.SUM(o.TotalPrice.ToExpr()).Gte(300.0)).
+			ToSQL()
+
+		t.Logf("SUM().Gte SQL: %s", sql)
+		if !strings.Contains(sql, "HAVING") {
+			t.Error("SQL should contain HAVING clause")
+		}
+		if !strings.Contains(sql, "SUM(") {
+			t.Error("SQL should contain SUM(")
+		}
+	})
+
+	// Test: AVG().Between(from, to) generates correct SQL
+	t.Run("AVG_Between", func(t *testing.T) {
+		// MySQL: SELECT products.category, AVG(products.price) AS avg_price
+		//        FROM products
+		//        GROUP BY products.category
+		//        HAVING AVG(products.price) BETWEEN 50 AND 2000
+		var results []struct {
+			Category string  `gorm:"column:category"`
+			AvgPrice float64 `gorm:"column:avg_price"`
+		}
+		err := gsql.Select(
+			p.Category,
+			gsql.AVG(p.Price.ToExpr()).AsF("avg_price"),
+		).From(&p).
+			GroupBy(p.Category).
+			Having(gsql.AVG(p.Price.ToExpr()).Between(50.0, 2000.0)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Electronics avg: ~1066.66, Clothing avg: ~54.99 - both in range [50, 2000]
+		if len(results) != 2 {
+			t.Errorf("Expected 2 categories with avg price between 50 and 2000, got %d", len(results))
+		}
+
+		// Verify ToSQL output
+		sql := gsql.Select(
+			p.Category,
+			gsql.AVG(p.Price.ToExpr()).AsF("avg_price"),
+		).From(&p).
+			GroupBy(p.Category).
+			Having(gsql.AVG(p.Price.ToExpr()).Between(50.0, 2000.0)).
+			ToSQL()
+
+		t.Logf("AVG().Between SQL: %s", sql)
+		if !strings.Contains(sql, "HAVING") {
+			t.Error("SQL should contain HAVING clause")
+		}
+		if !strings.Contains(sql, "AVG(") {
+			t.Error("SQL should contain AVG(")
+		}
+		if !strings.Contains(sql, "BETWEEN") {
+			t.Error("SQL should contain BETWEEN")
+		}
+	})
+
+	// Test: IntExpr.AsF() still works after return type change
+	t.Run("IntExpr_AsF_works", func(t *testing.T) {
+		// Verify .AsF() still works after return type change
+		// MySQL: SELECT orders.customer_id, COUNT(*) AS cnt
+		//        FROM orders
+		//        GROUP BY orders.customer_id
+		var results []struct {
+			CustomerID uint64 `gorm:"column:customer_id"`
+			Cnt        int64  `gorm:"column:cnt"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("cnt"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 3 {
+			t.Errorf("Expected 3 customers, got %d", len(results))
+		}
+
+		// Verify ToSQL output
+		sql := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("cnt"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			ToSQL()
+
+		t.Logf("IntExpr.AsF SQL: %s", sql)
+		if !strings.Contains(sql, "COUNT(*)") {
+			t.Error("SQL should contain COUNT(*)")
+		}
+		if !strings.Contains(sql, "AS") && !strings.Contains(sql, "cnt") {
+			t.Error("SQL should contain alias 'cnt'")
+		}
+	})
+
+	// Test: Additional comparison methods
+	t.Run("Additional_Comparisons", func(t *testing.T) {
+		// Test Lt (less than)
+		sqlLt := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("cnt"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.COUNT().Lt(3)).
+			ToSQL()
+
+		if !strings.Contains(sqlLt, "HAVING") {
+			t.Error("Lt SQL should contain HAVING clause")
+		}
+		t.Logf("COUNT().Lt SQL: %s", sqlLt)
+
+		// Test Lte (less than or equal)
+		sqlLte := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("cnt"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.COUNT().Lte(2)).
+			ToSQL()
+
+		if !strings.Contains(sqlLte, "HAVING") {
+			t.Error("Lte SQL should contain HAVING clause")
+		}
+		t.Logf("COUNT().Lte SQL: %s", sqlLte)
+
+		// Test Eq (equal) - execute and verify results
+		var results []struct {
+			CustomerID uint64 `gorm:"column:customer_id"`
+			Cnt        int64  `gorm:"column:cnt"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("cnt"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.COUNT().Eq(2)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Customers 1 and 2 have exactly 2 orders each
+		if len(results) != 2 {
+			t.Errorf("Expected 2 customers with exactly 2 orders, got %d", len(results))
+		}
+
+		sqlEq := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("cnt"),
+		).From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.COUNT().Eq(2)).
+			ToSQL()
+
+		if !strings.Contains(sqlEq, "HAVING") {
+			t.Error("Eq SQL should contain HAVING clause")
+		}
+		t.Logf("COUNT().Eq SQL: %s", sqlEq)
 	})
 }
