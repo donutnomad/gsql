@@ -27,6 +27,9 @@ func TestAdv_BasicCTE(t *testing.T) {
 
 	// Basic CTE: select high sales records
 	// Use TableName(...).Ptr() for CTE name reference
+	// MySQL CTE: WITH high_sales AS (
+	//              SELECT sales_records.* FROM sales_records WHERE sales_records.amount > 1200
+	//            )
 	cte := gsql.With("high_sales",
 		gsql.Select(s.AllFields()...).
 			From(&s).
@@ -39,6 +42,8 @@ func TestAdv_BasicCTE(t *testing.T) {
 	}
 
 	// Build the CTE query
+	// MySQL: WITH high_sales AS (...)
+	//        SELECT salesperson, amount FROM high_sales
 	query := cte.Select(gsql.Field("salesperson"), gsql.Field("amount")).
 		From(gsql.TN("high_sales"))
 
@@ -144,6 +149,7 @@ func TestAdv_RowNumber(t *testing.T) {
 	}
 
 	// ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount DESC)
+	// MySQL: ROW_NUMBER() OVER (PARTITION BY sales_records.region ORDER BY sales_records.amount ASC) AS row_num
 	rn := gsql.RowNumber().
 		PartitionBy(s.Region).
 		OrderBy(s.Amount, true).
@@ -157,6 +163,9 @@ func TestAdv_RowNumber(t *testing.T) {
 	}
 
 	var results []Result
+	// MySQL: SELECT sales_records.region, sales_records.salesperson, sales_records.amount,
+	//               ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount ASC) AS row_num
+	//        FROM sales_records
 	err := gsql.Select(s.Region, s.Salesperson, s.Amount, rn).
 		From(&s).
 		Find(db, &results)
@@ -299,10 +308,17 @@ func TestAdv_JsonExtract(t *testing.T) {
 	}
 
 	// Use gsql.JSON_EXTRACT and JSON_UNQUOTE
+	// MySQL: JSON_EXTRACT(profile, '$.age') AS age
 	ageField := gsql.JSON_EXTRACT(u.Profile, "$.age").AsF("age")
+	// MySQL: JSON_UNQUOTE(JSON_EXTRACT(profile, '$.city')) AS city
 	cityField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(u.Profile, "$.city")).AsF("city")
 
 	var results []Result
+	// MySQL: SELECT user_profiles.username,
+	//               JSON_EXTRACT(profile, '$.age') AS age,
+	//               JSON_UNQUOTE(JSON_EXTRACT(profile, '$.city')) AS city
+	//        FROM user_profiles
+	//        WHERE JSON_EXTRACT(profile, '$.age') > 20
 	err := gsql.Select(u.Username, ageField, cityField).
 		From(&u).
 		Where(gsql.Expr("JSON_EXTRACT(profile, '$.age') > ?", 20)).
@@ -334,9 +350,12 @@ func TestAdv_JsonModify(t *testing.T) {
 	}
 
 	// Use gsql.JSON_SET for update
+	// MySQL: JSON_SET(profile, '$.country', 'USA', '$.age', 26)
 	newProfile := gsql.JSON_SET(u.Profile, "$.country", gsql.Lit("USA"), "$.age", gsql.Lit(26))
 
 	// Update using gsql
+	// MySQL: UPDATE user_profiles SET profile = JSON_SET(...)
+	//        WHERE user_profiles.username = 'alice'
 	err := gsql.Select(u.AllFields()...).
 		From(&u).
 		Where(u.Username.Eq("alice")).
@@ -391,9 +410,12 @@ func TestAdv_JsonContains(t *testing.T) {
 
 	// JSON_CONTAINS - find users with specific skill using gsql
 	// JSON_CONTAINS(profile, '"go"', '$.skills')
+	// MySQL: JSON_CONTAINS(profile, '"go"', '$.skills')
 	hasGoSkill := gsql.JSON_CONTAINS(u.Profile, gsql.Lit(`"go"`), "$.skills")
 
 	var results []UserProfile
+	// MySQL: SELECT user_profiles.* FROM user_profiles
+	//        WHERE JSON_CONTAINS(profile, '"go"', '$.skills')
 	err := gsql.Select(u.AllFields()...).
 		From(&u).
 		Where(hasGoSkill).
@@ -551,6 +573,9 @@ func TestAdv_ForUpdate(t *testing.T) {
 	}
 
 	// FOR UPDATE
+	// MySQL: SELECT transactions.* FROM transactions
+	//        WHERE transactions.account_id = 1
+	//        FOR UPDATE
 	sql := gsql.Select(tx.AllFields()...).
 		From(&tx).
 		Where(tx.AccountID.Eq(1)).
@@ -638,6 +663,7 @@ func TestAdv_LargeInQuery(t *testing.T) {
 	}
 
 	// Use regular IN query with multiple values
+	// MySQL: SELECT products.* FROM products WHERE products.id IN (?, ?, ?, ...)
 	var results []Product
 	err := gsql.Select(p.AllFields()...).
 		From(&p).
@@ -673,6 +699,7 @@ func TestAdv_Distinct(t *testing.T) {
 	}
 
 	// DISTINCT categories
+	// MySQL: SELECT DISTINCT products.category FROM products
 	var categories []string
 	err := gsql.Select(p.Category).
 		From(&p).
@@ -696,6 +723,7 @@ func TestAdv_Exist(t *testing.T) {
 	db := getDB()
 
 	// Initially no products
+	// MySQL: SELECT EXISTS(SELECT 1 FROM products WHERE products.category = 'Electronics')
 	exists, err := gsql.Select(p.ID).
 		From(&p).
 		Where(p.Category.Eq("Electronics")).
@@ -715,6 +743,7 @@ func TestAdv_Exist(t *testing.T) {
 	}
 
 	// Now should exist
+	// MySQL: SELECT EXISTS(SELECT 1 FROM products WHERE products.category = 'Electronics')
 	exists, err = gsql.Select(p.ID).
 		From(&p).
 		Where(p.Category.Eq("Electronics")).

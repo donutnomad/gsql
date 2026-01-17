@@ -81,12 +81,16 @@ func (p *ListingPO) TableName() string {
 	return "listing"
 }
 
+// User
+// @Gsql
 type User struct {
 	gorm.Model
 	Name string `gorm:"column:name;uniqueIndex;type:varchar(255)"`
 	Age  int32
 }
 
+// User2
+// @Gsql
 type User2 struct {
 	gorm.Model
 	Name      string `gorm:"column:name;uniqueIndex;type:varchar(255)"`

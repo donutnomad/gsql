@@ -31,6 +31,9 @@ func TestBasic_Select(t *testing.T) {
 	// Test 1: WHERE + ORDER BY DESC
 	t.Run("WHERE + ORDER BY DESC", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        WHERE products.category = 'Electronics'
+		//        ORDER BY products.price DESC
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
@@ -50,6 +53,9 @@ func TestBasic_Select(t *testing.T) {
 	// Test 2: WHERE + ORDER BY ASC
 	t.Run("WHERE + ORDER BY ASC", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        WHERE products.category = 'Electronics'
+		//        ORDER BY products.price ASC
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
@@ -66,6 +72,9 @@ func TestBasic_Select(t *testing.T) {
 	// Test 3: LIMIT
 	t.Run("LIMIT", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        ORDER BY products.price DESC
+		//        LIMIT 2
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Order(p.Price, false).
@@ -82,6 +91,9 @@ func TestBasic_Select(t *testing.T) {
 	// Test 4: OFFSET + LIMIT
 	t.Run("OFFSET + LIMIT", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        ORDER BY products.price DESC
+		//        LIMIT 2 OFFSET 1
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Order(p.Price, false).
@@ -103,6 +115,8 @@ func TestBasic_Select(t *testing.T) {
 	// Test 5: Multiple WHERE conditions
 	t.Run("Multiple WHERE conditions", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        WHERE products.category = 'Electronics' AND products.price >= 500
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(
@@ -121,6 +135,8 @@ func TestBasic_Select(t *testing.T) {
 	// Test 6: IN operator
 	t.Run("IN operator", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        WHERE products.name IN ('iPhone', 'MacBook')
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.In("iPhone", "MacBook")).
@@ -136,6 +152,8 @@ func TestBasic_Select(t *testing.T) {
 	// Test 7: LIKE operator
 	t.Run("LIKE operator", func(t *testing.T) {
 		var result []Product
+		// MySQL: SELECT products.* FROM products
+		//        WHERE products.name LIKE '%Pod%'
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Contains("Pod")).
@@ -172,6 +190,7 @@ func TestBasic_Insert(t *testing.T) {
 
 		// Verify insertion
 		var result Product
+		// MySQL: SELECT products.* FROM products WHERE products.id = ?
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.ID.Eq(product.ID)).
@@ -196,6 +215,7 @@ func TestBasic_Insert(t *testing.T) {
 		}
 
 		// Verify insertion
+		// MySQL: SELECT COUNT(*) FROM products WHERE products.name IN ('Phone', 'Laptop', 'Tablet')
 		count, err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.In("Phone", "Laptop", "Tablet")).
@@ -253,6 +273,7 @@ func TestBasic_Update(t *testing.T) {
 
 	// Test 1: Update single field with condition
 	t.Run("Update single field", func(t *testing.T) {
+		// MySQL: UPDATE products SET price = 150.0 WHERE products.name = 'Product A'
 		result := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Eq("Product A")).
@@ -266,6 +287,7 @@ func TestBasic_Update(t *testing.T) {
 
 		// Verify update
 		var updated Product
+		// MySQL: SELECT products.* FROM products WHERE products.name = 'Product A' LIMIT 1
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Eq("Product A")).
@@ -280,6 +302,7 @@ func TestBasic_Update(t *testing.T) {
 
 	// Test 2: Update multiple fields
 	t.Run("Update multiple fields", func(t *testing.T) {
+		// MySQL: UPDATE products SET price = 250.0, stock = 25 WHERE products.name = 'Product B'
 		result := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Eq("Product B")).
@@ -337,6 +360,7 @@ func TestBasic_Delete(t *testing.T) {
 
 	// Test 1: Delete single row
 	t.Run("Delete single row", func(t *testing.T) {
+		// MySQL: DELETE FROM products WHERE products.name = 'Delete A'
 		result := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Eq("Delete A")).
@@ -349,6 +373,7 @@ func TestBasic_Delete(t *testing.T) {
 		}
 
 		// Verify deletion
+		// MySQL: SELECT EXISTS(SELECT 1 FROM products WHERE products.name = 'Delete A')
 		exist, err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Eq("Delete A")).
@@ -363,6 +388,7 @@ func TestBasic_Delete(t *testing.T) {
 
 	// Test 2: Delete by category (multiple rows)
 	t.Run("Delete multiple rows", func(t *testing.T) {
+		// MySQL: DELETE FROM products WHERE products.category = 'ToDelete'
 		result := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Category.Eq("ToDelete")).
@@ -375,6 +401,7 @@ func TestBasic_Delete(t *testing.T) {
 		}
 
 		// Verify Keep C still exists
+		// MySQL: SELECT EXISTS(SELECT 1 FROM products WHERE products.name = 'Keep C')
 		exist, err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Name.Eq("Keep C")).
@@ -412,6 +439,7 @@ func TestFunc_DateTime(t *testing.T) {
 		var result struct {
 			CurrentTime time.Time `gorm:"column:current_time"`
 		}
+		// MySQL: SELECT NOW() AS current_time FROM employees LIMIT 1
 		err := gsql.Select(gsql.NOW().AsF("current_time")).
 			From(&e).
 			Limit(1).
@@ -430,6 +458,8 @@ func TestFunc_DateTime(t *testing.T) {
 		var result struct {
 			HireYear int `gorm:"column:hire_year"`
 		}
+		// MySQL: SELECT YEAR(employees.hire_date) AS hire_year FROM employees
+		//        WHERE employees.name = 'John' LIMIT 1
 		err := gsql.Select(gsql.YEAR(e.HireDate.ToExpr()).AsF("hire_year")).
 			From(&e).
 			Where(e.Name.Eq("John")).
@@ -447,6 +477,8 @@ func TestFunc_DateTime(t *testing.T) {
 		var result struct {
 			HireMonth int `gorm:"column:hire_month"`
 		}
+		// MySQL: SELECT MONTH(employees.hire_date) AS hire_month FROM employees
+		//        WHERE employees.name = 'John' LIMIT 1
 		err := gsql.Select(gsql.MONTH(e.HireDate.ToExpr()).AsF("hire_month")).
 			From(&e).
 			Where(e.Name.Eq("John")).
@@ -464,6 +496,8 @@ func TestFunc_DateTime(t *testing.T) {
 		var result struct {
 			HireDay int `gorm:"column:hire_day"`
 		}
+		// MySQL: SELECT DAY(employees.hire_date) AS hire_day FROM employees
+		//        WHERE employees.name = 'John' LIMIT 1
 		err := gsql.Select(gsql.DAY(e.HireDate.ToExpr()).AsF("hire_day")).
 			From(&e).
 			Where(e.Name.Eq("John")).
@@ -825,6 +859,7 @@ func TestFunc_Aggregate(t *testing.T) {
 		var result struct {
 			Total int64 `gorm:"column:total"`
 		}
+		// MySQL: SELECT COUNT(*) AS total FROM products
 		err := gsql.Select(gsql.COUNT().AsF("total")).
 			From(&p).
 			First(db, &result)
@@ -841,6 +876,8 @@ func TestFunc_Aggregate(t *testing.T) {
 		var result struct {
 			Count int64 `gorm:"column:count"`
 		}
+		// MySQL: SELECT COUNT(products.id) AS count FROM products
+		//        WHERE products.category = 'Electronics'
 		err := gsql.Select(gsql.COUNT(p.ID).AsF("count")).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
@@ -858,6 +895,8 @@ func TestFunc_Aggregate(t *testing.T) {
 		var result struct {
 			TotalPrice float64 `gorm:"column:total_price"`
 		}
+		// MySQL: SELECT SUM(products.price) AS total_price FROM products
+		//        WHERE products.category = 'Electronics'
 		err := gsql.Select(gsql.SUM(p.Price.ToExpr()).AsF("total_price")).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
@@ -875,6 +914,8 @@ func TestFunc_Aggregate(t *testing.T) {
 		var result struct {
 			AvgPrice float64 `gorm:"column:avg_price"`
 		}
+		// MySQL: SELECT AVG(products.price) AS avg_price FROM products
+		//        WHERE products.category = 'Electronics'
 		err := gsql.Select(gsql.AVG(p.Price.ToExpr()).AsF("avg_price")).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
@@ -972,7 +1013,7 @@ func TestFunc_FlowControl(t *testing.T) {
 	// Test IF()
 	t.Run("IF", func(t *testing.T) {
 		var results []struct {
-			Name       string `gorm:"column:name"`
+			Name         string `gorm:"column:name"`
 			Availability string `gorm:"column:availability"`
 		}
 		err := gsql.Select(
@@ -1024,8 +1065,8 @@ func TestFunc_FlowControl(t *testing.T) {
 	// Test NULLIF()
 	t.Run("NULLIF", func(t *testing.T) {
 		var results []struct {
-			Name      string  `gorm:"column:name"`
-			StockNull *int    `gorm:"column:stock_null"`
+			Name      string `gorm:"column:name"`
+			StockNull *int   `gorm:"column:stock_null"`
 		}
 		// NULLIF(stock, 0) returns NULL if stock is 0
 		err := gsql.Select(
