@@ -1,10 +1,12 @@
 package tutorial
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	gsql "github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql/field"
 )
 
 // ==================== CTE Tests ====================
@@ -755,6 +757,132 @@ func TestAdv_Exist(t *testing.T) {
 	if !exists {
 		t.Error("Expected Electronics products to exist")
 	}
+}
+
+// ==================== Derived Table Tests ====================
+
+// TestDerivedTable_WithTypedColumn tests using typed columns from derived tables
+func TestDerivedTable_WithTypedColumn(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data: customers with orders
+	customers := []Customer{
+		{Name: "Alice", Email: "alice@test.com", Phone: "111-1111"},
+		{Name: "Bob", Email: "bob@test.com", Phone: "222-2222"},
+		{Name: "Charlie", Email: "charlie@test.com", Phone: "333-3333"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	// Alice: 3 orders, Bob: 2 orders, Charlie: 1 order
+	orders := []Order{
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 100.50, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 250.00, Status: "pending"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 50.00, Status: "completed"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 75.25, Status: "completed"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 120.00, Status: "pending"},
+		{CustomerID: customers[2].ID, OrderDate: time.Now(), TotalPrice: 200.00, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	t.Run("Subquery with aggregation and typed column", func(t *testing.T) {
+		// Scenario:
+		// SELECT sub.customer_id, sub.order_count
+		// FROM (
+		//   SELECT customer_id, COUNT(*) as order_count
+		//   FROM orders
+		//   GROUP BY customer_id
+		// ) AS sub
+		// WHERE sub.order_count > 1
+
+		// 1. Define result type for subquery
+		type CustomerOrderCount struct {
+			CustomerID uint64 `gorm:"column:customer_id"`
+			OrderCount int64  `gorm:"column:order_count"`
+		}
+
+		// 2. Build subquery
+		subquery := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+		).From(&o).
+			GroupBy(o.CustomerID)
+
+		// 3. Create derived table
+		derivedTable := gsql.DefineTable[any, CustomerOrderCount]("sub", CustomerOrderCount{}, subquery)
+
+		// 4. Use typed column from derived table
+		orderCount := field.IntColumn("order_count").From(&derivedTable)
+		customerID := field.NewComparable[uint64]("sub", "customer_id")
+
+		// 5. Build main query with typed column comparison
+		var results []CustomerOrderCount
+		err := gsql.Select(
+			customerID,
+			orderCount,
+		).From(&derivedTable).
+			Where(orderCount.Gt(1)).
+			Find(db, &results)
+
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+
+		// Based on test data: Alice (3 orders), Bob (2 orders) have > 1 order
+		t.Logf("Found %d customers with > 1 order", len(results))
+		if len(results) != 2 {
+			t.Errorf("Expected 2 customers with > 1 order, got %d", len(results))
+		}
+		for _, r := range results {
+			if r.OrderCount <= 1 {
+				t.Errorf("Expected order_count > 1, got %d for customer %d", r.OrderCount, r.CustomerID)
+			}
+		}
+	})
+
+	t.Run("Verify SQL generation", func(t *testing.T) {
+		// Verify the SQL is generated correctly
+		type CustomerOrderCount struct {
+			CustomerID uint64 `gorm:"column:customer_id"`
+			OrderCount int64  `gorm:"column:order_count"`
+		}
+
+		subquery := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+		).From(&o).
+			GroupBy(o.CustomerID)
+
+		derivedTable := gsql.DefineTable[any, CustomerOrderCount]("sub", CustomerOrderCount{}, subquery)
+		orderCount := field.IntColumn("order_count").From(&derivedTable)
+
+		sql := gsql.Select(
+			gsql.Field("customer_id"),
+			orderCount,
+		).From(&derivedTable).
+			Where(orderCount.Gt(1)).
+			ToSQL()
+
+		t.Logf("Generated SQL: %s", sql)
+
+		// Verify key parts
+		if !strings.Contains(sql, "FROM (") {
+			t.Error("SQL should contain derived table FROM (...)")
+		}
+		if !strings.Contains(sql, "AS sub") {
+			t.Error("SQL should contain alias AS sub")
+		}
+		if !strings.Contains(sql, "order_count") {
+			t.Error("SQL should reference order_count column")
+		}
+	})
 }
 
 // ==================== Helper Functions ====================
