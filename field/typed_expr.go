@@ -155,3 +155,57 @@ type FloatExpr struct {
 func NewFloatExpr(expr clause.Expression) FloatExpr {
 	return FloatExpr{numericExprBase{Expression: expr}}
 }
+
+// StringExpr 字符串类型表达式，支持比较和模式匹配
+// 用于 MAX(name), MIN(name) 等返回字符串的聚合函数
+type StringExpr struct {
+	numericExprBase // 复用比较操作
+}
+
+// NewStringExpr 创建一个新的 StringExpr 实例
+func NewStringExpr(expr clause.Expression) StringExpr {
+	return StringExpr{numericExprBase{Expression: expr}}
+}
+
+// Like 模式匹配 (LIKE)
+func (e StringExpr) Like(pattern string, escape ...byte) Expression {
+	if len(escape) > 0 {
+		return clause.Expr{
+			SQL:  "? LIKE ? ESCAPE ?",
+			Vars: []any{e.Expression, pattern, string(escape[0])},
+		}
+	}
+	return clause.Expr{
+		SQL:  "? LIKE ?",
+		Vars: []any{e.Expression, pattern},
+	}
+}
+
+// NotLike 不匹配模式 (NOT LIKE)
+func (e StringExpr) NotLike(pattern string, escape ...byte) Expression {
+	if len(escape) > 0 {
+		return clause.Expr{
+			SQL:  "? NOT LIKE ? ESCAPE ?",
+			Vars: []any{e.Expression, pattern, string(escape[0])},
+		}
+	}
+	return clause.Expr{
+		SQL:  "? NOT LIKE ?",
+		Vars: []any{e.Expression, pattern},
+	}
+}
+
+// Contains 包含 (LIKE '%value%')
+func (e StringExpr) Contains(value string) Expression {
+	return e.Like("%" + value + "%")
+}
+
+// HasPrefix 前缀匹配 (LIKE 'value%')
+func (e StringExpr) HasPrefix(value string) Expression {
+	return e.Like(value + "%")
+}
+
+// HasSuffix 后缀匹配 (LIKE '%value')
+func (e StringExpr) HasSuffix(value string) Expression {
+	return e.Like("%" + value)
+}

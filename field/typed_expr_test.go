@@ -195,3 +195,98 @@ func TestFloatExpr_ImplementsNumericExpr(t *testing.T) {
 	// 验证 FloatExpr 实现了 NumericExpr 接口
 	var _ NumericExpr = expr
 }
+
+// StringExpr 测试
+
+func TestStringExpr_Like(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.Like("%test%")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_Like_WithEscape(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.Like("%test\\%value%", '\\')
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_NotLike(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.NotLike("%test%")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_NotLike_WithEscape(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.NotLike("%test\\%value%", '\\')
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_Contains(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.Contains("test")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_HasPrefix(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.HasPrefix("test")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_HasSuffix(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.HasSuffix("test")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_Eq(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MIN(name)"})
+	result := expr.Eq("test")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_Gt(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.Gt("abc")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_In(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	result := expr.In("a", "b", "c")
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_AsF(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+	field := expr.AsF("max_name")
+
+	assert.NotNil(t, field)
+	assert.Equal(t, "max_name", field.Name())
+}
+
+func TestStringExpr_ToExpr(t *testing.T) {
+	baseExpr := clause.Expr{SQL: "MAX(name)"}
+	expr := NewStringExpr(baseExpr)
+	result := expr.ToExpr()
+
+	assert.NotNil(t, result)
+}
+
+func TestStringExpr_ImplementsNumericExpr(t *testing.T) {
+	expr := NewStringExpr(clause.Expr{SQL: "MAX(name)"})
+
+	// 验证 StringExpr 实现了 NumericExpr 接口（因为它继承了 numericExprBase）
+	var _ NumericExpr = expr
+}
