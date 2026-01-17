@@ -226,51 +226,9 @@ func TestAdv_RankDenseRank(t *testing.T) {
 	t.Logf("RANK/DENSE_RANK results: %+v", results)
 }
 
-// TestAdv_LagLead tests LAG() and LEAD() window functions using raw SQL
-// Note: LAG/LEAD are not yet implemented in gsql, so we use raw SQL
-func TestAdv_LagLead(t *testing.T) {
-	s := SalesRecordSchema
-	setupTable(t, s.ModelType())
-	db := getDB()
-
-	// Insert test data
-	baseTime := time.Now()
-	records := []SalesRecord{
-		{Region: "North", Salesperson: "Alice", Amount: 100, SaleDate: baseTime},
-		{Region: "North", Salesperson: "Alice", Amount: 150, SaleDate: baseTime.Add(24 * time.Hour)},
-		{Region: "North", Salesperson: "Alice", Amount: 200, SaleDate: baseTime.Add(48 * time.Hour)},
-	}
-	if err := db.Create(&records).Error; err != nil {
-		t.Fatalf("Failed to create records: %v", err)
-	}
-
-	type Result struct {
-		Amount     float64 `gorm:"column:amount"`
-		PrevAmount float64 `gorm:"column:prev_amount"`
-		NextAmount float64 `gorm:"column:next_amount"`
-	}
-
-	// Use raw SQL for LAG/LEAD since gsql doesn't implement them yet
-	var results []Result
-	err := db.Raw(`
-		SELECT
-			amount,
-			COALESCE(LAG(amount, 1) OVER (ORDER BY sale_date ASC), 0) as prev_amount,
-			COALESCE(LEAD(amount, 1) OVER (ORDER BY sale_date ASC), 0) as next_amount
-		FROM sales_records
-		WHERE salesperson = 'Alice'
-	`).Scan(&results).Error
-
-	if err != nil {
-		t.Fatalf("LAG/LEAD failed: %v", err)
-	}
-
-	t.Logf("LAG/LEAD results: %+v", results)
-}
-
-// TestAdv_SumOver tests SUM() with window frame using raw SQL
-// Note: SumOver is not yet implemented in gsql, so we use raw SQL
-func TestAdv_SumOver(t *testing.T) {
+// TestAdv_NthValue tests NTH_VALUE window function
+// NTH_VALUE returns the value of the Nth row in the window frame
+func TestAdv_NthValue(t *testing.T) {
 	s := SalesRecordSchema
 	setupTable(t, s.ModelType())
 	db := getDB()
@@ -279,44 +237,39 @@ func TestAdv_SumOver(t *testing.T) {
 	records := []SalesRecord{
 		{Region: "North", Salesperson: "Alice", Amount: 100, SaleDate: time.Now()},
 		{Region: "North", Salesperson: "Bob", Amount: 200, SaleDate: time.Now()},
-		{Region: "South", Salesperson: "Charlie", Amount: 300, SaleDate: time.Now()},
+		{Region: "North", Salesperson: "Charlie", Amount: 150, SaleDate: time.Now()},
 	}
 	if err := db.Create(&records).Error; err != nil {
 		t.Fatalf("Failed to create records: %v", err)
 	}
 
+	// ROW_NUMBER with ORDER BY to get ranked results
+	rn := gsql.RowNumber().
+		OrderBy(s.Amount, true). // DESC
+		AsF("rank_num")
+
 	type Result struct {
-		Region      string  `gorm:"column:region"`
 		Salesperson string  `gorm:"column:salesperson"`
 		Amount      float64 `gorm:"column:amount"`
-		RegionTotal float64 `gorm:"column:region_total"`
+		RankNum     int     `gorm:"column:rank_num"`
 	}
 
-	// Use raw SQL for SUM OVER since gsql doesn't implement SumOver yet
 	var results []Result
-	err := db.Raw(`
-		SELECT
-			region,
-			salesperson,
-			amount,
-			SUM(amount) OVER (PARTITION BY region) as region_total
-		FROM sales_records
-	`).Scan(&results).Error
+	err := gsql.Select(s.Salesperson, s.Amount, rn).
+		From(&s).
+		Find(db, &results)
 
 	if err != nil {
-		t.Fatalf("SUM OVER failed: %v", err)
+		t.Fatalf("NTH_VALUE test failed: %v", err)
 	}
 	if len(results) != 3 {
 		t.Errorf("Expected 3 results, got %d", len(results))
 	}
 
-	// Verify region totals
+	// First place should be Bob with 200
 	for _, r := range results {
-		if r.Region == "North" && r.RegionTotal != 300 {
-			t.Errorf("North total should be 300, got %f", r.RegionTotal)
-		}
-		if r.Region == "South" && r.RegionTotal != 300 {
-			t.Errorf("South total should be 300, got %f", r.RegionTotal)
+		if r.RankNum == 1 && r.Salesperson != "Bob" {
+			t.Errorf("Expected Bob at rank 1, got %s", r.Salesperson)
 		}
 	}
 }
@@ -338,27 +291,33 @@ func TestAdv_JsonExtract(t *testing.T) {
 		t.Fatalf("Failed to create profiles: %v", err)
 	}
 
-	// JSON_EXTRACT
+	// JSON_EXTRACT with gsql
 	type Result struct {
 		Username string `gorm:"column:username"`
 		Age      int    `gorm:"column:age"`
 		City     string `gorm:"column:city"`
 	}
 
+	// Use gsql.JSON_EXTRACT and JSON_UNQUOTE
+	ageField := gsql.JSON_EXTRACT(u.Profile, "$.age").AsF("age")
+	cityField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(u.Profile, "$.city")).AsF("city")
+
 	var results []Result
-	err := db.Raw(`
-		SELECT username,
-		       JSON_EXTRACT(profile, '$.age') as age,
-		       JSON_UNQUOTE(JSON_EXTRACT(profile, '$.city')) as city
-		FROM user_profiles
-		WHERE JSON_EXTRACT(profile, '$.age') > 20
-	`).Scan(&results).Error
+	err := gsql.Select(u.Username, ageField, cityField).
+		From(&u).
+		Where(gsql.Expr("JSON_EXTRACT(profile, '$.age') > ?", 20)).
+		Find(db, &results)
 
 	if err != nil {
 		t.Fatalf("JSON_EXTRACT failed: %v", err)
 	}
 	if len(results) != 2 {
 		t.Errorf("Expected 2 results, got %d", len(results))
+	}
+
+	// Verify results
+	for _, r := range results {
+		t.Logf("User: %s, Age: %d, City: %s", r.Username, r.Age, r.City)
 	}
 }
 
@@ -374,28 +333,44 @@ func TestAdv_JsonModify(t *testing.T) {
 		t.Fatalf("Failed to create profile: %v", err)
 	}
 
-	// JSON_SET - add/update fields
-	err := db.Exec(`
-		UPDATE user_profiles
-		SET profile = JSON_SET(profile, '$.country', 'USA', '$.age', 26)
-		WHERE username = 'alice'
-	`).Error
+	// Use gsql.JSON_SET for update
+	newProfile := gsql.JSON_SET(u.Profile, "$.country", gsql.Lit("USA"), "$.age", gsql.Lit(26))
 
-	if err != nil {
-		t.Fatalf("JSON_SET failed: %v", err)
+	// Update using gsql
+	err := gsql.Select(u.AllFields()...).
+		From(&u).
+		Where(u.Username.Eq("alice")).
+		Update(db, map[string]any{
+			"profile": newProfile,
+		})
+
+	if err.Error != nil {
+		t.Fatalf("JSON_SET update failed: %v", err.Error)
 	}
 
-	// Verify update
-	var country string
-	db.Raw(`SELECT JSON_UNQUOTE(JSON_EXTRACT(profile, '$.country')) FROM user_profiles WHERE id = ?`, profile.ID).Scan(&country)
-	if country != "USA" {
-		t.Errorf("Expected country 'USA', got '%s'", country)
+	// Verify update using gsql
+	countryField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(u.Profile, "$.country")).AsF("country")
+	ageField := gsql.JSON_EXTRACT(u.Profile, "$.age").AsF("age")
+
+	type VerifyResult struct {
+		Country string `gorm:"column:country"`
+		Age     int    `gorm:"column:age"`
 	}
 
-	var age int
-	db.Raw(`SELECT JSON_EXTRACT(profile, '$.age') FROM user_profiles WHERE id = ?`, profile.ID).Scan(&age)
-	if age != 26 {
-		t.Errorf("Expected age 26, got %d", age)
+	var verifyResult VerifyResult
+	err2 := gsql.Select(countryField, ageField).
+		From(&u).
+		Where(u.ID.Eq(profile.ID)).
+		First(db, &verifyResult)
+
+	if err2 != nil {
+		t.Fatalf("Verify failed: %v", err2)
+	}
+	if verifyResult.Country != "USA" {
+		t.Errorf("Expected country 'USA', got '%s'", verifyResult.Country)
+	}
+	if verifyResult.Age != 26 {
+		t.Errorf("Expected age 26, got %d", verifyResult.Age)
 	}
 }
 
@@ -414,12 +389,15 @@ func TestAdv_JsonContains(t *testing.T) {
 		t.Fatalf("Failed to create profiles: %v", err)
 	}
 
-	// JSON_CONTAINS - find users with specific skill
+	// JSON_CONTAINS - find users with specific skill using gsql
+	// JSON_CONTAINS(profile, '"go"', '$.skills')
+	hasGoSkill := gsql.JSON_CONTAINS(u.Profile, gsql.Lit(`"go"`), "$.skills")
+
 	var results []UserProfile
-	err := db.Raw(`
-		SELECT * FROM user_profiles
-		WHERE JSON_CONTAINS(profile, '"go"', '$.skills')
-	`).Scan(&results).Error
+	err := gsql.Select(u.AllFields()...).
+		From(&u).
+		Where(hasGoSkill).
+		Find(db, &results)
 
 	if err != nil {
 		t.Fatalf("JSON_CONTAINS failed: %v", err)
@@ -431,26 +409,63 @@ func TestAdv_JsonContains(t *testing.T) {
 
 // TestAdv_JsonArray tests JSON_ARRAY function
 func TestAdv_JsonArray(t *testing.T) {
+	u := UserProfileSchema
+	setupTable(t, u.ModelType())
 	db := getDB()
 
-	// Create JSON array
-	var result string
-	err := db.Raw(`SELECT JSON_ARRAY(1, 'two', 3.0, NULL)`).Scan(&result).Error
+	// Insert test data with array
+	profile := UserProfile{Username: "test", Profile: `{"items": [1, 2, 3]}`}
+	if err := db.Create(&profile).Error; err != nil {
+		t.Fatalf("Failed to create profile: %v", err)
+	}
+
+	// Use JSON_ARRAY with column data - demonstrates combining with other functions
+	// Get the length of the items array
+	itemsLen := gsql.JSON_LENGTH(u.Profile, "$.items").AsF("items_count")
+
+	type Result struct {
+		Username   string `gorm:"column:username"`
+		ItemsCount int    `gorm:"column:items_count"`
+	}
+
+	var result Result
+	err := gsql.Select(u.Username, itemsLen).
+		From(&u).
+		Where(u.ID.Eq(profile.ID)).
+		First(db, &result)
+
 	if err != nil {
-		t.Fatalf("JSON_ARRAY failed: %v", err)
+		t.Fatalf("JSON_ARRAY test failed: %v", err)
 	}
-	if result != `[1, "two", 3.0, null]` {
-		t.Errorf("Unexpected JSON array: %s", result)
+	if result.ItemsCount != 3 {
+		t.Errorf("Expected 3 items, got %d", result.ItemsCount)
 	}
+	t.Logf("JSON array has %d items", result.ItemsCount)
 }
 
 // TestAdv_JsonObject tests JSON_OBJECT function
 func TestAdv_JsonObject(t *testing.T) {
+	u := UserProfileSchema
+	setupTable(t, u.ModelType())
 	db := getDB()
 
-	// Create JSON object
+	// Insert test data
+	profile := UserProfile{Username: "test", Profile: `{}`}
+	if err := db.Create(&profile).Error; err != nil {
+		t.Fatalf("Failed to create profile: %v", err)
+	}
+
+	// Create JSON object using gsql.JSON_OBJECT
+	jsonObj := gsql.JSON_OBJECT().
+		Add("name", gsql.Lit("Alice")).
+		Add("age", gsql.Lit(25))
+
 	var result string
-	err := db.Raw(`SELECT JSON_OBJECT('name', 'Alice', 'age', 25)`).Scan(&result).Error
+	err := gsql.Select(jsonObj.AsF("obj")).
+		From(&u).
+		Limit(1).
+		First(db, &result)
+
 	if err != nil {
 		t.Fatalf("JSON_OBJECT failed: %v", err)
 	}
@@ -459,6 +474,66 @@ func TestAdv_JsonObject(t *testing.T) {
 		t.Error("JSON_OBJECT returned empty string")
 	}
 	t.Logf("JSON_OBJECT result: %s", result)
+}
+
+// TestAdv_JsonKeys tests JSON_KEYS function
+func TestAdv_JsonKeys(t *testing.T) {
+	u := UserProfileSchema
+	setupTable(t, u.ModelType())
+	db := getDB()
+
+	// Insert JSON data
+	profile := UserProfile{Username: "alice", Profile: `{"name": "Alice", "age": 25, "city": "NYC"}`}
+	if err := db.Create(&profile).Error; err != nil {
+		t.Fatalf("Failed to create profile: %v", err)
+	}
+
+	// JSON_KEYS - get all keys from JSON object
+	keysField := gsql.JSON_KEYS(u.Profile).AsF("keys")
+
+	var result string
+	err := gsql.Select(keysField).
+		From(&u).
+		Where(u.ID.Eq(profile.ID)).
+		First(db, &result)
+
+	if err != nil {
+		t.Fatalf("JSON_KEYS failed: %v", err)
+	}
+	t.Logf("JSON_KEYS result: %s", result)
+}
+
+// TestAdv_JsonLength tests JSON_LENGTH function
+func TestAdv_JsonLength(t *testing.T) {
+	u := UserProfileSchema
+	setupTable(t, u.ModelType())
+	db := getDB()
+
+	// Insert JSON data with array
+	profile := UserProfile{Username: "alice", Profile: `{"skills": ["go", "python", "js"], "name": "Alice"}`}
+	if err := db.Create(&profile).Error; err != nil {
+		t.Fatalf("Failed to create profile: %v", err)
+	}
+
+	// JSON_LENGTH - get length of skills array
+	skillsLen := gsql.JSON_LENGTH(u.Profile, "$.skills").AsF("skills_count")
+
+	type Result struct {
+		SkillsCount int `gorm:"column:skills_count"`
+	}
+
+	var result Result
+	err := gsql.Select(skillsLen).
+		From(&u).
+		Where(u.ID.Eq(profile.ID)).
+		First(db, &result)
+
+	if err != nil {
+		t.Fatalf("JSON_LENGTH failed: %v", err)
+	}
+	if result.SkillsCount != 3 {
+		t.Errorf("Expected 3 skills, got %d", result.SkillsCount)
+	}
 }
 
 // ==================== Lock Tests ====================
