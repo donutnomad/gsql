@@ -1,0 +1,888 @@
+package tutorial
+
+import (
+	"testing"
+	"time"
+
+	gsql "github.com/donutnomad/gsql"
+)
+
+// ==================== JOIN Tests ====================
+
+// TestInter_InnerJoin tests INNER JOIN - orders with customers
+func TestInter_InnerJoin(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data
+	customers := []Customer{
+		{Name: "Alice", Email: "alice@test.com", Phone: "111-1111"},
+		{Name: "Bob", Email: "bob@test.com", Phone: "222-2222"},
+		{Name: "Charlie", Email: "charlie@test.com", Phone: "333-3333"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	orders := []Order{
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 100.50, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 250.00, Status: "pending"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 75.25, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test INNER JOIN: orders with customer name
+	t.Run("INNER JOIN orders with customers", func(t *testing.T) {
+		var results []struct {
+			CustomerName string  `gorm:"column:customer_name"`
+			TotalPrice   float64 `gorm:"column:total_price"`
+			Status       string  `gorm:"column:status"`
+		}
+		err := gsql.Select(
+			c.Name.As("customer_name"),
+			o.TotalPrice,
+			o.Status,
+		).
+			From(&o).
+			Join(gsql.InnerJoin(&c).On(o.CustomerID.EqF(c.ID))).
+			Order(o.TotalPrice, false).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 3 {
+			t.Errorf("Expected 3 results, got %d", len(results))
+		}
+		// Highest price order should be first
+		if results[0].TotalPrice != 250.00 {
+			t.Errorf("Expected total_price 250.00, got %f", results[0].TotalPrice)
+		}
+		if results[0].CustomerName != "Alice" {
+			t.Errorf("Expected customer_name Alice, got %s", results[0].CustomerName)
+		}
+	})
+
+	// Test INNER JOIN with WHERE
+	t.Run("INNER JOIN with WHERE", func(t *testing.T) {
+		var results []struct {
+			CustomerName string  `gorm:"column:customer_name"`
+			TotalPrice   float64 `gorm:"column:total_price"`
+		}
+		err := gsql.Select(
+			c.Name.As("customer_name"),
+			o.TotalPrice,
+		).
+			From(&o).
+			Join(gsql.InnerJoin(&c).On(o.CustomerID.EqF(c.ID))).
+			Where(o.Status.Eq("completed")).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 2 {
+			t.Errorf("Expected 2 completed orders, got %d", len(results))
+		}
+	})
+}
+
+// TestInter_LeftJoin tests LEFT JOIN - customers with their orders (including customers without orders)
+func TestInter_LeftJoin(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data
+	customers := []Customer{
+		{Name: "Alice", Email: "alice@test.com", Phone: "111-1111"},
+		{Name: "Bob", Email: "bob@test.com", Phone: "222-2222"},
+		{Name: "NoOrders", Email: "noorders@test.com", Phone: "999-9999"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	orders := []Order{
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 100.50, Status: "completed"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 200.00, Status: "pending"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test LEFT JOIN: all customers with their orders
+	t.Run("LEFT JOIN customers with orders", func(t *testing.T) {
+		var results []struct {
+			CustomerName string   `gorm:"column:customer_name"`
+			TotalPrice   *float64 `gorm:"column:total_price"` // Nullable for customers without orders
+		}
+		err := gsql.Select(
+			c.Name.As("customer_name"),
+			o.TotalPrice,
+		).
+			From(&c).
+			Join(gsql.LeftJoin(&o).On(c.ID.EqF(o.CustomerID))).
+			Order(c.Name, true).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 3 {
+			t.Errorf("Expected 3 results (all customers), got %d", len(results))
+		}
+		// Check that NoOrders customer has NULL total_price
+		for _, r := range results {
+			if r.CustomerName == "NoOrders" && r.TotalPrice != nil {
+				t.Errorf("Expected NoOrders to have NULL total_price, got %v", *r.TotalPrice)
+			}
+		}
+	})
+
+	// Test finding customers without orders using LEFT JOIN + WHERE IS NULL
+	t.Run("Find customers without orders", func(t *testing.T) {
+		var results []struct {
+			CustomerName string `gorm:"column:customer_name"`
+		}
+		err := gsql.Select(c.Name.As("customer_name")).
+			From(&c).
+			Join(gsql.LeftJoin(&o).On(c.ID.EqF(o.CustomerID))).
+			Where(gsql.Expr("orders.id IS NULL")).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 customer without orders, got %d", len(results))
+		}
+		if len(results) > 0 && results[0].CustomerName != "NoOrders" {
+			t.Errorf("Expected NoOrders, got %s", results[0].CustomerName)
+		}
+	})
+}
+
+// TestInter_MultiJoin tests multi-table JOIN (Customer-Order-OrderItem-Product)
+func TestInter_MultiJoin(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	oi := OrderItemSchema
+	p := ProductSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	setupTable(t, oi.ModelType())
+	setupTable(t, p.ModelType())
+	db := getDB()
+
+	// Insert test data
+	customers := []Customer{
+		{Name: "Alice", Email: "alice@test.com", Phone: "111-1111"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	products := []Product{
+		{Name: "iPhone", Category: "Electronics", Price: 999.99, Stock: 100},
+		{Name: "MacBook", Category: "Electronics", Price: 1999.99, Stock: 50},
+		{Name: "T-Shirt", Category: "Clothing", Price: 29.99, Stock: 500},
+	}
+	if err := db.Create(&products).Error; err != nil {
+		t.Fatalf("Failed to create products: %v", err)
+	}
+
+	orders := []Order{
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 2029.97, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	orderItems := []OrderItem{
+		{OrderID: orders[0].ID, ProductID: products[0].ID, Quantity: 1, UnitPrice: 999.99},
+		{OrderID: orders[0].ID, ProductID: products[2].ID, Quantity: 2, UnitPrice: 29.99},
+	}
+	if err := db.Create(&orderItems).Error; err != nil {
+		t.Fatalf("Failed to create order items: %v", err)
+	}
+
+	// Test 4-table JOIN
+	t.Run("Multi-table JOIN", func(t *testing.T) {
+		var results []struct {
+			CustomerName string  `gorm:"column:customer_name"`
+			ProductName  string  `gorm:"column:product_name"`
+			Quantity     int     `gorm:"column:quantity"`
+			UnitPrice    float64 `gorm:"column:unit_price"`
+		}
+		err := gsql.Select(
+			c.Name.As("customer_name"),
+			p.Name.As("product_name"),
+			oi.Quantity,
+			oi.UnitPrice,
+		).
+			From(&oi).
+			Join(
+				gsql.InnerJoin(&o).On(oi.OrderID.EqF(o.ID)),
+				gsql.InnerJoin(&c).On(o.CustomerID.EqF(c.ID)),
+				gsql.InnerJoin(&p).On(oi.ProductID.EqF(p.ID)),
+			).
+			Order(oi.UnitPrice, false).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 2 {
+			t.Errorf("Expected 2 order items, got %d", len(results))
+		}
+		if results[0].ProductName != "iPhone" {
+			t.Errorf("Expected first product to be iPhone, got %s", results[0].ProductName)
+		}
+		if results[0].CustomerName != "Alice" {
+			t.Errorf("Expected customer to be Alice, got %s", results[0].CustomerName)
+		}
+	})
+}
+
+// TestInter_SubqueryInWhere tests subquery in WHERE clause
+func TestInter_SubqueryInWhere(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data
+	customers := []Customer{
+		{Name: "Alice", Email: "alice@test.com", Phone: "111-1111"},
+		{Name: "Bob", Email: "bob@test.com", Phone: "222-2222"},
+		{Name: "NoOrders", Email: "noorders@test.com", Phone: "999-9999"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	orders := []Order{
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 500.00, Status: "completed"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 100.00, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test: Find customers who have orders with total > 200
+	t.Run("Subquery in WHERE with IN", func(t *testing.T) {
+		// Build subquery
+		subquery := gsql.Select(o.CustomerID).
+			From(&o).
+			Where(o.TotalPrice.Gt(200))
+
+		var results []Customer
+		err := gsql.Select(c.AllFields()...).
+			From(&c).
+			Where(gsql.Expr("id IN (?)", subquery.ToExpr())).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 customer, got %d", len(results))
+		}
+		if len(results) > 0 && results[0].Name != "Alice" {
+			t.Errorf("Expected Alice, got %s", results[0].Name)
+		}
+	})
+
+	// Test: Scalar subquery comparison
+	t.Run("Scalar subquery comparison", func(t *testing.T) {
+		// Find orders with total above average
+		avgSubquery := gsql.Select(gsql.AVG(o.TotalPrice.ToExpr()).AsF("avg_price")).
+			From(&o)
+
+		var results []Order
+		err := gsql.Select(o.AllFields()...).
+			From(&o).
+			Where(gsql.Expr("total_price > (?)", avgSubquery.ToExpr())).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Average is 300, so only the 500 order should match
+		if len(results) != 1 {
+			t.Errorf("Expected 1 order above average, got %d", len(results))
+		}
+		if len(results) > 0 && results[0].TotalPrice != 500.00 {
+			t.Errorf("Expected total_price 500.00, got %f", results[0].TotalPrice)
+		}
+	})
+}
+
+// ==================== GROUP BY / HAVING Tests ====================
+
+// TestInter_GroupBy tests GROUP BY with aggregate functions
+func TestInter_GroupBy(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data
+	customers := []Customer{
+		{Name: "Alice", Email: "alice@test.com", Phone: "111-1111"},
+		{Name: "Bob", Email: "bob@test.com", Phone: "222-2222"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	orders := []Order{
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 100.00, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 200.00, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 150.00, Status: "pending"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 75.00, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test GROUP BY with COUNT and SUM
+	t.Run("GROUP BY with aggregates", func(t *testing.T) {
+		var results []struct {
+			CustomerID   uint64  `gorm:"column:customer_id"`
+			OrderCount   int64   `gorm:"column:order_count"`
+			TotalSpent   float64 `gorm:"column:total_spent"`
+			AverageOrder float64 `gorm:"column:average_order"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total_spent"),
+			gsql.AVG(o.TotalPrice.ToExpr()).AsF("average_order"),
+		).
+			From(&o).
+			GroupBy(o.CustomerID).
+			Order(o.CustomerID, true).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 2 {
+			t.Errorf("Expected 2 groups, got %d", len(results))
+		}
+		// Alice has 3 orders totaling 450
+		if results[0].OrderCount != 3 {
+			t.Errorf("Expected Alice to have 3 orders, got %d", results[0].OrderCount)
+		}
+		if results[0].TotalSpent != 450.00 {
+			t.Errorf("Expected Alice total 450.00, got %f", results[0].TotalSpent)
+		}
+		// Bob has 1 order totaling 75
+		if results[1].OrderCount != 1 {
+			t.Errorf("Expected Bob to have 1 order, got %d", results[1].OrderCount)
+		}
+	})
+
+	// Test GROUP BY with multiple columns
+	t.Run("GROUP BY multiple columns", func(t *testing.T) {
+		var results []struct {
+			CustomerID uint64  `gorm:"column:customer_id"`
+			Status     string  `gorm:"column:status"`
+			Count      int64   `gorm:"column:count"`
+			Total      float64 `gorm:"column:total"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			o.Status,
+			gsql.COUNT().AsF("count"),
+			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+		).
+			From(&o).
+			GroupBy(o.CustomerID, o.Status).
+			Order(o.CustomerID, true).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Alice: 2 completed, 1 pending; Bob: 1 completed
+		if len(results) != 3 {
+			t.Errorf("Expected 3 groups, got %d", len(results))
+		}
+	})
+}
+
+// TestInter_Having tests HAVING clause for filtering aggregated results
+func TestInter_Having(t *testing.T) {
+	c := CustomerSchema
+	o := OrderSchema
+	setupTable(t, c.ModelType())
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data
+	customers := []Customer{
+		{Name: "VIP Customer", Email: "vip@test.com", Phone: "111-1111"},
+		{Name: "Regular Customer", Email: "regular@test.com", Phone: "222-2222"},
+		{Name: "New Customer", Email: "new@test.com", Phone: "333-3333"},
+	}
+	if err := db.Create(&customers).Error; err != nil {
+		t.Fatalf("Failed to create customers: %v", err)
+	}
+
+	orders := []Order{
+		// VIP has 5 orders
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 100.00, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 200.00, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 150.00, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 300.00, Status: "completed"},
+		{CustomerID: customers[0].ID, OrderDate: time.Now(), TotalPrice: 250.00, Status: "completed"},
+		// Regular has 3 orders
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 50.00, Status: "completed"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 75.00, Status: "completed"},
+		{CustomerID: customers[1].ID, OrderDate: time.Now(), TotalPrice: 60.00, Status: "completed"},
+		// New has 1 order
+		{CustomerID: customers[2].ID, OrderDate: time.Now(), TotalPrice: 25.00, Status: "pending"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test HAVING with COUNT
+	t.Run("HAVING with COUNT > 3", func(t *testing.T) {
+		var results []struct {
+			CustomerID uint64 `gorm:"column:customer_id"`
+			OrderCount int64  `gorm:"column:order_count"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+		).
+			From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.Expr("COUNT(*) > ?", 3)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 customer with > 3 orders, got %d", len(results))
+		}
+		if len(results) > 0 && results[0].OrderCount != 5 {
+			t.Errorf("Expected VIP with 5 orders, got %d", results[0].OrderCount)
+		}
+	})
+
+	// Test HAVING with SUM
+	t.Run("HAVING with SUM > 500", func(t *testing.T) {
+		var results []struct {
+			CustomerID uint64  `gorm:"column:customer_id"`
+			Total      float64 `gorm:"column:total"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+		).
+			From(&o).
+			GroupBy(o.CustomerID).
+			Having(gsql.Expr("SUM(total_price) > ?", 500)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 customer with total > 500, got %d", len(results))
+		}
+		if len(results) > 0 && results[0].Total != 1000.00 {
+			t.Errorf("Expected total 1000.00, got %f", results[0].Total)
+		}
+	})
+
+	// Test HAVING with multiple conditions
+	t.Run("HAVING with multiple conditions", func(t *testing.T) {
+		var results []struct {
+			CustomerID uint64  `gorm:"column:customer_id"`
+			OrderCount int64   `gorm:"column:order_count"`
+			AvgOrder   float64 `gorm:"column:avg_order"`
+		}
+		err := gsql.Select(
+			o.CustomerID,
+			gsql.COUNT().AsF("order_count"),
+			gsql.AVG(o.TotalPrice.ToExpr()).AsF("avg_order"),
+		).
+			From(&o).
+			GroupBy(o.CustomerID).
+			Having(
+				gsql.Expr("COUNT(*) >= ?", 3),
+				gsql.Expr("AVG(total_price) > ?", 50),
+			).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// VIP: 5 orders, avg 200; Regular: 3 orders, avg ~61.67
+		if len(results) != 2 {
+			t.Errorf("Expected 2 customers matching criteria, got %d", len(results))
+		}
+	})
+}
+
+// ==================== UNION Tests ====================
+
+// TestInter_Union tests UNION and UNION ALL operations
+func TestInter_Union(t *testing.T) {
+	p := ProductSchema
+	e := EmployeeSchema
+	setupTable(t, p.ModelType())
+	setupTable(t, e.ModelType())
+	db := getDB()
+
+	// Insert test data
+	products := []Product{
+		{Name: "iPhone", Category: "Electronics", Price: 999.99, Stock: 100},
+		{Name: "MacBook", Category: "Electronics", Price: 1999.99, Stock: 50},
+		{Name: "T-Shirt", Category: "Clothing", Price: 29.99, Stock: 500},
+	}
+	if err := db.Create(&products).Error; err != nil {
+		t.Fatalf("Failed to create products: %v", err)
+	}
+
+	employees := []Employee{
+		{Name: "John", Email: "john@test.com", Department: "IT", Salary: 80000, HireDate: time.Now(), BirthDate: time.Now(), IsActive: true},
+		{Name: "Jane", Email: "jane@test.com", Department: "HR", Salary: 75000, HireDate: time.Now(), BirthDate: time.Now(), IsActive: true},
+	}
+	if err := db.Create(&employees).Error; err != nil {
+		t.Fatalf("Failed to create employees: %v", err)
+	}
+
+	// Test UNION - removes duplicates
+	t.Run("UNION removes duplicates", func(t *testing.T) {
+		// Create two queries that return the same category
+		q1 := gsql.Select(p.Category.As("name")).
+			From(&p).
+			Where(p.Category.Eq("Electronics"))
+
+		q2 := gsql.Select(p.Category.As("name")).
+			From(&p).
+			Where(p.Category.Eq("Electronics"))
+
+		union := gsql.Union(q1, q2)
+
+		// Use the union result as a derived table
+		type NameResult struct {
+			Name string `gorm:"column:name"`
+		}
+		derivedTable := gsql.DefineTable[any, NameResult]("union_result", NameResult{}, union)
+
+		var results []NameResult
+		err := gsql.Select(gsql.Field("name")).
+			From(&derivedTable).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// UNION should remove duplicates - only 1 "Electronics"
+		if len(results) != 1 {
+			t.Errorf("Expected 1 unique result from UNION, got %d", len(results))
+		}
+	})
+
+	// Test UNION ALL - keeps duplicates
+	t.Run("UNION ALL keeps duplicates", func(t *testing.T) {
+		q1 := gsql.Select(p.Category.As("name")).
+			From(&p).
+			Where(p.Category.Eq("Electronics"))
+
+		q2 := gsql.Select(p.Category.As("name")).
+			From(&p).
+			Where(p.Category.Eq("Electronics"))
+
+		unionAll := gsql.UnionAll(q1, q2)
+
+		type NameResult struct {
+			Name string `gorm:"column:name"`
+		}
+		derivedTable := gsql.DefineTable[any, NameResult]("union_all_result", NameResult{}, unionAll)
+
+		var results []NameResult
+		err := gsql.Select(gsql.Field("name")).
+			From(&derivedTable).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// UNION ALL should keep all rows (2 products in Electronics * 2 = 4)
+		if len(results) != 4 {
+			t.Errorf("Expected 4 results from UNION ALL, got %d", len(results))
+		}
+	})
+
+	// Test UNION combining different tables
+	t.Run("UNION different tables", func(t *testing.T) {
+		q1 := gsql.Select(p.Name.As("name")).
+			From(&p)
+
+		q2 := gsql.Select(e.Name.As("name")).
+			From(&e)
+
+		union := gsql.Union(q1, q2)
+
+		type NameResult struct {
+			Name string `gorm:"column:name"`
+		}
+		derivedTable := gsql.DefineTable[any, NameResult]("combined", NameResult{}, union)
+
+		var results []NameResult
+		err := gsql.Select(gsql.Field("name")).
+			From(&derivedTable).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// 3 products + 2 employees = 5 names
+		if len(results) != 5 {
+			t.Errorf("Expected 5 results, got %d", len(results))
+		}
+	})
+}
+
+// ==================== CASE WHEN Tests ====================
+
+// TestInter_CaseWhen tests CASE WHEN expressions
+func TestInter_CaseWhen(t *testing.T) {
+	o := OrderSchema
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Insert test data
+	orders := []Order{
+		{CustomerID: 1, OrderDate: time.Now(), TotalPrice: 50.00, Status: "pending"},
+		{CustomerID: 2, OrderDate: time.Now(), TotalPrice: 150.00, Status: "completed"},
+		{CustomerID: 3, OrderDate: time.Now(), TotalPrice: 350.00, Status: "completed"},
+		{CustomerID: 4, OrderDate: time.Now(), TotalPrice: 750.00, Status: "shipped"},
+		{CustomerID: 5, OrderDate: time.Now(), TotalPrice: 1500.00, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test: Price tier classification
+	t.Run("CASE WHEN for price tier", func(t *testing.T) {
+		priceTier := gsql.Case().
+			When(o.TotalPrice.Lt(100), gsql.Lit("Small")).
+			When(o.TotalPrice.Lt(500), gsql.Lit("Medium")).
+			When(o.TotalPrice.Lt(1000), gsql.Lit("Large")).
+			Else(gsql.Lit("VIP")).
+			End().AsF("price_tier")
+
+		var results []struct {
+			ID        uint64  `gorm:"column:id"`
+			Total     float64 `gorm:"column:total_price"`
+			PriceTier string  `gorm:"column:price_tier"`
+		}
+		err := gsql.Select(o.ID, o.TotalPrice, priceTier).
+			From(&o).
+			Order(o.TotalPrice, true).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 5 {
+			t.Errorf("Expected 5 results, got %d", len(results))
+		}
+		// Check tier assignments
+		expectedTiers := []string{"Small", "Medium", "Medium", "Large", "VIP"}
+		for i, r := range results {
+			if r.PriceTier != expectedTiers[i] {
+				t.Errorf("Order %d: expected tier %s, got %s", r.ID, expectedTiers[i], r.PriceTier)
+			}
+		}
+	})
+
+	// Test: Status mapping with CaseValue
+	t.Run("CaseValue for status mapping", func(t *testing.T) {
+		statusDesc := gsql.CaseValue(o.Status.ToExpr()).
+			When(gsql.Lit("pending"), gsql.Lit("Waiting")).
+			When(gsql.Lit("completed"), gsql.Lit("Done")).
+			When(gsql.Lit("shipped"), gsql.Lit("On the way")).
+			Else(gsql.Lit("Unknown")).
+			End().AsF("status_desc")
+
+		var results []struct {
+			Status     string `gorm:"column:status"`
+			StatusDesc string `gorm:"column:status_desc"`
+		}
+		err := gsql.Select(o.Status, statusDesc).
+			From(&o).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		// Verify mapping
+		for _, r := range results {
+			switch r.Status {
+			case "pending":
+				if r.StatusDesc != "Waiting" {
+					t.Errorf("pending should map to Waiting, got %s", r.StatusDesc)
+				}
+			case "completed":
+				if r.StatusDesc != "Done" {
+					t.Errorf("completed should map to Done, got %s", r.StatusDesc)
+				}
+			case "shipped":
+				if r.StatusDesc != "On the way" {
+					t.Errorf("shipped should map to On the way, got %s", r.StatusDesc)
+				}
+			}
+		}
+	})
+
+	// Test: CASE WHEN with aggregate
+	t.Run("CASE WHEN with SUM aggregate", func(t *testing.T) {
+		// Count orders by tier
+		smallOrderSum := gsql.SUM(
+			gsql.Case().
+				When(o.TotalPrice.Lt(100), gsql.Lit(1)).
+				Else(gsql.Lit(0)).
+				End(),
+		).AsF("small_count")
+
+		mediumOrderSum := gsql.SUM(
+			gsql.Case().
+				When(gsql.And(o.TotalPrice.Gte(100), o.TotalPrice.Lt(500)), gsql.Lit(1)).
+				Else(gsql.Lit(0)).
+				End(),
+		).AsF("medium_count")
+
+		var result struct {
+			SmallCount  int64 `gorm:"column:small_count"`
+			MediumCount int64 `gorm:"column:medium_count"`
+		}
+		err := gsql.Select(smallOrderSum, mediumOrderSum).
+			From(&o).
+			First(db, &result)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if result.SmallCount != 1 {
+			t.Errorf("Expected 1 small order, got %d", result.SmallCount)
+		}
+		if result.MediumCount != 2 {
+			t.Errorf("Expected 2 medium orders, got %d", result.MediumCount)
+		}
+	})
+}
+
+// ==================== Index Hint Tests ====================
+
+// TestInter_IndexHint tests USE INDEX / FORCE INDEX hints
+func TestInter_IndexHint(t *testing.T) {
+	o := OrderSchema
+	setupTable(t, o.ModelType())
+	db := getDB()
+
+	// Create indexes for testing (MySQL syntax without IF NOT EXISTS)
+	// Drop index first if exists, ignore error if not exists
+	_ = db.Exec("DROP INDEX idx_customer_id ON orders").Error
+	_ = db.Exec("DROP INDEX idx_status ON orders").Error
+
+	// Create indexes
+	if err := db.Exec("CREATE INDEX idx_customer_id ON orders(customer_id)").Error; err != nil {
+		t.Fatalf("Failed to create idx_customer_id: %v", err)
+	}
+	if err := db.Exec("CREATE INDEX idx_status ON orders(status)").Error; err != nil {
+		t.Fatalf("Failed to create idx_status: %v", err)
+	}
+
+	// Insert test data
+	orders := []Order{
+		{CustomerID: 1, OrderDate: time.Now(), TotalPrice: 100.00, Status: "pending"},
+		{CustomerID: 2, OrderDate: time.Now(), TotalPrice: 200.00, Status: "completed"},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		t.Fatalf("Failed to create orders: %v", err)
+	}
+
+	// Test USE INDEX
+	t.Run("USE INDEX hint", func(t *testing.T) {
+		var results []Order
+		err := gsql.Select(o.AllFields()...).
+			From(&o).
+			UseIndex("idx_customer_id").
+			Where(o.CustomerID.Eq(1)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 result, got %d", len(results))
+		}
+	})
+
+	// Test FORCE INDEX
+	t.Run("FORCE INDEX hint", func(t *testing.T) {
+		var results []Order
+		err := gsql.Select(o.AllFields()...).
+			From(&o).
+			ForceIndex("idx_status").
+			Where(o.Status.Eq("completed")).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 result, got %d", len(results))
+		}
+	})
+
+	// Test IGNORE INDEX
+	t.Run("IGNORE INDEX hint", func(t *testing.T) {
+		var results []Order
+		err := gsql.Select(o.AllFields()...).
+			From(&o).
+			IgnoreIndex("idx_customer_id").
+			Where(o.CustomerID.Eq(2)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 result, got %d", len(results))
+		}
+	})
+
+	// Test multiple index hints
+	t.Run("Multiple index hints", func(t *testing.T) {
+		var results []Order
+		err := gsql.Select(o.AllFields()...).
+			From(&o).
+			UseIndex("idx_customer_id").
+			IgnoreIndex("idx_status").
+			Where(o.CustomerID.Eq(1)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 result, got %d", len(results))
+		}
+	})
+
+	// Test index hint for specific operations
+	t.Run("Index hint for ORDER BY", func(t *testing.T) {
+		var results []Order
+		err := gsql.Select(o.AllFields()...).
+			From(&o).
+			UseIndexForOrderBy("idx_customer_id").
+			Order(o.CustomerID, true).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 2 {
+			t.Errorf("Expected 2 results, got %d", len(results))
+		}
+	})
+}
