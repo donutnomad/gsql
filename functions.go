@@ -928,30 +928,33 @@ func TRUNCATE(x field.Expression, d int) field.ExpressionTo {
 // ==================== 聚合函数 ====================
 
 // COUNT 计算行数或非NULL值的数量，不提供参数时统计所有行（包括NULL）
-// SELECT COUNT(*) FROM users;
-// SELECT COUNT(email) FROM users;
-// SELECT COUNT(users.id) FROM users;
-// SELECT status, COUNT(*) FROM orders GROUP BY status;
-func COUNT(expr ...field.IField) field.ExpressionTo {
+// 返回 IntExpr，支持 .Gt(), .Lt(), .Eq() 等比较操作
+// 示例:
+//
+//	COUNT()           // COUNT(*)
+//	COUNT(id)         // COUNT(id)
+//	COUNT().Gt(5)     // COUNT(*) > 5
+func COUNT(expr ...field.IField) field.IntExpr {
 	if len(expr) == 0 {
-		return ExprTo{clause.Expr{SQL: "COUNT(*)"}}
+		return field.NewIntExpr(clause.Expr{SQL: "COUNT(*)"})
 	}
-	return ExprTo{clause.Expr{
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "COUNT(?)",
 		Vars: []any{expr[0].ToExpr()},
-	}}
+	})
 }
 
 // COUNT_DISTINCT 计算不重复的非NULL值的数量
-// SELECT COUNT(DISTINCT city) FROM users;
-// SELECT COUNT(DISTINCT country) FROM addresses;
-// SELECT user_id, COUNT(DISTINCT product_id) FROM orders GROUP BY user_id;
-// SELECT COUNT(DISTINCT email) FROM subscribers;
-func COUNT_DISTINCT(expr field.IField) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+// 返回 IntExpr，支持比较操作
+// 示例:
+//
+//	COUNT_DISTINCT(city)       // COUNT(DISTINCT city)
+//	COUNT_DISTINCT(id).Gt(10)  // COUNT(DISTINCT id) > 10
+func COUNT_DISTINCT(expr field.IField) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "COUNT(DISTINCT ?)",
 		Vars: []any{expr.ToExpr()},
-	}}
+	})
 }
 
 // SUM 计算数值列的总和，忽略NULL值
