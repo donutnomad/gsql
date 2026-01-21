@@ -6,6 +6,7 @@ import (
 	"time"
 
 	gsql "github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql/field"
 )
 
 // ==================== CRUD Tests ====================
@@ -587,7 +588,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			FullInfo string `gorm:"column:full_info"`
 		}
-		err := gsql.Select(gsql.CONCAT(e.Name.ToExpr(), gsql.Lit(" - "), e.Department.ToExpr()).AsF("full_info")).
+		err := gsql.Select(e.Name.Concat(gsql.Lit(" - "), e.Department.ToExpr()).As("full_info")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -604,7 +605,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			UpperName string `gorm:"column:upper_name"`
 		}
-		err := gsql.Select(gsql.UPPER(e.Department.ToExpr()).AsF("upper_name")).
+		err := gsql.Select(e.Department.Upper().As("upper_name")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -621,7 +622,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			LowerDept string `gorm:"column:lower_dept"`
 		}
-		err := gsql.Select(gsql.LOWER(e.Department.ToExpr()).AsF("lower_dept")).
+		err := gsql.Select(e.Department.Lower().As("lower_dept")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -639,7 +640,7 @@ func TestFunc_String(t *testing.T) {
 			SubStr string `gorm:"column:sub_str"`
 		}
 		// Extract "john" from email
-		err := gsql.Select(gsql.SUBSTRING(e.Email.ToExpr(), 1, 4).AsF("sub_str")).
+		err := gsql.Select(e.Email.Substring(1, 4).As("sub_str")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -656,7 +657,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			EmailLen int `gorm:"column:email_len"`
 		}
-		err := gsql.Select(gsql.LENGTH(e.Email.ToExpr()).AsF("email_len")).
+		err := gsql.Select(e.Email.Length().As("email_len")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -673,7 +674,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			TrimmedName string `gorm:"column:trimmed_name"`
 		}
-		err := gsql.Select(gsql.TRIM(e.Name.ToExpr()).AsF("trimmed_name")).
+		err := gsql.Select(e.Name.Trim().As("trimmed_name")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -690,7 +691,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			ReplacedEmail string `gorm:"column:replaced_email"`
 		}
-		err := gsql.Select(gsql.REPLACE(e.Email.ToExpr(), gsql.Lit("test.com"), gsql.Lit("example.org")).AsF("replaced_email")).
+		err := gsql.Select(e.Email.Replace("test.com", "example.org").As("replaced_email")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -722,7 +723,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			AbsVal float64 `gorm:"column:abs_val"`
 		}
-		err := gsql.Select(gsql.ABS(gsql.Lit(-99.5)).AsF("abs_val")).
+		err := gsql.Select(field.NewFloatExprT[float64](gsql.Lit(-99.5)).Abs().As("abs_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -739,7 +740,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			CeilVal int `gorm:"column:ceil_val"`
 		}
-		err := gsql.Select(gsql.CEIL(p.Price.ToExpr()).AsF("ceil_val")).
+		err := gsql.Select(p.Price.Ceil().As("ceil_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -756,7 +757,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			FloorVal int `gorm:"column:floor_val"`
 		}
-		err := gsql.Select(gsql.FLOOR(p.Price.ToExpr()).AsF("floor_val")).
+		err := gsql.Select(p.Price.Floor().As("floor_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -773,7 +774,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			RoundVal float64 `gorm:"column:round_val"`
 		}
-		err := gsql.Select(gsql.ROUND(p.Price.ToExpr(), 2).AsF("round_val")).
+		err := gsql.Select(p.Price.Round(2).As("round_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -790,7 +791,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			ModVal int `gorm:"column:mod_val"`
 		}
-		err := gsql.Select(gsql.MOD(p.Stock.ToExpr(), gsql.Lit(5)).AsF("mod_val")).
+		err := gsql.Select(p.Stock.Mod(5).As("mod_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -807,7 +808,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			PowerVal float64 `gorm:"column:power_val"`
 		}
-		err := gsql.Select(gsql.POWER(gsql.Lit(2), gsql.Lit(3)).AsF("power_val")).
+		err := gsql.Select(field.NewIntExprT[int](gsql.Lit(2)).Pow(3).As("power_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -824,7 +825,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			SqrtVal float64 `gorm:"column:sqrt_val"`
 		}
-		err := gsql.Select(gsql.SQRT(gsql.Lit(16)).AsF("sqrt_val")).
+		err := gsql.Select(field.NewIntExprT[int](gsql.Lit(16)).Sqrt().As("sqrt_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1191,7 +1192,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		var result struct {
 			Total float64 `gorm:"column:total"`
 		}
-		err := gsql.Select(gsql.Add(p.Price.ToExpr(), gsql.Lit(50)).AsF("total")).
+		err := gsql.Select(p.Price.Add(50).As("total")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1208,7 +1209,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		var result struct {
 			Diff float64 `gorm:"column:diff"`
 		}
-		err := gsql.Select(gsql.Sub(p.Price.ToExpr(), gsql.Lit(30)).AsF("diff")).
+		err := gsql.Select(p.Price.Sub(30).As("diff")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1225,7 +1226,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		var result struct {
 			Product float64 `gorm:"column:product"`
 		}
-		err := gsql.Select(gsql.Mul(p.Price.ToExpr(), p.Stock.ToExpr()).AsF("product")).
+		err := gsql.Select(p.Price.Mul(p.Stock.ToExpr()).As("product")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1242,7 +1243,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		var result struct {
 			Quotient float64 `gorm:"column:quotient"`
 		}
-		err := gsql.Select(gsql.Div(p.Price.ToExpr(), gsql.Lit(4)).AsF("quotient")).
+		err := gsql.Select(p.Price.Div(4).As("quotient")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1259,7 +1260,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		var result struct {
 			Remainder float64 `gorm:"column:remainder"`
 		}
-		err := gsql.Select(gsql.Mod(p.Stock.ToExpr(), gsql.Lit(7)).AsF("remainder")).
+		err := gsql.Select(p.Stock.Mod(7).As("remainder")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1278,10 +1279,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		}
 		// (price * stock) - (price / 2) = (100 * 20) - (100 / 2) = 2000 - 50 = 1950
 		err := gsql.Select(
-			gsql.Sub(
-				gsql.Mul(p.Price.ToExpr(), p.Stock.ToExpr()),
-				gsql.Div(p.Price.ToExpr(), gsql.Lit(2)),
-			).AsF("value"),
+			p.Price.Mul(p.Stock.ToExpr()).Sub(p.Price.Div(2)).As("value"),
 		).
 			From(&p).
 			Limit(1).

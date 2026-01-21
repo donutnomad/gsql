@@ -87,39 +87,44 @@ func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) field.Expression {
 	return Expr("? != ?", val1, val2)
 }
 
-func Mul(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Mul 方法替代，如 expr1.Mul(expr2)
+func Mul(expr1, expr2 field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "? * ?",
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
-func Div(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Div 方法替代，如 expr1.Div(expr2)
+func Div(expr1, expr2 field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "? / ?",
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
-func Add(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Add 方法替代，如 expr1.Add(expr2)
+func Add(expr1, expr2 field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "? + ?",
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
-func Sub(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Sub 方法替代，如 expr1.Sub(expr2)
+func Sub(expr1, expr2 field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "? - ?",
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
-func Mod(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Mod 方法替代，如 expr1.Mod(expr2)
+func Mod(expr1, expr2 field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "? % ?",
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
 func StarWith(tableName string) field.IField {
@@ -229,14 +234,14 @@ func UTC_TIMESTAMP() field.ExpressionTo {
 // SELECT UNIX_TIMESTAMP(NOW());
 // SELECT UNIX_TIMESTAMP(users.created_at) FROM users;
 // SELECT * FROM orders WHERE UNIX_TIMESTAMP(order_time) > 1698306600;
-func UNIX_TIMESTAMP(date ...field.Expression) field.ExpressionTo {
+func UNIX_TIMESTAMP(date ...field.Expression) field.IntExpr {
 	if len(date) == 0 {
-		return ExprTo{clause.Expr{SQL: "UNIX_TIMESTAMP()"}}
+		return field.NewIntExpr(clause.Expr{SQL: "UNIX_TIMESTAMP()"})
 	}
-	return ExprTo{clause.Expr{
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "UNIX_TIMESTAMP(?)",
 		Vars: []any{date[0]},
-	}}
+	})
 }
 
 // FROM_UNIXTIME 将Unix时间戳（秒）转换为DATETIME类型，如果提供了format，将转换为VARCHAR类型
@@ -262,11 +267,11 @@ func FROM_UNIXTIME(date field.Expression, format ...string) field.ExpressionTo {
 // SELECT DATE_FORMAT('2023-10-26', '%Y年%m月%d日');
 // SELECT DATE_FORMAT(users.birthday, '%W %M %Y') FROM users;
 // SELECT DATE_FORMAT(NOW(), '%Y%m%d%H%i%s');
-func DATE_FORMAT(date field.Expression, format string) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func DATE_FORMAT(date field.Expression, format string) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "DATE_FORMAT(?, ?)",
 		Vars: []any{date, format},
-	}}
+	})
 }
 
 // STR_TO_DATE 将字符串按照指定格式转换为日期/时间，格式需要与字符串匹配
@@ -286,11 +291,11 @@ func STR_TO_DATE(str string, format string) field.ExpressionTo {
 // SELECT YEAR('2023-10-26');
 // SELECT * FROM users WHERE YEAR(birthday) = 1990;
 // SELECT YEAR(users.created_at) as year FROM users GROUP BY year;
-func YEAR(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func YEAR(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "YEAR(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // MONTH 提取日期中的月份部分 (1-12)
@@ -298,11 +303,11 @@ func YEAR(date field.Expression) field.ExpressionTo {
 // SELECT MONTH('2023-10-26');
 // SELECT * FROM orders WHERE MONTH(order_date) = 10;
 // SELECT MONTH(users.birthday), COUNT(*) FROM users GROUP BY MONTH(users.birthday);
-func MONTH(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func MONTH(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "MONTH(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // DAY 提取日期中一个月中的天数 (1-31)，是DAYOFMONTH的同义词
@@ -310,11 +315,11 @@ func MONTH(date field.Expression) field.ExpressionTo {
 // SELECT DAY('2023-10-26');
 // SELECT * FROM events WHERE DAY(event_date) = 15;
 // SELECT YEAR(date), MONTH(date), DAY(date) FROM logs;
-func DAY(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func DAY(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "DAY(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // DAYOFMONTH 提取日期中一个月中的天数 (1-31)，是DAY的同义词
@@ -322,11 +327,11 @@ func DAY(date field.Expression) field.ExpressionTo {
 // SELECT DAYOFMONTH('2023-10-26');
 // SELECT * FROM users WHERE DAYOFMONTH(birthday) = 1;
 // SELECT DAYOFMONTH(created_at) FROM orders;
-func DAYOFMONTH(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func DAYOFMONTH(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "DAYOFMONTH(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // WEEK 提取日期在一年中的周数 (0-53)，可选第二个参数指定周开始于周日还是周一
@@ -334,11 +339,11 @@ func DAYOFMONTH(date field.Expression) field.ExpressionTo {
 // SELECT WEEK('2023-10-26');
 // SELECT WEEK(NOW(), 1);
 // SELECT * FROM orders WHERE WEEK(order_date) = WEEK(NOW());
-func WEEK(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func WEEK(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "WEEK(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // WEEKOFYEAR 提取日期在一年中的周数 (1-53)，相当于WEEK(date, 3)
@@ -346,11 +351,11 @@ func WEEK(date field.Expression) field.ExpressionTo {
 // SELECT WEEKOFYEAR('2023-10-26');
 // SELECT * FROM events WHERE WEEKOFYEAR(event_date) = 43;
 // SELECT WEEKOFYEAR(created_at), COUNT(*) FROM orders GROUP BY WEEKOFYEAR(created_at);
-func WEEKOFYEAR(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func WEEKOFYEAR(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "WEEKOFYEAR(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // HOUR 提取时间中的小时部分 (0-23)
@@ -358,11 +363,11 @@ func WEEKOFYEAR(date field.Expression) field.ExpressionTo {
 // SELECT HOUR('2023-10-26 14:30:45');
 // SELECT * FROM logs WHERE HOUR(log_time) BETWEEN 9 AND 17;
 // SELECT HOUR(users.last_login) FROM users;
-func HOUR(time field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func HOUR(time field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "HOUR(?)",
 		Vars: []any{time},
-	}}
+	})
 }
 
 // MINUTE 提取时间中的分钟部分 (0-59)
@@ -370,11 +375,11 @@ func HOUR(time field.Expression) field.ExpressionTo {
 // SELECT MINUTE('2023-10-26 14:30:45');
 // SELECT * FROM schedules WHERE MINUTE(start_time) = 0;
 // SELECT HOUR(time), MINUTE(time) FROM appointments;
-func MINUTE(time field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func MINUTE(time field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "MINUTE(?)",
 		Vars: []any{time},
-	}}
+	})
 }
 
 // SECOND 提取时间中的秒数部分 (0-59)
@@ -382,11 +387,11 @@ func MINUTE(time field.Expression) field.ExpressionTo {
 // SELECT SECOND('2023-10-26 14:30:45');
 // SELECT * FROM events WHERE SECOND(event_time) = 0;
 // SELECT HOUR(time), MINUTE(time), SECOND(time) FROM logs;
-func SECOND(time field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func SECOND(time field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "SECOND(?)",
 		Vars: []any{time},
-	}}
+	})
 }
 
 // DAYOFWEEK 返回日期在一周中的索引 (1=周日, 2=周一, ..., 7=周六)
@@ -394,11 +399,11 @@ func SECOND(time field.Expression) field.ExpressionTo {
 // SELECT DAYOFWEEK('2023-10-26');
 // SELECT * FROM events WHERE DAYOFWEEK(event_date) IN (1, 7);
 // SELECT CASE DAYOFWEEK(date) WHEN 1 THEN '周日' WHEN 2 THEN '周一' END FROM logs;
-func DAYOFWEEK(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func DAYOFWEEK(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "DAYOFWEEK(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // DAYOFYEAR 返回日期在一年中的天数 (1-366)
@@ -406,11 +411,11 @@ func DAYOFWEEK(date field.Expression) field.ExpressionTo {
 // SELECT DAYOFYEAR('2023-10-26');
 // SELECT * FROM logs WHERE DAYOFYEAR(log_date) = 1;
 // SELECT DAYOFYEAR(created_at), COUNT(*) FROM orders GROUP BY DAYOFYEAR(created_at);
-func DAYOFYEAR(date field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func DAYOFYEAR(date field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "DAYOFYEAR(?)",
 		Vars: []any{date},
-	}}
+	})
 }
 
 // DATE_ADD 在日期上增加一个时间间隔，支持多种时间单位
@@ -488,11 +493,11 @@ func DATE_SUB(date field.Expression, interval string) field.ExpressionTo {
 // SELECT DATEDIFF('2023-10-26', '2023-10-20');
 // SELECT users.name, DATEDIFF(NOW(), users.birthday) / 365 as age FROM users;
 // SELECT * FROM orders WHERE DATEDIFF(NOW(), order_date) > 30;
-func DATEDIFF(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func DATEDIFF(expr1, expr2 field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "DATEDIFF(?, ?)",
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
 // TIMEDIFF 返回两个时间/日期时间之间的差值，结果为时间格式 (HH:MM:SS)
@@ -513,27 +518,28 @@ func TIMEDIFF(expr1, expr2 field.Expression) field.ExpressionTo {
 // SELECT TIMESTAMPDIFF(YEAR, users.birthday, NOW()) as age FROM users;
 // SELECT * FROM orders WHERE TIMESTAMPDIFF(DAY, order_date, NOW()) > 30;
 // 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
-func TIMESTAMPDIFF(unit string, expr1, expr2 field.Expression) field.ExpressionTo {
+func TIMESTAMPDIFF(unit string, expr1, expr2 field.Expression) field.IntExpr {
 	// 验证单位参数
 	unit = strings.ToUpper(strings.TrimSpace(unit))
 	if !allowedIntervalUnits[unit] {
 		panic(fmt.Sprintf("TIMESTAMPDIFF: invalid unit: %s", unit))
 	}
 
-	return ExprTo{clause.Expr{
+	return field.NewIntExpr(clause.Expr{
 		SQL:  fmt.Sprintf("TIMESTAMPDIFF(%s, ?, ?)", unit),
 		Vars: []any{expr1, expr2},
-	}}
+	})
 }
 
 // ==================== 字符串函数 ====================
 
+// Deprecated: 使用 TextExpr 的 Concat 方法替代，如 textExpr.Concat(args...)
 // CONCAT 拼接多个字符串，任意参数为NULL则返回NULL
 // SELECT CONCAT('Hello', ' ', 'World');
 // SELECT CONCAT(users.first_name, ' ', users.last_name) as full_name FROM users;
 // SELECT CONCAT('User:', users.id) FROM users;
 // SELECT CONCAT(YEAR(NOW()), '-', MONTH(NOW()));
-func CONCAT(args ...field.Expression) field.ExpressionTo {
+func CONCAT(args ...field.Expression) field.StringExpr {
 	placeholders := ""
 	for i := range args {
 		if i > 0 {
@@ -541,10 +547,10 @@ func CONCAT(args ...field.Expression) field.ExpressionTo {
 		}
 		placeholders += "?"
 	}
-	return ExprTo{clause.Expr{
+	return field.NewStringExpr(clause.Expr{
 		SQL:  fmt.Sprintf("CONCAT(%s)", placeholders),
 		Vars: lo.ToAnySlice(args),
-	}}
+	})
 }
 
 // CONCAT_WS 用指定分隔符拼接多个字符串，自动跳过NULL值，分隔符为NULL则返回NULL
@@ -552,167 +558,179 @@ func CONCAT(args ...field.Expression) field.ExpressionTo {
 // SELECT CONCAT_WS('-', users.last_name, users.first_name) FROM users;
 // SELECT CONCAT_WS('/', YEAR(date), MONTH(date), DAY(date)) FROM logs;
 // SELECT CONCAT_WS(', ', city, state, country) FROM addresses;
-func CONCAT_WS(separator string, args ...any) field.ExpressionTo {
+func CONCAT_WS(separator string, args ...any) field.StringExpr {
 	placeholders := "?"
 	allArgs := []any{separator}
 	for range args {
 		placeholders += ", ?"
 	}
 	allArgs = append(allArgs, args...)
-	return ExprTo{clause.Expr{
+	return field.NewStringExpr(clause.Expr{
 		SQL:  fmt.Sprintf("CONCAT_WS(%s)", placeholders),
 		Vars: allArgs,
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Length 方法替代，如 textExpr.Length()
 // LENGTH 返回字符串的字节长度，UTF-8编码中一个中文字符通常占3个字节
 // SELECT LENGTH('Hello');
 // SELECT LENGTH('你好');
 // SELECT users.name, LENGTH(users.name) FROM users;
 // SELECT * FROM products WHERE LENGTH(product_code) = 8;
-func LENGTH(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func LENGTH(str field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "LENGTH(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 CharLength 方法替代，如 textExpr.CharLength()
 // CHAR_LENGTH 返回字符串的字符长度，多字节字符按一个字符计算，是CHARACTER_LENGTH的同义词
 // SELECT CHAR_LENGTH('Hello');
 // SELECT CHAR_LENGTH('你好');
 // SELECT users.name, CHAR_LENGTH(users.name) FROM users;
 // SELECT * FROM articles WHERE CHAR_LENGTH(content) > 1000;
-func CHAR_LENGTH(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func CHAR_LENGTH(str field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "CHAR_LENGTH(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 CharLength 方法替代，如 textExpr.CharLength()
 // CHARACTER_LENGTH 返回字符串的字符长度，多字节字符按一个字符计算，是CHAR_LENGTH的同义词
 // SELECT CHARACTER_LENGTH('Hello');
 // SELECT CHARACTER_LENGTH('你好世界');
 // SELECT CHARACTER_LENGTH(description) FROM products;
 // SELECT * FROM posts WHERE CHARACTER_LENGTH(title) < 50;
-func CHARACTER_LENGTH(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func CHARACTER_LENGTH(str field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "CHARACTER_LENGTH(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Upper 方法替代，如 textExpr.Upper()
 // UPPER 将字符串转换为大写，只对英文字母有效
 // SELECT UPPER('hello world');
 // SELECT UPPER(users.username) FROM users;
 // SELECT * FROM products WHERE UPPER(product_code) = 'ABC123';
 // UPDATE users SET username = UPPER(username) WHERE id = 1;
-func UPPER(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func UPPER(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "UPPER(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Upper 方法替代，如 textExpr.Upper()
 // UCASE 将字符串转换为大写，是UPPER的同义词
 // SELECT UCASE('hello world');
 // SELECT UCASE(email) FROM users;
 // SELECT * FROM codes WHERE UCASE(code) LIKE 'A%';
 // SELECT CONCAT(UCASE(LEFT(name, 1)), SUBSTRING(name, 2)) FROM users;
-func UCASE(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func UCASE(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "UCASE(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Lower 方法替代，如 textExpr.Lower()
 // LOWER 将字符串转换为小写，只对英文字母有效
 // SELECT LOWER('HELLO WORLD');
 // SELECT LOWER(users.email) FROM users;
 // SELECT * FROM users WHERE LOWER(username) = 'admin';
 // UPDATE users SET email = LOWER(email);
-func LOWER(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func LOWER(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "LOWER(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Lower 方法替代，如 textExpr.Lower()
 // LCASE 将字符串转换为小写，是LOWER的同义词
 // SELECT LCASE('HELLO WORLD');
 // SELECT LCASE(company_name) FROM companies;
 // SELECT * FROM domains WHERE LCASE(domain) = 'example.com';
 // SELECT LCASE(TRIM(email)) FROM users;
-func LCASE(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func LCASE(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "LCASE(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Substring 方法替代，如 textExpr.Substring(pos, length)
 // SUBSTRING 从字符串中提取子字符串，位置从1开始，是SUBSTR的同义词
 // SELECT SUBSTRING('Hello World', 1, 5);
 // SELECT SUBSTRING('Hello World', 7);
 // SELECT SUBSTRING(users.email, 1, LOCATE('@', users.email) - 1) FROM users;
 // SELECT SUBSTRING(product_code, 4, 3) FROM products;
-func SUBSTRING(str field.Expression, pos, length int) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func SUBSTRING(str field.Expression, pos, length int) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "SUBSTRING(?, ?, ?)",
 		Vars: []any{str, pos, length},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Substring 方法替代，如 textExpr.Substring(pos, length)
 // SUBSTR 从字符串中提取子字符串，位置从1开始，是SUBSTRING的同义词
 // SELECT SUBSTR('Hello World', 1, 5);
 // SELECT SUBSTR('Hello World', 7);
 // SELECT SUBSTR(description, 1, 100) FROM articles;
 // SELECT SUBSTR(phone, -4) FROM users;
-func SUBSTR(str field.Expression, pos, length int) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func SUBSTR(str field.Expression, pos, length int) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "SUBSTR(?, ?, ?)",
 		Vars: []any{str, pos, length},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Left 方法替代，如 textExpr.Left(length)
 // LEFT 从字符串左侧提取指定长度的子字符串
 // SELECT LEFT('Hello World', 5);
 // SELECT LEFT(users.name, 1) as initial FROM users;
 // SELECT * FROM products WHERE LEFT(product_code, 2) = 'AB';
 // SELECT LEFT(email, LOCATE('@', email) - 1) FROM users;
-func LEFT(str field.Expression, length int) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func LEFT(str field.Expression, length int) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "LEFT(?, ?)",
 		Vars: []any{str, length},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Right 方法替代，如 textExpr.Right(length)
 // RIGHT 从字符串右侧提取指定长度的子字符串
 // SELECT RIGHT('Hello World', 5);
 // SELECT RIGHT(phone, 4) as last_four FROM users;
 // SELECT * FROM files WHERE RIGHT(filename, 4) = '.pdf';
 // SELECT RIGHT(product_code, 3) FROM products;
-func RIGHT(str field.Expression, length int) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func RIGHT(str field.Expression, length int) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "RIGHT(?, ?)",
 		Vars: []any{str, length},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Locate 方法替代，如 textExpr.Locate(substr)
 // LOCATE 返回子字符串在字符串中第一次出现的位置（从1开始），未找到返回0，可选起始位置
 // SELECT LOCATE('World', 'Hello World');
 // SELECT LOCATE('o', 'Hello World');
 // SELECT LOCATE('o', 'Hello World', 6);
 // SELECT * FROM users WHERE LOCATE('@', email) > 0;
-func LOCATE(substr, str field.Expression, pos ...int) field.ExpressionTo {
+func LOCATE(substr, str field.Expression, pos ...int) field.IntExpr {
 	if len(pos) > 0 {
-		return ExprTo{clause.Expr{
+		return field.NewIntExpr(clause.Expr{
 			SQL:  "LOCATE(?, ?, ?)",
 			Vars: []any{substr, str, pos[0]},
-		}}
+		})
 	}
-	return ExprTo{clause.Expr{
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "LOCATE(?, ?)",
 		Vars: []any{substr, str},
-	}}
+	})
 }
 
 // INSTR 返回子字符串在字符串中第一次出现的位置（从1开始），未找到返回0
@@ -720,128 +738,137 @@ func LOCATE(substr, str field.Expression, pos ...int) field.ExpressionTo {
 // SELECT INSTR('Hello World', 'o');
 // SELECT * FROM urls WHERE INSTR(url, 'https://') = 1;
 // SELECT INSTR(email, '@') as at_position FROM users;
-func INSTR(str, substr field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func INSTR(str, substr field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "INSTR(?, ?)",
 		Vars: []any{str, substr},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Replace 方法替代，如 textExpr.Replace(from, to)
 // REPLACE 替换字符串中所有出现的子字符串
 // SELECT REPLACE('Hello World', 'World', 'MySQL');
 // SELECT REPLACE('www.example.com', 'www', 'mail');
-// SELECT REPLACE(phone, '-', ”) FROM users;
+// SELECT REPLACE(phone, '-', ") FROM users;
 // UPDATE products SET description = REPLACE(description, 'old', 'new');
-func REPLACE(str, fromStr, toStr field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func REPLACE(str, fromStr, toStr field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "REPLACE(?, ?, ?)",
 		Vars: []any{str, fromStr, toStr},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 Trim 方法替代，如 textExpr.Trim()
 // TRIM 去除字符串两端的空格，也可指定去除的字符
 // SELECT TRIM('  Hello World  ');
 // SELECT TRIM(BOTH 'x' FROM 'xxxHelloxxx');
 // SELECT TRIM(users.username) FROM users;
 // UPDATE users SET email = TRIM(email);
-func TRIM(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func TRIM(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "TRIM(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 LTrim 方法替代，如 textExpr.LTrim()
 // LTRIM 去除字符串左侧的空格
 // SELECT LTRIM('  Hello World  ');
 // SELECT LTRIM(users.name) FROM users;
 // SELECT * FROM products WHERE LTRIM(code) != code;
 // UPDATE users SET username = LTRIM(username);
-func LTRIM(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func LTRIM(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "LTRIM(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
+// Deprecated: 使用 TextExpr 的 RTrim 方法替代，如 textExpr.RTrim()
 // RTRIM 去除字符串右侧的空格
 // SELECT RTRIM('  Hello World  ');
 // SELECT RTRIM(description) FROM products;
 // SELECT * FROM users WHERE RTRIM(email) != email;
 // UPDATE articles SET title = RTRIM(title);
-func RTRIM(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func RTRIM(str field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "RTRIM(?)",
 		Vars: []any{str},
-	}}
+	})
 }
 
 // ==================== 数值函数 ====================
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Abs 方法替代，如 expr.Abs()
 // ABS 返回数值的绝对值
 // SELECT ABS(-10);
 // SELECT ABS(10);
 // SELECT ABS(users.balance) FROM users;
 // SELECT * FROM transactions WHERE ABS(amount) > 1000;
-func ABS(x field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func ABS(x field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "ABS(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Ceil 方法替代，如 expr.Ceil()
 // CEIL 向上取整，返回大于或等于X的最小整数，是CEILING的同义词
 // SELECT CEIL(4.3);
 // SELECT CEIL(4.9);
 // SELECT CEIL(-4.3);
 // SELECT CEIL(price * 1.1) FROM products;
-func CEIL(x field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func CEIL(x field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "CEIL(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Ceil 方法替代，如 expr.Ceil()
 // CEILING 向上取整，返回大于或等于X的最小整数，是CEIL的同义词
 // SELECT CEILING(4.3);
 // SELECT CEILING(4.9);
 // SELECT CEILING(-4.3);
 // SELECT CEILING(total / 10) * 10 FROM orders;
-func CEILING(x field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func CEILING(x field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "CEILING(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Floor 方法替代，如 expr.Floor()
 // FLOOR 向下取整，返回小于或等于X的最大整数
 // SELECT FLOOR(4.3);
 // SELECT FLOOR(4.9);
 // SELECT FLOOR(-4.3);
 // SELECT FLOOR(price * 0.9) FROM products;
-func FLOOR(x field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func FLOOR(x field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "FLOOR(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Round 方法替代，如 expr.Round(decimals...)
 // ROUND 四舍五入到指定小数位数，默认四舍五入到整数
 // SELECT ROUND(4.567);
 // SELECT ROUND(4.567, 2);
 // SELECT ROUND(4.567, 0);
 // SELECT ROUND(price, 2) FROM products;
 // SELECT ROUND(123.456, -1);
-func ROUND(x field.Expression, d ...int) field.ExpressionTo {
+func ROUND(x field.Expression, d ...int) field.FloatExpr {
 	if len(d) > 0 {
-		return ExprTo{clause.Expr{
+		return field.NewFloatExpr(clause.Expr{
 			SQL:  "ROUND(?, ?)",
 			Vars: []any{x, d[0]},
-		}}
+		})
 	}
-	return ExprTo{clause.Expr{
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "ROUND(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
 // MOD 返回N除以M的余数（模运算）
@@ -849,47 +876,50 @@ func ROUND(x field.Expression, d ...int) field.ExpressionTo {
 // SELECT MOD(234, 10);
 // SELECT MOD(-10, 3);
 // SELECT * FROM users WHERE MOD(id, 2) = 0;
-func MOD(n, m field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func MOD(n, m field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "MOD(?, ?)",
 		Vars: []any{n, m},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Pow 方法替代，如 expr.Pow(exponent)
 // POWER 返回X的Y次幂，是POW的同义词
 // SELECT POWER(2, 3);
 // SELECT POWER(10, 2);
 // SELECT POWER(5, -1);
 // SELECT POWER(users.level, 2) FROM users;
-func POWER(x, y field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func POWER(x, y field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "POWER(?, ?)",
 		Vars: []any{x, y},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Pow 方法替代，如 expr.Pow(exponent)
 // POW 返回X的Y次幂，是POWER的同义词
 // SELECT POW(2, 3);
 // SELECT POW(10, 2);
 // SELECT POW(distance, 2) FROM locations;
 // SELECT SQRT(POW(x2 - x1, 2) + POW(y2 - y1, 2)) as distance FROM points;
-func POW(x, y field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func POW(x, y field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "POW(?, ?)",
 		Vars: []any{x, y},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Sqrt 方法替代，如 expr.Sqrt()
 // SQRT 返回X的平方根，X必须为非负数
 // SELECT SQRT(4);
 // SELECT SQRT(16);
 // SELECT SQRT(2);
 // SELECT SQRT(area) as side_length FROM squares;
-func SQRT(x field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func SQRT(x field.Expression) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "SQRT(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
 // RAND 返回0到1之间的随机浮点数，可选种子参数
@@ -897,32 +927,34 @@ func SQRT(x field.Expression) field.ExpressionTo {
 // SELECT RAND() * 100;
 // SELECT RAND(123);
 // SELECT * FROM users ORDER BY RAND() LIMIT 10;
-func RAND() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "RAND()"}}
+func RAND() field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{SQL: "RAND()"})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Sign 方法替代，如 expr.Sign()
 // SIGN 返回数值的符号：负数返回-1，零返回0，正数返回1
 // SELECT SIGN(-10);
 // SELECT SIGN(0);
 // SELECT SIGN(10);
 // SELECT SIGN(balance) FROM accounts;
-func SIGN(x field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func SIGN(x field.Expression) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "SIGN(?)",
 		Vars: []any{x},
-	}}
+	})
 }
 
+// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Truncate 方法替代，如 expr.Truncate(decimals)
 // TRUNCATE 截断数值到指定小数位数，不进行四舍五入
 // SELECT TRUNCATE(4.567, 2);
 // SELECT TRUNCATE(4.567, 0);
 // SELECT TRUNCATE(123.456, -1);
 // SELECT TRUNCATE(price, 2) FROM products;
-func TRUNCATE(x field.Expression, d int) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func TRUNCATE(x field.Expression, d int) field.FloatExpr {
+	return field.NewFloatExpr(clause.Expr{
 		SQL:  "TRUNCATE(?, ?)",
 		Vars: []any{x, d},
-	}}
+	})
 }
 
 // ==================== 聚合函数 ====================
@@ -1016,18 +1048,18 @@ func MIN(expr field.Expression) field.FloatExpr {
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
 // SELECT user_id, GROUP_CONCAT(product_name) FROM orders GROUP BY user_id;
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
-func GROUP_CONCAT(expr field.Expression, separator ...string) field.ExpressionTo {
+func GROUP_CONCAT(expr field.Expression, separator ...string) field.StringExpr {
 	if len(separator) > 0 {
 		// 使用参数化查询代替字符串拼接
-		return ExprTo{clause.Expr{
+		return field.NewStringExpr(clause.Expr{
 			SQL:  "GROUP_CONCAT(? SEPARATOR ?)",
 			Vars: []any{expr, separator[0]},
-		}}
+		})
 	}
-	return ExprTo{clause.Expr{
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "GROUP_CONCAT(?)",
 		Vars: []any{expr},
-	}}
+	})
 }
 
 // ==================== 流程控制函数 ====================
@@ -1132,8 +1164,8 @@ func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
 // INSERT INTO logs (db_name) VALUES (DATABASE());
 // SELECT DATABASE() as current_db;
 // SELECT * FROM information_schema.tables WHERE table_schema = DATABASE();
-func DATABASE() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "DATABASE()"}}
+func DATABASE() field.StringExpr {
+	return field.NewStringExpr(clause.Expr{SQL: "DATABASE()"})
 }
 
 // USER 返回当前MySQL用户名和主机名，格式为 'user@host'
@@ -1141,8 +1173,8 @@ func DATABASE() field.ExpressionTo {
 // INSERT INTO audit_logs (user) VALUES (USER());
 // SELECT USER() as current_user;
 // SELECT * FROM connections WHERE user = USER();
-func USER() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "USER()"}}
+func USER() field.StringExpr {
+	return field.NewStringExpr(clause.Expr{SQL: "USER()"})
 }
 
 // CURRENT_USER 返回当前MySQL用户名和主机名，与USER()相同
@@ -1150,8 +1182,8 @@ func USER() field.ExpressionTo {
 // SELECT CURRENT_USER;
 // INSERT INTO access_logs (accessed_by) VALUES (CURRENT_USER());
 // SELECT CURRENT_USER() as authenticated_user;
-func CURRENT_USER() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "CURRENT_USER()"}}
+func CURRENT_USER() field.StringExpr {
+	return field.NewStringExpr(clause.Expr{SQL: "CURRENT_USER()"})
 }
 
 // VERSION 返回MySQL服务器的版本号
@@ -1159,8 +1191,8 @@ func CURRENT_USER() field.ExpressionTo {
 // SELECT VERSION() as mysql_version;
 // INSERT INTO system_info (version) VALUES (VERSION());
 // SELECT IF(VERSION() LIKE '8.%', 'MySQL 8', 'Older') as version_check;
-func VERSION() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "VERSION()"}}
+func VERSION() field.StringExpr {
+	return field.NewStringExpr(clause.Expr{SQL: "VERSION()"})
 }
 
 // UUID 生成一个符合RFC 4122标准的通用唯一标识符（36字符的字符串）
@@ -1168,8 +1200,8 @@ func VERSION() field.ExpressionTo {
 // INSERT INTO records (id) VALUES (UUID());
 // SELECT UUID() as unique_id;
 // UPDATE sessions SET session_id = UUID() WHERE session_id IS NULL;
-func UUID() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "UUID()"}}
+func UUID() field.StringExpr {
+	return field.NewStringExpr(clause.Expr{SQL: "UUID()"})
 }
 
 // INET_ATON 将点分十进制的IPv4地址转换为整数形式（网络字节序）
@@ -1177,11 +1209,11 @@ func UUID() field.ExpressionTo {
 // SELECT INET_ATON('10.0.0.1');
 // INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
 // SELECT * FROM ip_ranges WHERE INET_ATON('192.168.1.50') BETWEEN start_ip AND end_ip;
-func INET_ATON(expr string) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func INET_ATON(expr string) field.IntExpr {
+	return field.NewIntExpr(clause.Expr{
 		SQL:  "INET_ATON(?)",
 		Vars: []any{expr},
-	}}
+	})
 }
 
 // INET_NTOA 将整数形式的IP地址转换为点分十进制字符串
@@ -1189,433 +1221,9 @@ func INET_ATON(expr string) field.ExpressionTo {
 // SELECT INET_NTOA(167772161);
 // SELECT INET_NTOA(ip_address) FROM access_logs;
 // SELECT user_id, INET_NTOA(last_ip) FROM users;
-func INET_NTOA(expr field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func INET_NTOA(expr field.Expression) field.StringExpr {
+	return field.NewStringExpr(clause.Expr{
 		SQL:  "INET_NTOA(?)",
 		Vars: []any{expr},
-	}}
-}
-
-// ==================== JSON 函数 ====================
-
-// JSON_EXTRACT 从 JSON 文档中提取数据，使用 JSON 路径表达式定位元素
-// SELECT JSON_EXTRACT('{"name":"John","age":30}', '$.name');
-// SELECT JSON_EXTRACT(data, '$.user.email') FROM profiles;
-// SELECT JSON_EXTRACT(config, '$.settings[0]') FROM applications;
-// SELECT JSON_EXTRACT(metadata, '$[0].id', '$[1].id') FROM logs;
-// 路径语法: $ 表示根, .key 访问对象键, [n] 访问数组索引, [*] 访问所有数组元素
-func JSON_EXTRACT(column field.Expression, paths ...string) field.ExpressionTo {
-	var vars = make([]any, 0, len(paths)+1)
-	var placeholders = make([]string, 0, len(paths)+1)
-
-	vars = append(vars, column)
-	placeholders = append(placeholders, "?")
-	for _, path := range paths {
-		placeholders = append(placeholders, "?")
-		vars = append(vars, path)
-	}
-
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_EXTRACT(%s)", strings.Join(placeholders, ", ")),
-		Vars: vars,
-	}}
-}
-
-// JSON_OBJECT 创建 JSON 对象，接受成对的键值参数（key1, value1, key2, value2, ...）
-// SELECT JSON_OBJECT('name', 'John', 'age', 30);
-// SELECT JSON_OBJECT('id', users.id, 'name', users.name) FROM users;
-// SELECT JSON_OBJECT('total', COUNT(*), 'sum', SUM(amount)) FROM orders;
-// SELECT JSON_OBJECT('user', users.name, 'email', users.email, 'status', users.status) FROM users;
-func JSON_OBJECT(pairs ...lo.Entry[string, field.Expression]) *jsonObjectBuilder {
-	return &jsonObjectBuilder{
-		pairs: lo.FromEntries(pairs),
-	}
-}
-
-type jsonObjectBuilder struct {
-	pairs map[string]field.Expression
-}
-
-func (j *jsonObjectBuilder) Add(key string, value field.Expression) *jsonObjectBuilder {
-	j.pairs[key] = value
-	return j
-}
-
-func (j *jsonObjectBuilder) toExpr() field.ExpressionTo {
-	placeholders := ""
-	for i := range len(j.pairs) * 2 {
-		if i > 0 {
-			placeholders += ", "
-		}
-		placeholders += "?"
-	}
-	var unpack = make([]any, 0, len(j.pairs)*2)
-	for k, v := range j.pairs {
-		unpack = append(unpack, k, v)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_OBJECT(%s)", placeholders),
-		Vars: unpack,
-	}}
-}
-
-func (j *jsonObjectBuilder) Build(builder clause.Builder) {
-	j.toExpr().Build(builder)
-}
-
-func (j *jsonObjectBuilder) AsF(name ...string) field.IField {
-	return j.toExpr().AsF(name...)
-}
-
-// JSON_ARRAY 创建 JSON 数组，接受多个值作为数组元素
-// SELECT JSON_ARRAY(1, 2, 3);
-// SELECT JSON_ARRAY('a', 'b', 'c');
-// SELECT JSON_ARRAY(users.id, users.name, users.email) FROM users;
-// SELECT JSON_ARRAY(NULL, 'value', 123, true);
-func JSON_ARRAY(values ...field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_ARRAY(?)"),
-		Vars: lo.ToAnySlice(values),
-	}}
-}
-
-// JSON_UNQUOTE 去除 JSON 值的引号，通常与 JSON_EXTRACT 配合使用
-// SELECT JSON_UNQUOTE('"Hello World"');
-// SELECT JSON_UNQUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
-// SELECT JSON_UNQUOTE(JSON_EXTRACT(config, '$.email')) FROM settings;
-// SELECT JSON_UNQUOTE(json_col->'$.field') FROM table;
-func JSON_UNQUOTE(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_UNQUOTE(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_QUOTE 为字符串添加引号，使其成为有效的 JSON 字符串值
-// SELECT JSON_QUOTE('Hello World');
-// SELECT JSON_QUOTE(users.name) FROM users;
-// SELECT JSON_QUOTE('He said "Hi"');
-// SELECT JSON_QUOTE(CONCAT(first_name, ' ', last_name)) FROM users;
-func JSON_QUOTE(str field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_QUOTE(?)",
-		Vars: []any{str},
-	}}
-}
-
-// JSON_CONTAINS 检查 JSON 文档是否在指定路径包含候选值，可选路径参数
-// SELECT JSON_CONTAINS('{"a":1,"b":2}', '1', '$.a');
-// SELECT JSON_CONTAINS('[1,2,3]', '2');
-// SELECT * FROM users WHERE JSON_CONTAINS(tags, '"vip"');
-// SELECT * FROM products WHERE JSON_CONTAINS(features, '{"color":"red"}', '$.attributes');
-func JSON_CONTAINS(target, candidate field.Expression, path ...string) field.ExpressionTo {
-	if len(path) > 0 {
-		return ExprTo{clause.Expr{
-			SQL:  "JSON_CONTAINS(?, ?, ?)",
-			Vars: []any{target, candidate, path[0]},
-		}}
-	}
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_CONTAINS(?, ?)",
-		Vars: []any{target, candidate},
-	}}
-}
-
-// JSON_CONTAINS_PATH 检查 JSON 文档中是否存在指定路径，mode 可以是 'one' 或 'all'
-// SELECT JSON_CONTAINS_PATH('{"a":1,"b":2}', 'one', '$.a', '$.c');
-// SELECT JSON_CONTAINS_PATH('{"a":1,"b":2}', 'all', '$.a', '$.b');
-// SELECT * FROM users WHERE JSON_CONTAINS_PATH(data, 'one', '$.email', '$.phone');
-// SELECT * FROM profiles WHERE JSON_CONTAINS_PATH(metadata, 'all', '$.name', '$.age');
-func JSON_CONTAINS_PATH(json field.Expression, mode string, paths ...string) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json, mode)
-	placeholders := "?, ?"
-	for _, path := range paths {
-		placeholders += ", ?"
-		vars = append(vars, path)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_CONTAINS_PATH(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_KEYS 返回 JSON 对象的顶级键或指定路径的键，结果为 JSON 数组
-// SELECT JSON_KEYS('{"a":1,"b":2}');
-// SELECT JSON_KEYS('{"a":{"x":1,"y":2},"b":3}', '$.a');
-// SELECT JSON_KEYS(data) FROM users;
-// SELECT JSON_KEYS(config, '$.settings') FROM applications;
-func JSON_KEYS(json field.Expression, path ...string) field.ExpressionTo {
-	if len(path) > 0 {
-		return ExprTo{clause.Expr{
-			SQL:  "JSON_KEYS(?, ?)",
-			Vars: []any{json, path[0]},
-		}}
-	}
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_KEYS(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_LENGTH 返回 JSON 文档的长度（对象的键数量或数组的元素数量），可指定路径
-// SELECT JSON_LENGTH('[1,2,3]');
-// SELECT JSON_LENGTH('{"a":1,"b":2}');
-// SELECT JSON_LENGTH(data, '$.items') FROM orders;
-// SELECT * FROM products WHERE JSON_LENGTH(attributes) > 5;
-func JSON_LENGTH(json field.Expression, path ...string) field.ExpressionTo {
-	if len(path) > 0 {
-		return ExprTo{clause.Expr{
-			SQL:  "JSON_LENGTH(?, ?)",
-			Vars: []any{json, path[0]},
-		}}
-	}
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_LENGTH(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_SET 在 JSON 文档中设置值，路径存在则替换，不存在则插入
-// SELECT JSON_SET('{"a":1}', '$.a', 10, '$.b', 20);
-// UPDATE users SET data = JSON_SET(data, '$.status', 'active') WHERE id = 1;
-// SELECT JSON_SET(config, '$.enabled', true) FROM settings;
-// UPDATE products SET metadata = JSON_SET(metadata, '$.price', 99.99, '$.stock', 100);
-func JSON_SET(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json)
-	placeholders := "?"
-	for _, val := range pathValuePairs {
-		placeholders += ", ?"
-		vars = append(vars, val)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_SET(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_INSERT 在 JSON 文档中插入值，仅当路径不存在时插入
-// SELECT JSON_INSERT('{"a":1}', '$.a', 10, '$.b', 20);
-// UPDATE users SET data = JSON_INSERT(data, '$.created_at', NOW()) WHERE id = 1;
-// SELECT JSON_INSERT(config, '$.new_field', 'value') FROM settings;
-// UPDATE products SET metadata = JSON_INSERT(metadata, '$.views', 0);
-func JSON_INSERT(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json)
-	placeholders := "?"
-	for _, val := range pathValuePairs {
-		placeholders += ", ?"
-		vars = append(vars, val)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_INSERT(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_REPLACE 在 JSON 文档中替换值，仅当路径存在时替换
-// SELECT JSON_REPLACE('{"a":1,"b":2}', '$.a', 10, '$.c', 30);
-// UPDATE users SET data = JSON_REPLACE(data, '$.status', 'inactive') WHERE id = 1;
-// SELECT JSON_REPLACE(config, '$.version', '2.0') FROM settings;
-// UPDATE products SET metadata = JSON_REPLACE(metadata, '$.price', price * 1.1);
-func JSON_REPLACE(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json)
-	placeholders := "?"
-	for _, val := range pathValuePairs {
-		placeholders += ", ?"
-		vars = append(vars, val)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_REPLACE(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_REMOVE 从 JSON 文档中移除指定路径的元素
-// SELECT JSON_REMOVE('{"a":1,"b":2}', '$.b');
-// SELECT JSON_REMOVE('[1,2,3]', '$[1]');
-// UPDATE users SET data = JSON_REMOVE(data, '$.temp_field') WHERE id = 1;
-// UPDATE products SET metadata = JSON_REMOVE(metadata, '$.deprecated', '$.old_price');
-func JSON_REMOVE(json field.Expression, paths ...string) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json)
-	placeholders := "?"
-	for _, path := range paths {
-		placeholders += ", ?"
-		vars = append(vars, path)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_REMOVE(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_ARRAY_APPEND 向 JSON 数组的指定路径追加值
-// SELECT JSON_ARRAY_APPEND('[1,2]', '$', 3);
-// SELECT JSON_ARRAY_APPEND('{"a":[1,2]}', '$.a', 3);
-// UPDATE users SET tags = JSON_ARRAY_APPEND(tags, '$', 'new_tag') WHERE id = 1;
-// UPDATE products SET images = JSON_ARRAY_APPEND(images, '$', 'image.jpg');
-func JSON_ARRAY_APPEND(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json)
-	placeholders := "?"
-	for _, val := range pathValuePairs {
-		placeholders += ", ?"
-		vars = append(vars, val)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_ARRAY_APPEND(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_ARRAY_INSERT 向 JSON 数组的指定位置插入值
-// SELECT JSON_ARRAY_INSERT('[1,3]', '$[1]', 2);
-// SELECT JSON_ARRAY_INSERT('{"a":[1,3]}', '$.a[1]', 2);
-// UPDATE users SET tags = JSON_ARRAY_INSERT(tags, '$[0]', 'priority') WHERE id = 1;
-// UPDATE products SET images = JSON_ARRAY_INSERT(images, '$[0]', 'cover.jpg');
-func JSON_ARRAY_INSERT(json field.Expression, pathValuePairs ...any) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json)
-	placeholders := "?"
-	for _, val := range pathValuePairs {
-		placeholders += ", ?"
-		vars = append(vars, val)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_ARRAY_INSERT(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_MERGE_PRESERVE 合并多个 JSON 文档，保留所有重复的键（已废弃，使用 JSON_MERGE_PRESERVE）
-// SELECT JSON_MERGE_PRESERVE('{"a":1}', '{"b":2}');
-// SELECT JSON_MERGE_PRESERVE('[1,2]', '[3,4]');
-// SELECT JSON_MERGE_PRESERVE(config, '{"new_key":"value"}') FROM settings;
-// UPDATE users SET data = JSON_MERGE_PRESERVE(data, '{"updated_at":"2024-01-01"}');
-func JSON_MERGE_PRESERVE(jsons ...field.Expression) field.ExpressionTo {
-	placeholders := ""
-	for i := range jsons {
-		if i > 0 {
-			placeholders += ", "
-		}
-		placeholders += "?"
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_MERGE_PRESERVE(%s)", placeholders),
-		Vars: lo.ToAnySlice(jsons),
-	}}
-}
-
-// JSON_MERGE_PATCH 使用 RFC 7396 语义合并 JSON 文档，后面的文档会覆盖前面的键
-// SELECT JSON_MERGE_PATCH('{"a":1,"b":2}', '{"a":10}');
-// SELECT JSON_MERGE_PATCH('{"a":1}', '{"b":2}', '{"c":3}');
-// UPDATE users SET data = JSON_MERGE_PATCH(data, '{"status":"active"}') WHERE id = 1;
-// SELECT JSON_MERGE_PATCH(default_config, user_config) FROM settings;
-func JSON_MERGE_PATCH(jsons ...field.Expression) field.ExpressionTo {
-	placeholders := ""
-	for i := range jsons {
-		if i > 0 {
-			placeholders += ", "
-		}
-		placeholders += "?"
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_MERGE_PATCH(%s)", placeholders),
-		Vars: lo.ToAnySlice(jsons),
-	}}
-}
-
-// JSON_VALID 检查值是否为有效的 JSON 文档，返回 1 表示有效，0 表示无效
-// SELECT JSON_VALID('{"a":1}');
-// SELECT JSON_VALID('invalid json');
-// SELECT * FROM users WHERE JSON_VALID(data) = 1;
-// SELECT id, JSON_VALID(metadata) as is_valid FROM products;
-func JSON_VALID(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_VALID(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_TYPE 返回 JSON 值的类型（OBJECT, ARRAY, INTEGER, DOUBLE, STRING, BOOLEAN, NULL）
-// SELECT JSON_TYPE('{"a":1}');
-// SELECT JSON_TYPE('[1,2,3]');
-// SELECT JSON_TYPE(JSON_EXTRACT(data, '$.field')) FROM users;
-// SELECT path, JSON_TYPE(JSON_EXTRACT(config, path)) FROM configs;
-func JSON_TYPE(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_TYPE(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_DEPTH 返回 JSON 文档的最大深度，空数组/对象或标量值的深度为 1
-// SELECT JSON_DEPTH('{"a":{"b":{"c":1}}}');
-// SELECT JSON_DEPTH('[1,[2,[3]]]');
-// SELECT JSON_DEPTH(data) as depth FROM users;
-// SELECT * FROM products WHERE JSON_DEPTH(metadata) > 3;
-func JSON_DEPTH(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_DEPTH(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_PRETTY 以易读的格式打印 JSON 文档（带缩进和换行）
-// SELECT JSON_PRETTY('{"a":1,"b":2}');
-// SELECT JSON_PRETTY(data) FROM users LIMIT 1;
-// SELECT JSON_PRETTY(JSON_OBJECT('name', 'John', 'age', 30));
-// SELECT id, JSON_PRETTY(config) as formatted FROM settings;
-func JSON_PRETTY(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_PRETTY(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_SEARCH 在 JSON 文档中搜索字符串值，返回匹配路径
-// mode: 'one' 返回第一个匹配，'all' 返回所有匹配
-// SELECT JSON_SEARCH('{"a":"abc","b":"def"}', 'one', 'abc');
-// SELECT JSON_SEARCH('["abc","def","abc"]', 'all', 'abc');
-// SELECT JSON_SEARCH(data, 'one', 'admin', NULL, '$**.role') FROM users;
-// SELECT * FROM products WHERE JSON_SEARCH(tags, 'one', 'electronics') IS NOT NULL;
-func JSON_SEARCH(json field.Expression, mode string, searchStr any, escape ...any) field.ExpressionTo {
-	var vars []any
-	vars = append(vars, json, mode, searchStr)
-	placeholders := "?, ?, ?"
-	for _, esc := range escape {
-		placeholders += ", ?"
-		vars = append(vars, esc)
-	}
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("JSON_SEARCH(%s)", placeholders),
-		Vars: vars,
-	}}
-}
-
-// JSON_STORAGE_SIZE 返回存储 JSON 文档所需的字节数（MySQL 5.7.22+）
-// SELECT JSON_STORAGE_SIZE('{"a":1}');
-// SELECT JSON_STORAGE_SIZE('[1,2,3,4,5]');
-// SELECT id, JSON_STORAGE_SIZE(data) as size FROM users;
-// SELECT AVG(JSON_STORAGE_SIZE(metadata)) as avg_size FROM products;
-func JSON_STORAGE_SIZE(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_STORAGE_SIZE(?)",
-		Vars: []any{json},
-	}}
-}
-
-// JSON_STORAGE_FREE 返回 JSON 列值的二进制表示中部分更新后释放的空间（MySQL 8.0.13+）
-// SELECT JSON_STORAGE_FREE(data) FROM users;
-// SELECT id, JSON_STORAGE_FREE(metadata) as free_space FROM products;
-// SELECT SUM(JSON_STORAGE_FREE(config)) as total_free FROM settings;
-// SELECT * FROM logs WHERE JSON_STORAGE_FREE(details) > 1024;
-func JSON_STORAGE_FREE(json field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "JSON_STORAGE_FREE(?)",
-		Vars: []any{json},
-	}}
+	})
 }

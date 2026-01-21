@@ -11,7 +11,7 @@ func TestName2(t *testing.T) {
 		From(gsql.TN("aaa")).
 		Where(
 			gsql.Eq(
-				gsql.JSON_EXTRACT(gsql.Expr("content"), "$.Address"),
+				gsql.JSON_EXTRACT(gsql.AsJson(gsql.Expr("content")), "$.Address"),
 				gsql.JSON_ARRAY(gsql.Slice("0x1111", "0x1112")),
 			),
 		).

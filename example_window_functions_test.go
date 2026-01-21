@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/utils"
@@ -87,7 +86,7 @@ func TestGG(t *testing.T) {
 
 func TestDD(t *testing.T) {
 	b := utils.NewMemoryBuilder()
-	bookF := gsql.Expr("book")
+	bookF := gsql.AsJson(gsql.Expr("book"))
 
 	gsql.JSON_EXTRACT(bookF, "$.name").Build(b)
 	fmt.Println(b.SQL.String())
@@ -144,8 +143,6 @@ func ExampleRowNumber() {
 	fmt.Println("示例 1 - 简单排序:")
 	fmt.Println(query1.ToSQL())
 
-	spew.Dump(query1.ToSQL())
-
 	// 示例 2: 带 PARTITION BY 的 ROW_NUMBER，在每个分类内按价格排序
 	rn2 := gsql.RowNumber().
 		PartitionBy(category). // 按类别分组
@@ -173,13 +170,13 @@ func ExampleRowNumber() {
 
 	// Output:
 	// 示例 1 - 简单排序:
-	// SELECT `products`.`name`, `products`.`price`, (ROW_NUMBER() OVER(ORDER BY `products`.`price` DESC)) AS `row_num` FROM `products`
+	// SELECT `products`.`name`, `products`.`price`, ROW_NUMBER() OVER(ORDER BY `products`.`price` DESC) AS `row_num` FROM `products`
 	//
 	// 示例 2 - 分组排序:
-	// SELECT `products`.`category`, `products`.`name`, `products`.`price`, (ROW_NUMBER() OVER(PARTITION BY `products`.`category` ORDER BY `products`.`price` DESC)) AS `row_num` FROM `products`
+	// SELECT `products`.`category`, `products`.`name`, `products`.`price`, ROW_NUMBER() OVER(PARTITION BY `products`.`category` ORDER BY `products`.`price` DESC) AS `row_num` FROM `products`
 	//
 	// 示例 3 - 多字段分组:
-	// SELECT `products`.`category`, `products`.`created_at`, `products`.`name`, `products`.`price`, (ROW_NUMBER() OVER(PARTITION BY `products`.`category`, `products`.`created_at` ORDER BY `products`.`price` ASC)) AS `row_num` FROM `products`
+	// SELECT `products`.`category`, `products`.`created_at`, `products`.`name`, `products`.`price`, ROW_NUMBER() OVER(PARTITION BY `products`.`category`, `products`.`created_at` ORDER BY `products`.`price` ASC) AS `row_num` FROM `products`
 }
 
 // 演示 RANK() 窗口函数的使用
@@ -205,7 +202,7 @@ func ExampleRank() {
 
 	// Output:
 	// RANK() 示例:
-	// SELECT `products`.`category`, `products`.`name`, `products`.`price`, (RANK() OVER(PARTITION BY `products`.`category` ORDER BY `products`.`price` DESC)) AS `price_rank` FROM `products`
+	// SELECT `products`.`category`, `products`.`name`, `products`.`price`, RANK() OVER(PARTITION BY `products`.`category` ORDER BY `products`.`price` DESC) AS `price_rank` FROM `products`
 }
 
 // 演示 DENSE_RANK() 窗口函数的使用
@@ -229,5 +226,5 @@ func ExampleDenseRank() {
 
 	// Output:
 	// DENSE_RANK() 示例:
-	// SELECT `students`.`name`, `students`.`score`, (DENSE_RANK() OVER(ORDER BY `students`.`score` DESC)) AS `score_rank` FROM `students`
+	// SELECT `students`.`name`, `students`.`score`, DENSE_RANK() OVER(ORDER BY `students`.`score` DESC) AS `score_rank` FROM `students`
 }

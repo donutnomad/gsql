@@ -145,25 +145,27 @@ func TestCaseExample_NestedCase(t *testing.T) {
 
 	// 季节性折扣
 	seasonDiscount := gsql.Case().
-		When(monthCreatedAt.In(11, 12), gsql.Primitive(0.8)). // 双11双12
-		When(monthCreatedAt.Eq(6), gsql.Primitive(0.9)).      // 618
-		Else(gsql.Primitive(1.0)).
+		When(monthCreatedAt.In(11, 12), gsql.Lit(0.8)). // 双11双12
+		When(monthCreatedAt.Eq(6), gsql.Lit(0.9)).      // 618
+		Else(gsql.Lit(1.0)).
 		End()
+
+	seasonDiscount1 := field.NewIntExprT[float64](seasonDiscount)
 
 	// VIP 在季节性折扣基础上再打 95 折
 	finalDiscount := gsql.Case().
 		When(
 			userType.Eq("vip"),
-			gsql.Mul(seasonDiscount, gsql.Primitive(0.95)), // VIP在活动基础上再打95折
+			seasonDiscount1.Mul(0.95), // VIP在活动基础上再打95折
 		).
-		Else(seasonDiscount).
+		Else(seasonDiscount1).
 		End().AsF("final_discount")
 
 	sql := gsql.Select(
 		gsql.Field("`id`"),
 		gsql.Field("`user_type`"),
 		finalDiscount,
-	).From(gsql.TableName("orders").Ptr()).ToSQL()
+	).From(gsql.TN("orders")).ToSQL()
 
 	t.Logf("嵌套 CASE SQL:\n%s", sql)
 }

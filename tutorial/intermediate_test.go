@@ -327,7 +327,7 @@ func TestInter_SubqueryInWhere(t *testing.T) {
 	t.Run("Scalar subquery comparison", func(t *testing.T) {
 		// Find orders with total above average
 		// MySQL Subquery: SELECT AVG(orders.total_price) AS avg_price FROM orders
-		avgSubquery := gsql.Select(gsql.AVG(o.TotalPrice.ToExpr()).AsF("avg_price")).
+		avgSubquery := gsql.Select(gsql.AVG(o.TotalPrice).AsF("avg_price")).
 			From(&o)
 
 		var results []Order
@@ -396,8 +396,8 @@ func TestInter_GroupBy(t *testing.T) {
 		err := gsql.Select(
 			o.CustomerID,
 			gsql.COUNT().AsF("order_count"),
-			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total_spent"),
-			gsql.AVG(o.TotalPrice.ToExpr()).AsF("average_order"),
+			gsql.SUM(o.TotalPrice).AsF("total_spent"),
+			gsql.AVG(o.TotalPrice).AsF("average_order"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -439,7 +439,7 @@ func TestInter_GroupBy(t *testing.T) {
 			o.CustomerID,
 			o.Status,
 			gsql.COUNT().AsF("count"),
-			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+			gsql.SUM(o.TotalPrice).AsF("total"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID, o.Status).
@@ -532,7 +532,7 @@ func TestInter_Having(t *testing.T) {
 		//        HAVING SUM(total_price) > 500
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+			gsql.SUM(o.TotalPrice).AsF("total"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -563,7 +563,7 @@ func TestInter_Having(t *testing.T) {
 		err := gsql.Select(
 			o.CustomerID,
 			gsql.COUNT().AsF("order_count"),
-			gsql.AVG(o.TotalPrice.ToExpr()).AsF("avg_order"),
+			gsql.AVG(o.TotalPrice).AsF("avg_order"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -785,7 +785,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		//          WHEN 'shipped' THEN 'On the way'
 		//          ELSE 'Unknown'
 		//        END AS status_desc
-		statusDesc := gsql.CaseValue(o.Status.ToExpr()).
+		statusDesc := gsql.CaseValue(o.Status).
 			When(gsql.Lit("pending"), gsql.Lit("Waiting")).
 			When(gsql.Lit("completed"), gsql.Lit("Done")).
 			When(gsql.Lit("shipped"), gsql.Lit("On the way")).
@@ -1078,10 +1078,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+			gsql.SUM(o.TotalPrice).AsF("total"),
 		).From(&o).
 			GroupBy(o.CustomerID).
-			Having(gsql.SUM(o.TotalPrice.ToExpr()).Gte(300.0)).
+			Having(gsql.SUM(o.TotalPrice).Gte(300.0)).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -1094,10 +1094,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Verify ToSQL output
 		sql := gsql.Select(
 			o.CustomerID,
-			gsql.SUM(o.TotalPrice.ToExpr()).AsF("total"),
+			gsql.SUM(o.TotalPrice).AsF("total"),
 		).From(&o).
 			GroupBy(o.CustomerID).
-			Having(gsql.SUM(o.TotalPrice.ToExpr()).Gte(300.0)).
+			Having(gsql.SUM(o.TotalPrice).Gte(300.0)).
 			ToSQL()
 
 		t.Logf("SUM().Gte SQL: %s", sql)
@@ -1121,10 +1121,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			p.Category,
-			gsql.AVG(p.Price.ToExpr()).AsF("avg_price"),
+			gsql.AVG(p.Price).AsF("avg_price"),
 		).From(&p).
 			GroupBy(p.Category).
-			Having(gsql.AVG(p.Price.ToExpr()).Between(50.0, 2000.0)).
+			Having(gsql.AVG(p.Price).Between(50.0, 2000.0)).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -1137,10 +1137,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Verify ToSQL output
 		sql := gsql.Select(
 			p.Category,
-			gsql.AVG(p.Price.ToExpr()).AsF("avg_price"),
+			gsql.AVG(p.Price).AsF("avg_price"),
 		).From(&p).
 			GroupBy(p.Category).
-			Having(gsql.AVG(p.Price.ToExpr()).Between(50.0, 2000.0)).
+			Having(gsql.AVG(p.Price).Between(50.0, 2000.0)).
 			ToSQL()
 
 		t.Logf("AVG().Between SQL: %s", sql)
