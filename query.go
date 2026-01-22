@@ -15,6 +15,12 @@ func Select(fields ...field.IField) *baseQueryBuilder {
 	return (&baseQueryBuilder{}).Select(fields...)
 }
 
+// SelectOne
+// SELECT 1 FROM XXX
+func SelectOne() *baseQueryBuilder {
+	return Select(Field("1"))
+}
+
 func Pluck(f field.IField) *baseQueryBuilder {
 	return Select(f)
 }

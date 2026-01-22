@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
@@ -70,6 +71,10 @@ func IsNeedParenthesesExpr(expr clause.Expression) bool {
 		return false
 	} else if isQuotedColumn(sql) {
 		// 简单的反引号包裹的列名不需要括号，如 `id` 或 `table`.`column`
+		return false
+	}
+	// SELECT 1  这种1不需要加括号
+	if _, e := strconv.ParseInt(sql, 10, 64); e == nil {
 		return false
 	}
 	//else if strings.Contains(sql, "AS") || strings.Contains(sql, "as") {
