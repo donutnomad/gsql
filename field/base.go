@@ -26,6 +26,22 @@ type Base struct {
 	flags      FieldFlag // 字段标志
 }
 
+// ColumnName 返回列名
+func (f Base) ColumnName() string {
+	return f.columnName
+}
+
+// TableName 返回表名
+func (f Base) TableName() string {
+	return f.tableName
+}
+
+// SetAlias 设置别名并返回新的 Base
+func (f Base) SetAlias(alias string) Base {
+	f.alias = alias
+	return f
+}
+
 func NewBase(tableName, name string, flags ...FieldFlag) *Base {
 	var flag = FlagNone
 	if len(flags) > 0 {

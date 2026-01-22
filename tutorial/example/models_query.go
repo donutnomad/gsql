@@ -27,7 +27,7 @@ func (t UserSchemaType) Alias() string {
 }
 
 func (t *UserSchemaType) WithTable(tableName string) {
-	tn := gsql.TableName(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.OrgID = t.OrgID.WithTable(&tn)
 	t.Status = t.Status.WithTable(&tn)

@@ -8,6 +8,9 @@ import (
 
 var emptyExpression = clause.Expr{}
 
+// EmptyExpression 空表达式，用于跳过条件
+var EmptyExpression = emptyExpression
+
 func NewColumnClause(f Base) clauses.ColumnClause {
 	if f.sql != nil {
 		return clauses.ColumnClause{

@@ -6,6 +6,7 @@ import (
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/samber/lo"
 )
 
@@ -23,15 +24,12 @@ func (m SortNameMapping) Map(orders []SortOrder, defaultOrder ...SortOrder) []gs
 		orders = defaultOrder
 	}
 	if len(orders) == 0 {
-		return []gsql.FieldOrder{}
+		return []types.OrderItem{}
 	}
 	var ret []gsql.FieldOrder
 	for _, item := range orders {
 		if v, ok := m[item.Name]; ok {
-			ret = append(ret, gsql.FieldOrder{
-				Field: v,
-				Asc:   item.Asc,
-			})
+			ret = append(ret, types.NewOrder(v.ToExpr(), item.Asc))
 		}
 	}
 	return ret

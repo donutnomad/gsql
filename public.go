@@ -212,7 +212,7 @@ func (t *Table) TableName() string {
 }
 
 type order struct {
-	field field.IField
+	field clause.Expression
 	asc   bool
 }
 

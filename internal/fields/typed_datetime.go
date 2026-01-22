@@ -1,4 +1,4 @@
-package field
+package fields
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
 )
 
 // 允许的时间间隔单位
@@ -72,13 +73,13 @@ func (e DateExpr[T]) Build(builder clause.Builder) {
 }
 
 // ToExpr 转换为 Expression
-func (e DateExpr[T]) ToExpr() Expression {
+func (e DateExpr[T]) ToExpr() clause.Expression {
 	return e.baseComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e DateExpr[T]) As(alias string) IField {
-	return NewBaseFromSql(e.baseComparableImpl.Expression, alias)
+func (e DateExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.baseComparableImpl.Expression, alias)
 }
 
 // ==================== 日期比较 ====================
@@ -117,8 +118,8 @@ func (e DateExpr[T]) NotBetween(start, end T) clause.Expression {
 
 // Year 提取年份部分 (YEAR)
 // SELECT YEAR(date_column) FROM table;
-func (e DateExpr[T]) Year() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) Year() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "YEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -126,8 +127,8 @@ func (e DateExpr[T]) Year() IntExprT[int] {
 
 // Month 提取月份部分 (MONTH)
 // SELECT MONTH(date_column) FROM table;
-func (e DateExpr[T]) Month() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) Month() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MONTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -135,16 +136,16 @@ func (e DateExpr[T]) Month() IntExprT[int] {
 
 // Day 提取天数部分 (DAY)
 // SELECT DAY(date_column) FROM table;
-func (e DateExpr[T]) Day() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) Day() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAY(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfMonth 提取一月中的天数 (DAYOFMONTH)，是 Day 的同义词
-func (e DateExpr[T]) DayOfMonth() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) DayOfMonth() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFMONTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -152,8 +153,8 @@ func (e DateExpr[T]) DayOfMonth() IntExprT[int] {
 
 // DayOfWeek 返回一周中的索引 (DAYOFWEEK)
 // 1=周日, 2=周一, ..., 7=周六
-func (e DateExpr[T]) DayOfWeek() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) DayOfWeek() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFWEEK(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -161,8 +162,8 @@ func (e DateExpr[T]) DayOfWeek() IntExprT[int] {
 
 // DayOfYear 返回一年中的天数 (DAYOFYEAR)
 // 范围: 1-366
-func (e DateExpr[T]) DayOfYear() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) DayOfYear() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFYEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -170,8 +171,8 @@ func (e DateExpr[T]) DayOfYear() IntExprT[int] {
 
 // Week 提取周数 (WEEK)
 // 范围: 0-53
-func (e DateExpr[T]) Week() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) Week() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "WEEK(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -179,8 +180,8 @@ func (e DateExpr[T]) Week() IntExprT[int] {
 
 // WeekOfYear 提取周数 (WEEKOFYEAR)
 // 范围: 1-53，相当于 WEEK(date, 3)
-func (e DateExpr[T]) WeekOfYear() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) WeekOfYear() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "WEEKOFYEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -188,8 +189,8 @@ func (e DateExpr[T]) WeekOfYear() IntExprT[int] {
 
 // Quarter 提取季度 (QUARTER)
 // 范围: 1-4
-func (e DateExpr[T]) Quarter() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) Quarter() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "QUARTER(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -220,8 +221,8 @@ func (e DateExpr[T]) SubInterval(interval string) DateExpr[T] {
 
 // DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
 // 返回 this - other 的天数
-func (e DateExpr[T]) DateDiff(other Expression) IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateExpr[T]) DateDiff(other clause.Expression) IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DATEDIFF(?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, other},
 	})
@@ -241,8 +242,8 @@ func (e DateExpr[T]) Format(format string) TextExpr[string] {
 // ==================== 日期转换 ====================
 
 // UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
-func (e DateExpr[T]) UnixTimestamp() IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e DateExpr[T]) UnixTimestamp() IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "UNIX_TIMESTAMP(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -251,7 +252,7 @@ func (e DateExpr[T]) UnixTimestamp() IntExprT[int64] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e DateExpr[T]) Cast(targetType string) Expression {
+func (e DateExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
@@ -314,13 +315,13 @@ func (e DateTimeExpr[T]) Build(builder clause.Builder) {
 }
 
 // ToExpr 转换为 Expression
-func (e DateTimeExpr[T]) ToExpr() Expression {
+func (e DateTimeExpr[T]) ToExpr() clause.Expression {
 	return e.baseComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e DateTimeExpr[T]) As(alias string) IField {
-	return NewBaseFromSql(e.baseComparableImpl.Expression, alias)
+func (e DateTimeExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.baseComparableImpl.Expression, alias)
 }
 
 // ==================== 日期时间比较 ====================
@@ -358,72 +359,72 @@ func (e DateTimeExpr[T]) NotBetween(start, end T) clause.Expression {
 // ==================== 日期提取函数 ====================
 
 // Year 提取年份部分 (YEAR)
-func (e DateTimeExpr[T]) Year() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Year() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "YEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Month 提取月份部分 (MONTH)
-func (e DateTimeExpr[T]) Month() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Month() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MONTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Day 提取天数部分 (DAY)
-func (e DateTimeExpr[T]) Day() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Day() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAY(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfMonth 提取一月中的天数 (DAYOFMONTH)
-func (e DateTimeExpr[T]) DayOfMonth() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) DayOfMonth() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFMONTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfWeek 返回一周中的索引 (DAYOFWEEK)
-func (e DateTimeExpr[T]) DayOfWeek() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) DayOfWeek() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFWEEK(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfYear 返回一年中的天数 (DAYOFYEAR)
-func (e DateTimeExpr[T]) DayOfYear() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) DayOfYear() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFYEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Week 提取周数 (WEEK)
-func (e DateTimeExpr[T]) Week() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Week() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "WEEK(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // WeekOfYear 提取周数 (WEEKOFYEAR)
-func (e DateTimeExpr[T]) WeekOfYear() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) WeekOfYear() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "WEEKOFYEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Quarter 提取季度 (QUARTER)
-func (e DateTimeExpr[T]) Quarter() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Quarter() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "QUARTER(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -433,8 +434,8 @@ func (e DateTimeExpr[T]) Quarter() IntExprT[int] {
 
 // Hour 提取小时部分 (HOUR)
 // 范围: 0-23
-func (e DateTimeExpr[T]) Hour() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Hour() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "HOUR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -442,8 +443,8 @@ func (e DateTimeExpr[T]) Hour() IntExprT[int] {
 
 // Minute 提取分钟部分 (MINUTE)
 // 范围: 0-59
-func (e DateTimeExpr[T]) Minute() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Minute() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MINUTE(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -451,8 +452,8 @@ func (e DateTimeExpr[T]) Minute() IntExprT[int] {
 
 // Second 提取秒数部分 (SECOND)
 // 范围: 0-59
-func (e DateTimeExpr[T]) Second() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Second() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "SECOND(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -460,8 +461,8 @@ func (e DateTimeExpr[T]) Second() IntExprT[int] {
 
 // Microsecond 提取微秒部分 (MICROSECOND)
 // 范围: 0-999999
-func (e DateTimeExpr[T]) Microsecond() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) Microsecond() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MICROSECOND(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -488,8 +489,8 @@ func (e DateTimeExpr[T]) SubInterval(interval string) DateTimeExpr[T] {
 }
 
 // DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
-func (e DateTimeExpr[T]) DateDiff(other Expression) IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e DateTimeExpr[T]) DateDiff(other clause.Expression) IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DATEDIFF(?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, other},
 	})
@@ -497,7 +498,7 @@ func (e DateTimeExpr[T]) DateDiff(other Expression) IntExprT[int] {
 
 // TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
 // 返回 TimeExpr 格式
-func (e DateTimeExpr[T]) TimeDiff(other Expression) TimeExpr[string] {
+func (e DateTimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[string] {
 	return NewTimeExpr[string](clause.Expr{
 		SQL:  "TIMEDIFF(?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, other},
@@ -506,12 +507,12 @@ func (e DateTimeExpr[T]) TimeDiff(other Expression) TimeExpr[string] {
 
 // TimestampDiff 计算与另一个日期时间的差值（指定单位）(TIMESTAMPDIFF)
 // unit: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
-func (e DateTimeExpr[T]) TimestampDiff(unit string, other Expression) IntExprT[int64] {
+func (e DateTimeExpr[T]) TimestampDiff(unit string, other clause.Expression) IntExpr[int64] {
 	unit = strings.ToUpper(strings.TrimSpace(unit))
 	if !allowedIntervalUnits[unit] {
 		panic(fmt.Sprintf("TimestampDiff: invalid unit: %s", unit))
 	}
-	return NewIntExprT[int64](clause.Expr{
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  fmt.Sprintf("TIMESTAMPDIFF(%s, ?, ?)", unit),
 		Vars: []any{other, e.baseComparableImpl.Expression},
 	})
@@ -546,8 +547,8 @@ func (e DateTimeExpr[T]) Time() TimeExpr[string] {
 }
 
 // UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
-func (e DateTimeExpr[T]) UnixTimestamp() IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e DateTimeExpr[T]) UnixTimestamp() IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "UNIX_TIMESTAMP(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -556,7 +557,7 @@ func (e DateTimeExpr[T]) UnixTimestamp() IntExprT[int64] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e DateTimeExpr[T]) Cast(targetType string) Expression {
+func (e DateTimeExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
@@ -625,13 +626,13 @@ func (e TimeExpr[T]) Build(builder clause.Builder) {
 }
 
 // ToExpr 转换为 Expression
-func (e TimeExpr[T]) ToExpr() Expression {
+func (e TimeExpr[T]) ToExpr() clause.Expression {
 	return e.baseComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e TimeExpr[T]) As(alias string) IField {
-	return NewBaseFromSql(e.baseComparableImpl.Expression, alias)
+func (e TimeExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.baseComparableImpl.Expression, alias)
 }
 
 // ==================== 时间比较 ====================
@@ -669,32 +670,32 @@ func (e TimeExpr[T]) NotBetween(start, end T) clause.Expression {
 // ==================== 时间提取函数 ====================
 
 // Hour 提取小时部分 (HOUR)
-func (e TimeExpr[T]) Hour() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimeExpr[T]) Hour() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "HOUR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Minute 提取分钟部分 (MINUTE)
-func (e TimeExpr[T]) Minute() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimeExpr[T]) Minute() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MINUTE(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Second 提取秒数部分 (SECOND)
-func (e TimeExpr[T]) Second() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimeExpr[T]) Second() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "SECOND(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Microsecond 提取微秒部分 (MICROSECOND)
-func (e TimeExpr[T]) Microsecond() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimeExpr[T]) Microsecond() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MICROSECOND(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -721,7 +722,7 @@ func (e TimeExpr[T]) SubInterval(interval string) TimeExpr[T] {
 }
 
 // TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
-func (e TimeExpr[T]) TimeDiff(other Expression) TimeExpr[T] {
+func (e TimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
 	return NewTimeExpr[T](clause.Expr{
 		SQL:  "TIMEDIFF(?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, other},
@@ -741,7 +742,7 @@ func (e TimeExpr[T]) Format(format string) TextExpr[string] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e TimeExpr[T]) Cast(targetType string) Expression {
+func (e TimeExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
@@ -804,13 +805,13 @@ func (e TimestampExpr[T]) Build(builder clause.Builder) {
 }
 
 // ToExpr 转换为 Expression
-func (e TimestampExpr[T]) ToExpr() Expression {
+func (e TimestampExpr[T]) ToExpr() clause.Expression {
 	return e.baseComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e TimestampExpr[T]) As(alias string) IField {
-	return NewBaseFromSql(e.baseComparableImpl.Expression, alias)
+func (e TimestampExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.baseComparableImpl.Expression, alias)
 }
 
 // ==================== 时间戳比较 ====================
@@ -848,72 +849,72 @@ func (e TimestampExpr[T]) NotBetween(start, end T) clause.Expression {
 // ==================== 日期提取函数 ====================
 
 // Year 提取年份部分 (YEAR)
-func (e TimestampExpr[T]) Year() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Year() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "YEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Month 提取月份部分 (MONTH)
-func (e TimestampExpr[T]) Month() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Month() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MONTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Day 提取天数部分 (DAY)
-func (e TimestampExpr[T]) Day() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Day() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAY(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfMonth 提取一月中的天数 (DAYOFMONTH)
-func (e TimestampExpr[T]) DayOfMonth() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) DayOfMonth() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFMONTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfWeek 返回一周中的索引 (DAYOFWEEK)
-func (e TimestampExpr[T]) DayOfWeek() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) DayOfWeek() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFWEEK(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // DayOfYear 返回一年中的天数 (DAYOFYEAR)
-func (e TimestampExpr[T]) DayOfYear() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) DayOfYear() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DAYOFYEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Week 提取周数 (WEEK)
-func (e TimestampExpr[T]) Week() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Week() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "WEEK(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // WeekOfYear 提取周数 (WEEKOFYEAR)
-func (e TimestampExpr[T]) WeekOfYear() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) WeekOfYear() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "WEEKOFYEAR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Quarter 提取季度 (QUARTER)
-func (e TimestampExpr[T]) Quarter() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Quarter() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "QUARTER(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -922,32 +923,32 @@ func (e TimestampExpr[T]) Quarter() IntExprT[int] {
 // ==================== 时间提取函数 ====================
 
 // Hour 提取小时部分 (HOUR)
-func (e TimestampExpr[T]) Hour() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Hour() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "HOUR(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Minute 提取分钟部分 (MINUTE)
-func (e TimestampExpr[T]) Minute() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Minute() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MINUTE(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Second 提取秒数部分 (SECOND)
-func (e TimestampExpr[T]) Second() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Second() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "SECOND(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // Microsecond 提取微秒部分 (MICROSECOND)
-func (e TimestampExpr[T]) Microsecond() IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) Microsecond() IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "MICROSECOND(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -974,15 +975,15 @@ func (e TimestampExpr[T]) SubInterval(interval string) TimestampExpr[T] {
 }
 
 // DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
-func (e TimestampExpr[T]) DateDiff(other Expression) IntExprT[int] {
-	return NewIntExprT[int](clause.Expr{
+func (e TimestampExpr[T]) DateDiff(other clause.Expression) IntExpr[int] {
+	return NewIntExpr[int](clause.Expr{
 		SQL:  "DATEDIFF(?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, other},
 	})
 }
 
 // TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
-func (e TimestampExpr[T]) TimeDiff(other Expression) TimeExpr[string] {
+func (e TimestampExpr[T]) TimeDiff(other clause.Expression) TimeExpr[string] {
 	return NewTimeExpr[string](clause.Expr{
 		SQL:  "TIMEDIFF(?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, other},
@@ -990,12 +991,12 @@ func (e TimestampExpr[T]) TimeDiff(other Expression) TimeExpr[string] {
 }
 
 // TimestampDiff 计算与另一个日期时间的差值（指定单位）(TIMESTAMPDIFF)
-func (e TimestampExpr[T]) TimestampDiff(unit string, other Expression) IntExprT[int64] {
+func (e TimestampExpr[T]) TimestampDiff(unit string, other clause.Expression) IntExpr[int64] {
 	unit = strings.ToUpper(strings.TrimSpace(unit))
 	if !allowedIntervalUnits[unit] {
 		panic(fmt.Sprintf("TimestampDiff: invalid unit: %s", unit))
 	}
-	return NewIntExprT[int64](clause.Expr{
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  fmt.Sprintf("TIMESTAMPDIFF(%s, ?, ?)", unit),
 		Vars: []any{other, e.baseComparableImpl.Expression},
 	})
@@ -1030,8 +1031,8 @@ func (e TimestampExpr[T]) Time() TimeExpr[string] {
 }
 
 // UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
-func (e TimestampExpr[T]) UnixTimestamp() IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e TimestampExpr[T]) UnixTimestamp() IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "UNIX_TIMESTAMP(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -1040,7 +1041,7 @@ func (e TimestampExpr[T]) UnixTimestamp() IntExprT[int64] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e TimestampExpr[T]) Cast(targetType string) Expression {
+func (e TimestampExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
@@ -1112,25 +1113,25 @@ func (e YearExpr[T]) Build(builder clause.Builder) {
 }
 
 // ToExpr 转换为 Expression
-func (e YearExpr[T]) ToExpr() Expression {
+func (e YearExpr[T]) ToExpr() clause.Expression {
 	return e.numericComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e YearExpr[T]) As(alias string) IField {
-	return NewBaseFromSql(e.numericComparableImpl.Expression, alias)
+func (e YearExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.numericComparableImpl.Expression, alias)
 }
 
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e YearExpr[T]) Cast(targetType string) Expression {
+func (e YearExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
 // CastSigned 转换为有符号整数 (CAST AS SIGNED)
-func (e YearExpr[T]) CastSigned() IntExprT[int64] {
-	return NewIntExprT[int64](e.castSignedExpr())
+func (e YearExpr[T]) CastSigned() IntExpr[int64] {
+	return NewIntExpr[int64](e.castSignedExpr())
 }
 
 // CastChar 转换为字符串 (CAST AS CHAR)

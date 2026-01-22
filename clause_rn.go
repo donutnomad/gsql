@@ -6,6 +6,8 @@ import (
 	"github.com/donutnomad/gsql/internal/utils"
 )
 
+var _ clause.Expression = (*WindowFunctionBuilder)(nil)
+
 // RowNumber 创建 ROW_NUMBER() OVER() 窗口函数
 // SELECT ROW_NUMBER() OVER(PARTITION BY category ORDER BY price DESC) as row_num FROM products;
 // SELECT *, ROW_NUMBER() OVER(ORDER BY created_at DESC) as rn FROM orders;
@@ -38,12 +40,7 @@ func DenseRank() *WindowFunctionBuilder {
 type WindowFunctionBuilder struct {
 	function    string             // ROW_NUMBER(), RANK(), DENSE_RANK() 等
 	partitionBy []field.Expression // PARTITION BY 子句
-	orderBy     []orderByItem      // ORDER BY 子句
-}
-
-type orderByItem struct {
-	expr field.Expression
-	desc bool
+	orderBy     []FieldOrder       // ORDER BY 子句
 }
 
 // PartitionBy 添加 PARTITION BY 子句，支持多个字段
@@ -58,15 +55,11 @@ func (w *WindowFunctionBuilder) PartitionBy(exprs ...field.Expression) *WindowFu
 // desc 为 true 表示降序(DESC)，false 表示升序(ASC)
 // RowNumber().OrderBy(price, true) // ORDER BY price DESC
 // RowNumber().OrderBy(created_at, false) // ORDER BY created_at ASC
-func (w *WindowFunctionBuilder) OrderBy(expr field.Expression, desc bool) *WindowFunctionBuilder {
-	w.orderBy = append(w.orderBy, orderByItem{
-		expr: expr,
-		desc: desc,
-	})
+func (w *WindowFunctionBuilder) OrderBy(order FieldOrder) *WindowFunctionBuilder {
+	w.orderBy = append(w.orderBy, order)
 	return w
 }
 
-// Build 实现 clause.Expression 接口
 func (w *WindowFunctionBuilder) Build(builder clause.Builder) {
 	// 写入函数名
 	builder.WriteString(w.function)
@@ -93,8 +86,8 @@ func (w *WindowFunctionBuilder) Build(builder clause.Builder) {
 			if idx > 0 {
 				builder.WriteString(", ")
 			}
-			item.expr.Build(builder)
-			if item.desc {
+			item.Expr.Build(builder)
+			if !item.Asc {
 				builder.WriteString(" DESC")
 			} else {
 				builder.WriteString(" ASC")
@@ -105,7 +98,6 @@ func (w *WindowFunctionBuilder) Build(builder clause.Builder) {
 	builder.WriteString(")")
 }
 
-// ToExpr 转换为 clause.Expression
 func (w *WindowFunctionBuilder) ToExpr() clause.Expression {
 	return w
 }
@@ -114,6 +106,3 @@ func (w *WindowFunctionBuilder) ToExpr() clause.Expression {
 func (w *WindowFunctionBuilder) AsF(name ...string) field.IField {
 	return FieldExpr(w.ToExpr(), utils.Optional(name, ""))
 }
-
-// 确保实现了 clause.Expression 接口
-var _ clause.Expression = (*WindowFunctionBuilder)(nil)

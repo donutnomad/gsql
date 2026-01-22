@@ -15,11 +15,6 @@ import (
 	"gorm.io/gorm/utils"
 )
 
-// Debug
-// Deprecated: 无效
-func Debug() {
-}
-
 func getQuoteFunc() func(field string) string {
 	return func(field string) string {
 		var writer strings.Builder

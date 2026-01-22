@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== CRUD Tests ====================
@@ -60,7 +60,7 @@ func TestBasic_Select(t *testing.T) {
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
-			Order(p.Price, true). // ASC
+			OrderBy(p.Price.Asc()).
 			Find(db, &result)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -534,8 +534,8 @@ func TestFunc_DateTime(t *testing.T) {
 			DaysDiff int `gorm:"column:days_diff"`
 		}
 		// Calculate days between hire dates of John and Jane
-		date1 := field.NewDateTimeExpr[time.Time](gsql.Lit("2020-06-15"))
-		date2 := field.NewDateTimeExpr[time.Time](gsql.Lit("2019-01-10"))
+		date1 := fields.NewDateTimeExpr[time.Time](gsql.Lit("2020-06-15"))
+		date2 := fields.NewDateTimeExpr[time.Time](gsql.Lit("2019-01-10"))
 		err := gsql.Select(date1.DateDiff(date2).As("days_diff")).
 			From(&e).
 			Limit(1).
@@ -722,7 +722,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			AbsVal float64 `gorm:"column:abs_val"`
 		}
-		err := gsql.Select(field.NewFloatExprT[float64](gsql.Lit(-99.5)).Abs().As("abs_val")).
+		err := gsql.Select(fields.NewFloatExpr[float64](gsql.Lit(-99.5)).Abs().As("abs_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -807,7 +807,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			PowerVal float64 `gorm:"column:power_val"`
 		}
-		err := gsql.Select(field.NewIntExprT[int](gsql.Lit(2)).Pow(3).As("power_val")).
+		err := gsql.Select(fields.NewIntExpr[int](gsql.Lit(2)).Pow(3).As("power_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -824,7 +824,7 @@ func TestFunc_Numeric(t *testing.T) {
 		var result struct {
 			SqrtVal float64 `gorm:"column:sqrt_val"`
 		}
-		err := gsql.Select(field.NewIntExprT[int](gsql.Lit(16)).Sqrt().As("sqrt_val")).
+		err := gsql.Select(fields.NewIntExpr[int](gsql.Lit(16)).Sqrt().As("sqrt_val")).
 			From(&p).
 			Limit(1).
 			First(db, &result)

@@ -1,20 +1,21 @@
-package field
+package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
 )
 
-var _ clause.Expression = (*FloatExprT[float64])(nil)
+var _ clause.Expression = (*FloatExpr[float64])(nil)
 
-// ==================== FloatExprT 定义 ====================
+// ==================== FloatExpr 定义 ====================
 
-// FloatExprT 浮点类型表达式，用于 AVG, SUM 等返回浮点数的聚合函数
+// FloatExpr 浮点类型表达式，用于 AVG, SUM 等返回浮点数的聚合函数
 // 支持比较操作、算术运算和数学函数
 // 使用场景：
 //   - AVG, SUM 等聚合函数的返回值
 //   - 派生表中的浮点列
 //   - 浮点字段的算术运算结果
-type FloatExprT[T any] struct {
+type FloatExpr[T any] struct {
 	numericComparableImpl[T]
 	pointerExprImpl
 	arithmeticSql
@@ -25,9 +26,9 @@ type FloatExprT[T any] struct {
 	trigFuncSql
 }
 
-// NewFloatExprT 创建一个新的 FloatExprT 实例
-func NewFloatExprT[T any](expr clause.Expression) FloatExprT[T] {
-	return FloatExprT[T]{
+// NewFloatExpr 创建一个新的 FloatExpr 实例
+func NewFloatExpr[T any](expr clause.Expression) FloatExpr[T] {
+	return FloatExpr[T]{
 		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
@@ -40,18 +41,18 @@ func NewFloatExprT[T any](expr clause.Expression) FloatExprT[T] {
 }
 
 // Build 实现 clause.Expression 接口
-func (e FloatExprT[T]) Build(builder clause.Builder) {
+func (e FloatExpr[T]) Build(builder clause.Builder) {
 	e.numericComparableImpl.Expression.Build(builder)
 }
 
 // ToExpr 转换为 Expression
-func (e FloatExprT[T]) ToExpr() Expression {
+func (e FloatExpr[T]) ToExpr() clause.Expression {
 	return e.numericComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e FloatExprT[T]) As(alias string) IField {
-	return NewBaseFromSql(e.numericComparableImpl.Expression, alias)
+func (e FloatExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.numericComparableImpl.Expression, alias)
 }
 
 // ==================== 算术运算 ====================
@@ -59,36 +60,36 @@ func (e FloatExprT[T]) As(alias string) IField {
 // Add 加法 (+)
 // SELECT price + 100 FROM products;
 // SELECT users.balance + deposit FROM users;
-func (e FloatExprT[T]) Add(value any) FloatExprT[T] {
-	return NewFloatExprT[T](e.addExpr(value))
+func (e FloatExpr[T]) Add(value any) FloatExpr[T] {
+	return NewFloatExpr[T](e.addExpr(value))
 }
 
 // Sub 减法 (-)
 // SELECT price - discount FROM products;
 // SELECT balance - withdrawal FROM accounts;
-func (e FloatExprT[T]) Sub(value any) FloatExprT[T] {
-	return NewFloatExprT[T](e.subExpr(value))
+func (e FloatExpr[T]) Sub(value any) FloatExpr[T] {
+	return NewFloatExpr[T](e.subExpr(value))
 }
 
 // Mul 乘法 (*)
 // SELECT price * quantity FROM order_items;
 // SELECT rate * hours as total FROM timesheets;
-func (e FloatExprT[T]) Mul(value any) FloatExprT[T] {
-	return NewFloatExprT[T](e.mulExpr(value))
+func (e FloatExpr[T]) Mul(value any) FloatExpr[T] {
+	return NewFloatExpr[T](e.mulExpr(value))
 }
 
 // Div 除法 (/)
 // SELECT total / count FROM stats;
 // SELECT amount / rate as quantity FROM orders;
-func (e FloatExprT[T]) Div(value any) FloatExprT[T] {
-	return NewFloatExprT[T](e.divExpr(value))
+func (e FloatExpr[T]) Div(value any) FloatExpr[T] {
+	return NewFloatExpr[T](e.divExpr(value))
 }
 
 // Neg 取负 (-)
 // SELECT -price FROM products;
 // SELECT -balance FROM accounts;
-func (e FloatExprT[T]) Neg() FloatExprT[T] {
-	return NewFloatExprT[T](e.negExpr())
+func (e FloatExpr[T]) Neg() FloatExpr[T] {
+	return NewFloatExpr[T](e.negExpr())
 }
 
 // ==================== 数学函数 ====================
@@ -97,32 +98,32 @@ func (e FloatExprT[T]) Neg() FloatExprT[T] {
 // SELECT ABS(-10.5); -- 结果为 10.5
 // SELECT ABS(users.balance) FROM users;
 // SELECT * FROM transactions WHERE ABS(amount) > 1000;
-func (e FloatExprT[T]) Abs() FloatExprT[T] {
-	return NewFloatExprT[T](e.absExpr())
+func (e FloatExpr[T]) Abs() FloatExpr[T] {
+	return NewFloatExpr[T](e.absExpr())
 }
 
 // Sign 返回数值的符号 (SIGN)：负数返回-1，零返回0，正数返回1
 // SELECT SIGN(-10.5); -- 结果为 -1
 // SELECT SIGN(0); -- 结果为 0
 // SELECT SIGN(balance) FROM accounts;
-func (e FloatExprT[T]) Sign() IntExprT[int8] {
-	return NewIntExprT[int8](e.signExpr())
+func (e FloatExpr[T]) Sign() IntExpr[int8] {
+	return NewIntExpr[int8](e.signExpr())
 }
 
 // Ceil 向上取整 (CEIL)，返回大于或等于X的最小整数
 // SELECT CEIL(4.3); -- 结果为 5
 // SELECT CEIL(-4.3); -- 结果为 -4
 // SELECT CEIL(price * 1.1) FROM products;
-func (e FloatExprT[T]) Ceil() IntExprT[int64] {
-	return NewIntExprT[int64](e.ceilExpr())
+func (e FloatExpr[T]) Ceil() IntExpr[int64] {
+	return NewIntExpr[int64](e.ceilExpr())
 }
 
 // Floor 向下取整 (FLOOR)，返回小于或等于X的最大整数
 // SELECT FLOOR(4.9); -- 结果为 4
 // SELECT FLOOR(-4.3); -- 结果为 -5
 // SELECT FLOOR(price * 0.9) FROM products;
-func (e FloatExprT[T]) Floor() IntExprT[int64] {
-	return NewIntExprT[int64](e.floorExpr())
+func (e FloatExpr[T]) Floor() IntExpr[int64] {
+	return NewIntExpr[int64](e.floorExpr())
 }
 
 // Round 四舍五入 (ROUND) 到指定小数位数，默认四舍五入到整数
@@ -130,8 +131,8 @@ func (e FloatExprT[T]) Floor() IntExprT[int64] {
 // SELECT ROUND(4.567, 2); -- 结果为 4.57
 // SELECT ROUND(price, 2) FROM products;
 // SELECT ROUND(123.456, -1); -- 结果为 120
-func (e FloatExprT[T]) Round(decimals ...int) FloatExprT[T] {
-	return NewFloatExprT[T](e.roundExpr(decimals...))
+func (e FloatExpr[T]) Round(decimals ...int) FloatExpr[T] {
+	return NewFloatExpr[T](e.roundExpr(decimals...))
 }
 
 // Truncate 截断数值到指定小数位数 (TRUNCATE)，不进行四舍五入
@@ -139,8 +140,8 @@ func (e FloatExprT[T]) Round(decimals ...int) FloatExprT[T] {
 // SELECT TRUNCATE(4.567, 0); -- 结果为 4
 // SELECT TRUNCATE(123.456, -1); -- 结果为 120
 // SELECT TRUNCATE(price, 2) FROM products;
-func (e FloatExprT[T]) Truncate(decimals int) FloatExprT[T] {
-	return NewFloatExprT[T](e.truncateExpr(decimals))
+func (e FloatExpr[T]) Truncate(decimals int) FloatExpr[T] {
+	return NewFloatExpr[T](e.truncateExpr(decimals))
 }
 
 // Pow 返回X的Y次幂 (POW)
@@ -148,138 +149,138 @@ func (e FloatExprT[T]) Truncate(decimals int) FloatExprT[T] {
 // SELECT POW(10, 2); -- 结果为 100
 // SELECT POW(5, -1); -- 结果为 0.2
 // SELECT SQRT(POW(x2 - x1, 2) + POW(y2 - y1, 2)) as distance FROM points;
-func (e FloatExprT[T]) Pow(exponent float64) FloatExprT[T] {
-	return NewFloatExprT[T](e.powExpr(exponent))
+func (e FloatExpr[T]) Pow(exponent float64) FloatExpr[T] {
+	return NewFloatExpr[T](e.powExpr(exponent))
 }
 
 // Sqrt 返回X的平方根 (SQRT)，X必须为非负数
 // SELECT SQRT(4); -- 结果为 2
 // SELECT SQRT(2); -- 结果为 1.4142...
 // SELECT SQRT(area) as side_length FROM squares;
-func (e FloatExprT[T]) Sqrt() FloatExprT[T] {
-	return NewFloatExprT[T](e.sqrtExpr())
+func (e FloatExpr[T]) Sqrt() FloatExpr[T] {
+	return NewFloatExpr[T](e.sqrtExpr())
 }
 
 // Log 自然对数 (LOG)
-func (e FloatExprT[T]) Log() FloatExprT[T] {
-	return NewFloatExprT[T](e.logExpr())
+func (e FloatExpr[T]) Log() FloatExpr[T] {
+	return NewFloatExpr[T](e.logExpr())
 }
 
 // Log10 以10为底的对数 (LOG10)
-func (e FloatExprT[T]) Log10() FloatExprT[T] {
-	return NewFloatExprT[T](e.log10Expr())
+func (e FloatExpr[T]) Log10() FloatExpr[T] {
+	return NewFloatExpr[T](e.log10Expr())
 }
 
 // Log2 以2为底的对数 (LOG2)
-func (e FloatExprT[T]) Log2() FloatExprT[T] {
-	return NewFloatExprT[T](e.log2Expr())
+func (e FloatExpr[T]) Log2() FloatExpr[T] {
+	return NewFloatExpr[T](e.log2Expr())
 }
 
 // Exp 自然指数 (EXP)
-func (e FloatExprT[T]) Exp() FloatExprT[T] {
-	return NewFloatExprT[T](e.expExpr())
+func (e FloatExpr[T]) Exp() FloatExpr[T] {
+	return NewFloatExpr[T](e.expExpr())
 }
 
 // ==================== 三角函数 ====================
 
 // Sin 正弦 (SIN)
-func (e FloatExprT[T]) Sin() FloatExprT[T] {
-	return NewFloatExprT[T](e.sinExpr())
+func (e FloatExpr[T]) Sin() FloatExpr[T] {
+	return NewFloatExpr[T](e.sinExpr())
 }
 
 // Cos 余弦 (COS)
-func (e FloatExprT[T]) Cos() FloatExprT[T] {
-	return NewFloatExprT[T](e.cosExpr())
+func (e FloatExpr[T]) Cos() FloatExpr[T] {
+	return NewFloatExpr[T](e.cosExpr())
 }
 
 // Tan 正切 (TAN)
-func (e FloatExprT[T]) Tan() FloatExprT[T] {
-	return NewFloatExprT[T](e.tanExpr())
+func (e FloatExpr[T]) Tan() FloatExpr[T] {
+	return NewFloatExpr[T](e.tanExpr())
 }
 
 // Asin 反正弦 (ASIN)
-func (e FloatExprT[T]) Asin() FloatExprT[T] {
-	return NewFloatExprT[T](e.asinExpr())
+func (e FloatExpr[T]) Asin() FloatExpr[T] {
+	return NewFloatExpr[T](e.asinExpr())
 }
 
 // Acos 反余弦 (ACOS)
-func (e FloatExprT[T]) Acos() FloatExprT[T] {
-	return NewFloatExprT[T](e.acosExpr())
+func (e FloatExpr[T]) Acos() FloatExpr[T] {
+	return NewFloatExpr[T](e.acosExpr())
 }
 
 // Atan 反正切 (ATAN)
-func (e FloatExprT[T]) Atan() FloatExprT[T] {
-	return NewFloatExprT[T](e.atanExpr())
+func (e FloatExpr[T]) Atan() FloatExpr[T] {
+	return NewFloatExpr[T](e.atanExpr())
 }
 
 // Radians 角度转弧度 (RADIANS)
-func (e FloatExprT[T]) Radians() FloatExprT[T] {
-	return NewFloatExprT[T](e.radiansExpr())
+func (e FloatExpr[T]) Radians() FloatExpr[T] {
+	return NewFloatExpr[T](e.radiansExpr())
 }
 
 // Degrees 弧度转角度 (DEGREES)
-func (e FloatExprT[T]) Degrees() FloatExprT[T] {
-	return NewFloatExprT[T](e.degreesExpr())
+func (e FloatExpr[T]) Degrees() FloatExpr[T] {
+	return NewFloatExpr[T](e.degreesExpr())
 }
 
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e FloatExprT[T]) Cast(targetType string) Expression {
+func (e FloatExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
 // CastSigned 转换为有符号整数 (CAST AS SIGNED)
-func (e FloatExprT[T]) CastSigned() IntExprT[int64] {
-	return NewIntExprT[int64](e.castSignedExpr())
+func (e FloatExpr[T]) CastSigned() IntExpr[int64] {
+	return NewIntExpr[int64](e.castSignedExpr())
 }
 
 // CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
-func (e FloatExprT[T]) CastUnsigned() IntExprT[uint64] {
-	return NewIntExprT[uint64](e.castUnsignedExpr())
+func (e FloatExpr[T]) CastUnsigned() IntExpr[uint64] {
+	return NewIntExpr[uint64](e.castUnsignedExpr())
 }
 
 // CastDecimal 转换为指定精度的小数 (CAST AS DECIMAL)
-func (e FloatExprT[T]) CastDecimal(precision, scale int) DecimalExprT[float64] {
-	return NewDecimalExprT[float64](e.castDecimalExpr(precision, scale))
+func (e FloatExpr[T]) CastDecimal(precision, scale int) DecimalExpr[float64] {
+	return NewDecimalExpr[float64](e.castDecimalExpr(precision, scale))
 }
 
 // CastChar 转换为字符串 (CAST AS CHAR)
-func (e FloatExprT[T]) CastChar(length ...int) TextExpr[string] {
+func (e FloatExpr[T]) CastChar(length ...int) TextExpr[string] {
 	return NewTextExpr[string](e.castCharExpr(length...))
 }
 
 // ==================== 条件函数 ====================
 
 // IfNull 如果为NULL则返回默认值 (IFNULL)
-func (e FloatExprT[T]) IfNull(defaultValue T) FloatExprT[T] {
-	return NewFloatExprT[T](e.ifNullExpr(defaultValue))
+func (e FloatExpr[T]) IfNull(defaultValue T) FloatExpr[T] {
+	return NewFloatExpr[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回第一个非NULL值 (COALESCE)
-func (e FloatExprT[T]) Coalesce(values ...any) FloatExprT[T] {
-	return NewFloatExprT[T](e.coalesceExpr(values...))
+func (e FloatExpr[T]) Coalesce(values ...any) FloatExpr[T] {
+	return NewFloatExpr[T](e.coalesceExpr(values...))
 }
 
 // Nullif 如果两个值相等则返回NULL (NULLIF)
-func (e FloatExprT[T]) Nullif(value T) FloatExprT[T] {
-	return NewFloatExprT[T](e.nullifExpr(value))
+func (e FloatExpr[T]) Nullif(value T) FloatExpr[T] {
+	return NewFloatExpr[T](e.nullifExpr(value))
 }
 
 // Greatest 返回最大值 (GREATEST)
-func (e FloatExprT[T]) Greatest(values ...any) FloatExprT[T] {
-	return NewFloatExprT[T](e.greatestExpr(values...))
+func (e FloatExpr[T]) Greatest(values ...any) FloatExpr[T] {
+	return NewFloatExpr[T](e.greatestExpr(values...))
 }
 
 // Least 返回最小值 (LEAST)
-func (e FloatExprT[T]) Least(values ...any) FloatExprT[T] {
-	return NewFloatExprT[T](e.leastExpr(values...))
+func (e FloatExpr[T]) Least(values ...any) FloatExpr[T] {
+	return NewFloatExpr[T](e.leastExpr(values...))
 }
 
 // ==================== 格式化 ====================
 
 // Format 格式化数字 (FORMAT)
-func (e FloatExprT[T]) Format(decimals int) TextExpr[string] {
+func (e FloatExpr[T]) Format(decimals int) TextExpr[string] {
 	return NewTextExpr[string](e.formatExpr(decimals))
 }
 
@@ -288,8 +289,8 @@ func (e FloatExprT[T]) Format(decimals int) TextExpr[string] {
 // Sum 计算数值的总和 (SUM)
 // SELECT SUM(price) FROM products;
 // SELECT category, SUM(amount) FROM orders GROUP BY category;
-func (e FloatExprT[T]) Sum() FloatExprT[T] {
-	return NewFloatExprT[T](clause.Expr{
+func (e FloatExpr[T]) Sum() FloatExpr[T] {
+	return NewFloatExpr[T](clause.Expr{
 		SQL:  "SUM(?)",
 		Vars: []any{e.numericComparableImpl.Expression},
 	})
@@ -298,8 +299,8 @@ func (e FloatExprT[T]) Sum() FloatExprT[T] {
 // Avg 计算数值的平均值 (AVG)
 // SELECT AVG(price) FROM products;
 // SELECT category, AVG(rating) FROM reviews GROUP BY category;
-func (e FloatExprT[T]) Avg() FloatExprT[T] {
-	return NewFloatExprT[T](clause.Expr{
+func (e FloatExpr[T]) Avg() FloatExpr[T] {
+	return NewFloatExpr[T](clause.Expr{
 		SQL:  "AVG(?)",
 		Vars: []any{e.numericComparableImpl.Expression},
 	})
@@ -308,8 +309,8 @@ func (e FloatExprT[T]) Avg() FloatExprT[T] {
 // Max 返回最大值 (MAX)
 // SELECT MAX(price) FROM products;
 // SELECT category, MAX(temperature) FROM readings GROUP BY category;
-func (e FloatExprT[T]) Max() FloatExprT[T] {
-	return NewFloatExprT[T](clause.Expr{
+func (e FloatExpr[T]) Max() FloatExpr[T] {
+	return NewFloatExpr[T](clause.Expr{
 		SQL:  "MAX(?)",
 		Vars: []any{e.numericComparableImpl.Expression},
 	})
@@ -318,8 +319,8 @@ func (e FloatExprT[T]) Max() FloatExprT[T] {
 // Min 返回最小值 (MIN)
 // SELECT MIN(price) FROM products;
 // SELECT category, MIN(temperature) FROM readings GROUP BY category;
-func (e FloatExprT[T]) Min() FloatExprT[T] {
-	return NewFloatExprT[T](clause.Expr{
+func (e FloatExpr[T]) Min() FloatExpr[T] {
+	return NewFloatExpr[T](clause.Expr{
 		SQL:  "MIN(?)",
 		Vars: []any{e.numericComparableImpl.Expression},
 	})

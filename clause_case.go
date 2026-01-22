@@ -5,7 +5,6 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// CaseBuilder CASE WHEN 构建器
 type CaseBuilder struct {
 	value     field.Expression // CASE value WHEN ... (可选，简单 CASE 表达式)
 	whenPairs []whenPair
@@ -51,11 +50,12 @@ func (c *CaseBuilder) End() field.ExpressionTo {
 	return ExprTo{caseClause{c}}
 }
 
+var _ clause.Expression = (*caseClause)(nil)
+
 type caseClause struct {
 	*CaseBuilder
 }
 
-// Build 实现 clause.Expression 接口
 func (c caseClause) Build(builder clause.Builder) {
 	writer := &safeWriter{builder}
 

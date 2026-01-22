@@ -71,8 +71,6 @@ type UserTemp struct {
 func TestD1(t *testing.T) {
 	db := collectDB(t)
 
-	gsql.Debug()
-
 	var u = UserSchema
 	_ = u
 

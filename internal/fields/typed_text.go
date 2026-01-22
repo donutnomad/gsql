@@ -1,9 +1,10 @@
-package field
+package fields
 
 import (
 	"fmt"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
 )
 
 var _ clause.Expression = (*TextExpr[string])(nil)
@@ -35,13 +36,13 @@ func (e TextExpr[T]) Build(builder clause.Builder) {
 	e.baseComparableImpl.Expression.Build(builder)
 }
 
-func (e TextExpr[T]) ToExpr() Expression {
+func (e TextExpr[T]) ToExpr() clause.Expression {
 	return e.baseComparableImpl.Expression
 }
 
 // As 创建一个别名字段
-func (e TextExpr[T]) As(alias string) IField {
-	return NewBaseFromSql(e.baseComparableImpl.Expression, alias)
+func (e TextExpr[T]) As(alias string) field.IField {
+	return field.NewBaseFromSql(e.baseComparableImpl.Expression, alias)
 }
 
 // ==================== 类型转换 ====================
@@ -50,7 +51,7 @@ func (e TextExpr[T]) As(alias string) IField {
 // SELECT CAST(price AS SIGNED) FROM products;
 // SELECT CAST(amount AS DECIMAL(10,2)) FROM orders;
 // targetType: SIGNED, UNSIGNED, DECIMAL(m,n), CHAR, DATE, DATETIME, TIME, BINARY 等
-func (e TextExpr[T]) Cast(targetType string) Expression {
+func (e TextExpr[T]) Cast(targetType string) clause.Expression {
 	return clause.Expr{
 		SQL:  "CAST(? AS " + targetType + ")",
 		Vars: []any{e.baseComparableImpl.Expression},
@@ -58,16 +59,16 @@ func (e TextExpr[T]) Cast(targetType string) Expression {
 }
 
 // CastSigned 转换为有符号整数 (CAST AS SIGNED)
-func (e TextExpr[T]) CastSigned() IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e TextExpr[T]) CastSigned() IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "CAST(? AS SIGNED)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
 // CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
-func (e TextExpr[T]) CastUnsigned() IntExprT[uint64] {
-	return NewIntExprT[uint64](clause.Expr{
+func (e TextExpr[T]) CastUnsigned() IntExpr[uint64] {
+	return NewIntExpr[uint64](clause.Expr{
 		SQL:  "CAST(? AS UNSIGNED)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -75,8 +76,8 @@ func (e TextExpr[T]) CastUnsigned() IntExprT[uint64] {
 
 // CastDecimal 转换为小数 (CAST AS DECIMAL)
 // precision: 总位数, scale: 小数位数
-func (e TextExpr[T]) CastDecimal(precision, scale int) DecimalExprT[float64] {
-	return NewDecimalExprT[float64](clause.Expr{
+func (e TextExpr[T]) CastDecimal(precision, scale int) DecimalExpr[float64] {
+	return NewDecimalExpr[float64](clause.Expr{
 		SQL:  fmt.Sprintf("CAST(? AS DECIMAL(%d, %d))", precision, scale),
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -204,8 +205,8 @@ func (e TextExpr[T]) Right(length int) TextExpr[T] {
 // SELECT users.name, LENGTH(users.name) FROM users;
 // SELECT * FROM products WHERE LENGTH(product_code) = 8;
 // 注意: UTF-8编码中一个中文字符通常占3个字节
-func (e TextExpr[T]) Length() IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e TextExpr[T]) Length() IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "LENGTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -216,8 +217,8 @@ func (e TextExpr[T]) Length() IntExprT[int64] {
 // SELECT CHAR_LENGTH('你好');
 // SELECT users.name, CHAR_LENGTH(users.name) FROM users;
 // SELECT * FROM articles WHERE CHAR_LENGTH(content) > 1000;
-func (e TextExpr[T]) CharLength() IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e TextExpr[T]) CharLength() IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "CHAR_LENGTH(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
@@ -228,7 +229,7 @@ func (e TextExpr[T]) CharLength() IntExprT[int64] {
 // SELECT CONCAT(users.first_name, ' ', users.last_name) as full_name FROM users;
 // SELECT CONCAT('User:', users.id) FROM users;
 // SELECT CONCAT(YEAR(NOW()), '-', MONTH(NOW()));
-func (e TextExpr[T]) Concat(args ...Expression) TextExpr[T] {
+func (e TextExpr[T]) Concat(args ...clause.Expression) TextExpr[T] {
 	placeholders := "?"
 	allArgs := []any{e.baseComparableImpl.Expression}
 	for _, arg := range args {
@@ -247,7 +248,7 @@ func (e TextExpr[T]) Concat(args ...Expression) TextExpr[T] {
 // SELECT CONCAT_WS('/', YEAR(date), MONTH(date), DAY(date)) FROM logs;
 // SELECT CONCAT_WS(', ', city, state, country) FROM addresses;
 // 注意：分隔符为NULL则返回NULL，但参数中的NULL会被跳过
-func (e TextExpr[T]) ConcatWS(separator string, args ...Expression) TextExpr[T] {
+func (e TextExpr[T]) ConcatWS(separator string, args ...clause.Expression) TextExpr[T] {
 	placeholders := "?, ?"
 	allArgs := []any{separator, e.baseComparableImpl.Expression}
 	for _, arg := range args {
@@ -275,8 +276,8 @@ func (e TextExpr[T]) Replace(from, to string) TextExpr[T] {
 // Locate 查找子字符串位置 (LOCATE)
 // SELECT LOCATE('@', email) FROM users;
 // 返回子字符串第一次出现的位置（从1开始），未找到返回0
-func (e TextExpr[T]) Locate(substr string) IntExprT[int64] {
-	return NewIntExprT[int64](clause.Expr{
+func (e TextExpr[T]) Locate(substr string) IntExpr[int64] {
+	return NewIntExpr[int64](clause.Expr{
 		SQL:  "LOCATE(?, ?)",
 		Vars: []any{substr, e.baseComparableImpl.Expression},
 	})
@@ -323,8 +324,8 @@ func (e TextExpr[T]) RPad(length int, padStr string) TextExpr[T] {
 // InetAton 将点分十进制的IPv4地址转换为整数形式 (INET_ATON)
 // SELECT INET_ATON('192.168.1.1'); -- 结果为 3232235777
 // INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
-func (e TextExpr[T]) InetAton() IntExprT[uint32] {
-	return NewIntExprT[uint32](clause.Expr{
+func (e TextExpr[T]) InetAton() IntExpr[uint32] {
+	return NewIntExpr[uint32](clause.Expr{
 		SQL:  "INET_ATON(?)",
 		Vars: []any{e.baseComparableImpl.Expression},
 	})

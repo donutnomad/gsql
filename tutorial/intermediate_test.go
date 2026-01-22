@@ -6,7 +6,7 @@ import (
 	"time"
 
 	gsql "github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== JOIN Tests ====================
@@ -54,9 +54,9 @@ func TestInter_InnerJoin(t *testing.T) {
 			o.TotalPrice,
 			o.Status,
 		).
-			From(&o).
+			From(o).
 			Join(gsql.InnerJoin(&c).On(o.CustomerID.EqF(c.ID))).
-			Order(o.TotalPrice, false).
+			OrderBy(o.TotalPrice.Desc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -87,7 +87,7 @@ func TestInter_InnerJoin(t *testing.T) {
 			c.Name.As("customer_name"),
 			o.TotalPrice,
 		).
-			From(&o).
+			From(o).
 			Join(gsql.InnerJoin(&c).On(o.CustomerID.EqF(c.ID))).
 			Where(o.Status.Eq("completed")).
 			Find(db, &results)
@@ -136,13 +136,14 @@ func TestInter_LeftJoin(t *testing.T) {
 		//        FROM customers
 		//        LEFT JOIN orders ON customers.id = orders.customer_id
 		//        ORDER BY customers.name ASC
-		err := gsql.Select(
-			c.Name.As("customer_name"),
-			o.TotalPrice,
-		).
+		err := gsql.
+			Select(
+				c.Name.As("customer_name"),
+				o.TotalPrice,
+			).
 			From(&c).
 			Join(gsql.LeftJoin(&o).On(c.ID.EqF(o.CustomerID))).
-			Order(c.Name, true).
+			OrderBy(c.Name.Asc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -255,7 +256,7 @@ func TestInter_MultiJoin(t *testing.T) {
 				gsql.InnerJoin(&c).On(o.CustomerID.EqF(c.ID)),
 				gsql.InnerJoin(&p).On(oi.ProductID.EqF(p.ID)),
 			).
-			Order(oi.UnitPrice, false).
+			OrderBy(oi.UnitPrice.Desc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -303,7 +304,7 @@ func TestInter_SubqueryInWhere(t *testing.T) {
 		// Build subquery
 		// MySQL Subquery: SELECT orders.customer_id FROM orders WHERE orders.total_price > 200
 		subquery := gsql.Select(o.CustomerID).
-			From(&o).
+			From(o).
 			Where(o.TotalPrice.Gt(200))
 
 		var results []Customer
@@ -328,14 +329,15 @@ func TestInter_SubqueryInWhere(t *testing.T) {
 	t.Run("Scalar subquery comparison", func(t *testing.T) {
 		// Find orders with total above average
 		// MySQL Subquery: SELECT AVG(orders.total_price) AS avg_price FROM orders
-		avgSubquery := gsql.Select(o.TotalPrice.Avg().As("avg_price")).
-			From(&o)
+		avgSubquery := gsql.
+			Select(o.TotalPrice.Avg().As("avg_price")).
+			From(o)
 
 		var results []Order
 		// MySQL: SELECT orders.* FROM orders
 		//        WHERE total_price > (SELECT AVG(orders.total_price) AS avg_price FROM orders)
 		err := gsql.Select(o.AllFields()...).
-			From(&o).
+			From(o).
 			Where(gsql.Expr("total_price > (?)", avgSubquery.ToExpr())).
 			Find(db, &results)
 		if err != nil {
@@ -400,9 +402,9 @@ func TestInter_GroupBy(t *testing.T) {
 			o.TotalPrice.Sum().As("total_spent"),
 			o.TotalPrice.Avg().As("average_order"),
 		).
-			From(&o).
+			From(o).
 			GroupBy(o.CustomerID).
-			Order(o.CustomerID, true).
+			OrderBy(o.CustomerID.Asc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -442,9 +444,9 @@ func TestInter_GroupBy(t *testing.T) {
 			gsql.COUNT().As("count"),
 			o.TotalPrice.Sum().As("total"),
 		).
-			From(&o).
+			From(o).
 			GroupBy(o.CustomerID, o.Status).
-			Order(o.CustomerID, true).
+			OrderBy(o.CustomerID.Asc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -506,7 +508,7 @@ func TestInter_Having(t *testing.T) {
 			o.CustomerID,
 			gsql.COUNT().As("order_count"),
 		).
-			From(&o).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.Expr("COUNT(*) > ?", 3)).
 			Find(db, &results)
@@ -535,7 +537,7 @@ func TestInter_Having(t *testing.T) {
 			o.CustomerID,
 			o.TotalPrice.Sum().As("total"),
 		).
-			From(&o).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.Expr("SUM(total_price) > ?", 500)).
 			Find(db, &results)
@@ -566,7 +568,7 @@ func TestInter_Having(t *testing.T) {
 			gsql.COUNT().As("order_count"),
 			o.TotalPrice.Avg().As("avg_order"),
 		).
-			From(&o).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(
 				gsql.Expr("COUNT(*) >= ?", 3),
@@ -616,12 +618,12 @@ func TestInter_Union(t *testing.T) {
 		// Create two queries that return the same category
 		// MySQL Query1: SELECT products.category AS name FROM products WHERE products.category = 'Electronics'
 		q1 := gsql.Select(p.Category.As("name")).
-			From(&p).
+			From(p).
 			Where(p.Category.Eq("Electronics"))
 
 		// MySQL Query2: SELECT products.category AS name FROM products WHERE products.category = 'Electronics'
 		q2 := gsql.Select(p.Category.As("name")).
-			From(&p).
+			From(p).
 			Where(p.Category.Eq("Electronics"))
 
 		// MySQL: (Query1) UNION (Query2)
@@ -651,12 +653,12 @@ func TestInter_Union(t *testing.T) {
 	t.Run("UNION ALL keeps duplicates", func(t *testing.T) {
 		// MySQL Query1: SELECT products.category AS name FROM products WHERE products.category = 'Electronics'
 		q1 := gsql.Select(p.Category.As("name")).
-			From(&p).
+			From(p).
 			Where(p.Category.Eq("Electronics"))
 
 		// MySQL Query2: SELECT products.category AS name FROM products WHERE products.category = 'Electronics'
 		q2 := gsql.Select(p.Category.As("name")).
-			From(&p).
+			From(p).
 			Where(p.Category.Eq("Electronics"))
 
 		// MySQL: (Query1) UNION ALL (Query2)
@@ -759,9 +761,10 @@ func TestInter_CaseWhen(t *testing.T) {
 		//               CASE WHEN total_price < 100 THEN 'Small' ... END AS price_tier
 		//        FROM orders
 		//        ORDER BY orders.total_price ASC
-		err := gsql.Select(o.ID, o.TotalPrice, priceTier).
-			From(&o).
-			Order(o.TotalPrice, true).
+		err := gsql.
+			Select(o.ID, o.TotalPrice, priceTier).
+			From(o).
+			OrderBy(o.TotalPrice.Asc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -801,7 +804,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		//               CASE status WHEN 'pending' THEN 'Waiting' ... END AS status_desc
 		//        FROM orders
 		err := gsql.Select(o.Status, statusDesc).
-			From(&o).
+			From(o).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -830,7 +833,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		// Count orders by tier
 		// MySQL: SUM(CASE WHEN orders.total_price < 100 THEN 1 ELSE 0 END) AS small_count
 
-		smallOrderSum := field.NewIntExprT[int64](
+		smallOrderSum := fields.NewIntExpr[int64](
 			gsql.Case().
 				When(o.TotalPrice.Lt(100), gsql.Lit(1)).
 				Else(gsql.Lit(0)).
@@ -838,7 +841,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		).Sum().As("small_count")
 
 		// MySQL: SUM(CASE WHEN orders.total_price >= 100 AND orders.total_price < 500 THEN 1 ELSE 0 END) AS medium_count
-		mediumOrderSum := field.NewIntExprT[int64](
+		mediumOrderSum := fields.NewIntExpr[int64](
 			gsql.Case().
 				When(gsql.And(o.TotalPrice.Gte(100), o.TotalPrice.Lt(500)), gsql.Lit(1)).
 				Else(gsql.Lit(0)).
@@ -853,7 +856,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		//               SUM(CASE WHEN total_price >= 100 AND total_price < 500 THEN 1 ELSE 0 END) AS medium_count
 		//        FROM orders
 		err := gsql.Select(smallOrderSum, mediumOrderSum).
-			From(&o).
+			From(o).
 			First(db, &result)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -903,7 +906,7 @@ func TestInter_IndexHint(t *testing.T) {
 		// MySQL: SELECT orders.* FROM orders USE INDEX (idx_customer_id)
 		//        WHERE orders.customer_id = 1
 		err := gsql.Select(o.AllFields()...).
-			From(&o).
+			From(o).
 			UseIndex("idx_customer_id").
 			Where(o.CustomerID.Eq(1)).
 			Find(db, &results)
@@ -921,7 +924,7 @@ func TestInter_IndexHint(t *testing.T) {
 		// MySQL: SELECT orders.* FROM orders FORCE INDEX (idx_status)
 		//        WHERE orders.status = 'completed'
 		err := gsql.Select(o.AllFields()...).
-			From(&o).
+			From(o).
 			ForceIndex("idx_status").
 			Where(o.Status.Eq("completed")).
 			Find(db, &results)
@@ -939,7 +942,7 @@ func TestInter_IndexHint(t *testing.T) {
 		// MySQL: SELECT orders.* FROM orders IGNORE INDEX (idx_customer_id)
 		//        WHERE orders.customer_id = 2
 		err := gsql.Select(o.AllFields()...).
-			From(&o).
+			From(o).
 			IgnoreIndex("idx_customer_id").
 			Where(o.CustomerID.Eq(2)).
 			Find(db, &results)
@@ -957,7 +960,7 @@ func TestInter_IndexHint(t *testing.T) {
 		// MySQL: SELECT orders.* FROM orders USE INDEX (idx_customer_id) IGNORE INDEX (idx_status)
 		//        WHERE orders.customer_id = 1
 		err := gsql.Select(o.AllFields()...).
-			From(&o).
+			From(o).
 			UseIndex("idx_customer_id").
 			IgnoreIndex("idx_status").
 			Where(o.CustomerID.Eq(1)).
@@ -976,9 +979,9 @@ func TestInter_IndexHint(t *testing.T) {
 		// MySQL: SELECT orders.* FROM orders USE INDEX FOR ORDER BY (idx_customer_id)
 		//        ORDER BY orders.customer_id ASC
 		err := gsql.Select(o.AllFields()...).
-			From(&o).
+			From(o).
 			UseIndexForOrderBy("idx_customer_id").
-			Order(o.CustomerID, true).
+			OrderBy(o.CustomerID.Asc()).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -1035,10 +1038,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			CustomerID uint64 `gorm:"column:customer_id"`
 			OrderCount int64  `gorm:"column:order_count"`
 		}
-		err := gsql.Select(
-			o.CustomerID,
-			gsql.COUNT().As("order_count"),
-		).From(&o).
+		err := gsql.
+			Select(
+				o.CustomerID,
+				gsql.COUNT().As("order_count"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Gt(1)).
 			Find(db, &results)
@@ -1051,10 +1056,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 
 		// Also verify ToSQL output
-		sql := gsql.Select(
-			o.CustomerID,
-			gsql.COUNT().As("order_count"),
-		).From(&o).
+		sql := gsql.
+			Select(
+				o.CustomerID,
+				gsql.COUNT().As("order_count"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Gt(1)).
 			ToSQL()
@@ -1078,10 +1085,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			CustomerID uint64  `gorm:"column:customer_id"`
 			Total      float64 `gorm:"column:total"`
 		}
-		err := gsql.Select(
-			o.CustomerID,
-			o.TotalPrice.Sum().As("total"),
-		).From(&o).
+		err := gsql.
+			Select(
+				o.CustomerID,
+				o.TotalPrice.Sum().As("total"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(o.TotalPrice.Sum().Gte(300.0)).
 			Find(db, &results)
@@ -1094,10 +1103,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 
 		// Verify ToSQL output
-		sql := gsql.Select(
-			o.CustomerID,
-			o.TotalPrice.Sum().As("total"),
-		).From(&o).
+		sql := gsql.
+			Select(
+				o.CustomerID,
+				o.TotalPrice.Sum().As("total"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(o.TotalPrice.Sum().Gte(300.0)).
 			ToSQL()
@@ -1121,10 +1132,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			Category string  `gorm:"column:category"`
 			AvgPrice float64 `gorm:"column:avg_price"`
 		}
-		err := gsql.Select(
-			p.Category,
-			p.Price.Avg().As("avg_price"),
-		).From(&p).
+		err := gsql.
+			Select(
+				p.Category,
+				p.Price.Avg().As("avg_price"),
+			).
+			From(p).
 			GroupBy(p.Category).
 			Having(p.Price.Avg().Between(50.0, 2000.0)).
 			Find(db, &results)
@@ -1137,10 +1150,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 
 		// Verify ToSQL output
-		sql := gsql.Select(
-			p.Category,
-			p.Price.Avg().As("avg_price"),
-		).From(&p).
+		sql := gsql.
+			Select(
+				p.Category,
+				p.Price.Avg().As("avg_price"),
+			).
+			From(p).
 			GroupBy(p.Category).
 			Having(p.Price.Avg().Between(50.0, 2000.0)).
 			ToSQL()
@@ -1167,10 +1182,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			CustomerID uint64 `gorm:"column:customer_id"`
 			Cnt        int64  `gorm:"column:cnt"`
 		}
-		err := gsql.Select(
-			o.CustomerID,
-			gsql.COUNT().As("cnt"),
-		).From(&o).
+		err := gsql.
+			Select(
+				o.CustomerID,
+				gsql.COUNT().As("cnt"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Find(db, &results)
 		if err != nil {
@@ -1184,7 +1201,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		sql := gsql.Select(
 			o.CustomerID,
 			gsql.COUNT().As("cnt"),
-		).From(&o).
+		).From(o).
 			GroupBy(o.CustomerID).
 			ToSQL()
 
@@ -1200,10 +1217,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 	// Test: Additional comparison methods
 	t.Run("Additional_Comparisons", func(t *testing.T) {
 		// Test Lt (less than)
-		sqlLt := gsql.Select(
-			o.CustomerID,
-			gsql.COUNT().As("cnt"),
-		).From(&o).
+		sqlLt := gsql.
+			Select(
+				o.CustomerID,
+				gsql.COUNT().As("cnt"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Lt(3)).
 			ToSQL()
@@ -1217,7 +1236,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		sqlLte := gsql.Select(
 			o.CustomerID,
 			gsql.COUNT().As("cnt"),
-		).From(&o).
+		).From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Lte(2)).
 			ToSQL()
@@ -1232,10 +1251,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			CustomerID uint64 `gorm:"column:customer_id"`
 			Cnt        int64  `gorm:"column:cnt"`
 		}
-		err := gsql.Select(
-			o.CustomerID,
-			gsql.COUNT().As("cnt"),
-		).From(&o).
+		err := gsql.
+			Select(
+				o.CustomerID,
+				gsql.COUNT().As("cnt"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Eq(2)).
 			Find(db, &results)
@@ -1247,10 +1268,12 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			t.Errorf("Expected 2 customers with exactly 2 orders, got %d", len(results))
 		}
 
-		sqlEq := gsql.Select(
-			o.CustomerID,
-			gsql.COUNT().As("cnt"),
-		).From(&o).
+		sqlEq := gsql.
+			Select(
+				o.CustomerID,
+				gsql.COUNT().As("cnt"),
+			).
+			From(o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Eq(2)).
 			ToSQL()

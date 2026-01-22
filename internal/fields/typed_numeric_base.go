@@ -1,9 +1,10 @@
-package field
+package fields
 
 import (
 	"fmt"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
 	"github.com/samber/mo"
 )
 
@@ -14,11 +15,11 @@ type pointerExprImpl struct {
 	clause.Expression
 }
 
-func (f pointerExprImpl) IsNull() Expression {
+func (f pointerExprImpl) IsNull() clause.Expression {
 	return clause.Expr{SQL: "? IS NULL", Vars: []any{f.Expression}}
 }
 
-func (f pointerExprImpl) IsNotNull() Expression {
+func (f pointerExprImpl) IsNotNull() clause.Expression {
 	return clause.Expr{SQL: "? IS NOT NULL", Vars: []any{f.Expression}}
 }
 
@@ -30,46 +31,46 @@ type baseComparableImpl[T any] struct {
 	clause.Expression
 }
 
-func (f baseComparableImpl[T]) Eq(value T) Expression {
+func (f baseComparableImpl[T]) Eq(value T) clause.Expression {
 	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, value}}
 }
 
-func (f baseComparableImpl[T]) EqF(other Expression) Expression {
+func (f baseComparableImpl[T]) EqF(other clause.Expression) clause.Expression {
 	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, other}}
 }
 
-func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) Expression {
+func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Eq(value.MustGet())
 }
 
-func (f baseComparableImpl[T]) Not(value T) Expression {
+func (f baseComparableImpl[T]) Not(value T) clause.Expression {
 	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, value}}
 }
 
-func (f baseComparableImpl[T]) NotF(other Expression) Expression {
+func (f baseComparableImpl[T]) NotF(other clause.Expression) clause.Expression {
 	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, other}}
 }
 
-func (f baseComparableImpl[T]) NotOpt(value mo.Option[T]) Expression {
+func (f baseComparableImpl[T]) NotOpt(value mo.Option[T]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Not(value.MustGet())
 }
 
-func (f baseComparableImpl[T]) In(values ...T) Expression {
+func (f baseComparableImpl[T]) In(values ...T) clause.Expression {
 	if len(values) == 0 {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return clause.Expr{SQL: "? IN ?", Vars: []any{f.Expression, values}}
 }
 
-func (f baseComparableImpl[T]) NotIn(values ...T) Expression {
+func (f baseComparableImpl[T]) NotIn(values ...T) clause.Expression {
 	if len(values) == 0 {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return clause.Expr{SQL: "? NOT IN ?", Vars: []any{f.Expression, values}}
 }
@@ -77,77 +78,77 @@ func (f baseComparableImpl[T]) NotIn(values ...T) Expression {
 // ==================== 数值比较操作的通用实现 ====================
 
 // numericComparableImpl 数值类型的比较操作通用实现
-// 适用于 IntExprT, FloatExprT, DecimalExprT
+// 适用于 IntExpr, FloatExpr, DecimalExpr
 // 嵌入 baseComparableImpl 获得基础比较操作，额外添加大于、小于、Between 等操作
 type numericComparableImpl[T any] struct {
 	baseComparableImpl[T]
 }
 
-func (f numericComparableImpl[T]) Gt(value T) Expression {
+func (f numericComparableImpl[T]) Gt(value T) clause.Expression {
 	return clause.Expr{SQL: "? > ?", Vars: []any{f.Expression, value}}
 }
 
-func (f numericComparableImpl[T]) GtOpt(value mo.Option[T]) Expression {
+func (f numericComparableImpl[T]) GtOpt(value mo.Option[T]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Gt(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) GtF(other Expression) Expression {
+func (f numericComparableImpl[T]) GtF(other clause.Expression) clause.Expression {
 	return clause.Expr{SQL: "? > ?", Vars: []any{f.Expression, other}}
 }
 
-func (f numericComparableImpl[T]) Gte(value T) Expression {
+func (f numericComparableImpl[T]) Gte(value T) clause.Expression {
 	return clause.Expr{SQL: "? >= ?", Vars: []any{f.Expression, value}}
 }
 
-func (f numericComparableImpl[T]) GteOpt(value mo.Option[T]) Expression {
+func (f numericComparableImpl[T]) GteOpt(value mo.Option[T]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Gte(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) GteF(other Expression) Expression {
+func (f numericComparableImpl[T]) GteF(other clause.Expression) clause.Expression {
 	return clause.Expr{SQL: "? >= ?", Vars: []any{f.Expression, other}}
 }
 
-func (f numericComparableImpl[T]) Lt(value T) Expression {
+func (f numericComparableImpl[T]) Lt(value T) clause.Expression {
 	return clause.Expr{SQL: "? < ?", Vars: []any{f.Expression, value}}
 }
 
-func (f numericComparableImpl[T]) LtOpt(value mo.Option[T]) Expression {
+func (f numericComparableImpl[T]) LtOpt(value mo.Option[T]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Lt(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) LtF(other Expression) Expression {
+func (f numericComparableImpl[T]) LtF(other clause.Expression) clause.Expression {
 	return clause.Expr{SQL: "? < ?", Vars: []any{f.Expression, other}}
 }
 
-func (f numericComparableImpl[T]) Lte(value T) Expression {
+func (f numericComparableImpl[T]) Lte(value T) clause.Expression {
 	return clause.Expr{SQL: "? <= ?", Vars: []any{f.Expression, value}}
 }
 
-func (f numericComparableImpl[T]) LteOpt(value mo.Option[T]) Expression {
+func (f numericComparableImpl[T]) LteOpt(value mo.Option[T]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Lte(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) LteF(other Expression) Expression {
+func (f numericComparableImpl[T]) LteF(other clause.Expression) clause.Expression {
 	return clause.Expr{SQL: "? <= ?", Vars: []any{f.Expression, other}}
 }
 
-func (f numericComparableImpl[T]) Between(from, to T) Expression {
+func (f numericComparableImpl[T]) Between(from, to T) clause.Expression {
 	return clause.Expr{SQL: "? BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}
 }
 
-func (f numericComparableImpl[T]) NotBetween(from, to T) Expression {
+func (f numericComparableImpl[T]) NotBetween(from, to T) clause.Expression {
 	return clause.Expr{SQL: "? NOT BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}
 }
 
@@ -436,7 +437,7 @@ type patternExprImpl[T any] struct {
 	clause.Expression
 }
 
-func (f patternExprImpl[T]) Like(value T, escape ...byte) Expression {
+func (f patternExprImpl[T]) Like(value T, escape ...byte) clause.Expression {
 	if len(escape) > 0 {
 		return clause.Expr{
 			SQL:  "? LIKE ? ESCAPE ?",
@@ -446,14 +447,14 @@ func (f patternExprImpl[T]) Like(value T, escape ...byte) Expression {
 	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, value}}
 }
 
-func (f patternExprImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) Expression {
+func (f patternExprImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Like(value.MustGet(), escape...)
 }
 
-func (f patternExprImpl[T]) NotLike(value T, escape ...byte) Expression {
+func (f patternExprImpl[T]) NotLike(value T, escape ...byte) clause.Expression {
 	if len(escape) > 0 {
 		return clause.Expr{
 			SQL:  "? NOT LIKE ? ESCAPE ?",
@@ -463,42 +464,42 @@ func (f patternExprImpl[T]) NotLike(value T, escape ...byte) Expression {
 	return clause.Expr{SQL: "? NOT LIKE ?", Vars: []any{f.Expression, value}}
 }
 
-func (f patternExprImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) Expression {
+func (f patternExprImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.NotLike(value.MustGet(), escape...)
 }
 
-func (f patternExprImpl[T]) Contains(value string) Expression {
+func (f patternExprImpl[T]) Contains(value string) clause.Expression {
 	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, "%" + value + "%"}}
 }
 
-func (f patternExprImpl[T]) ContainsOpt(value mo.Option[string]) Expression {
+func (f patternExprImpl[T]) ContainsOpt(value mo.Option[string]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.Contains(value.MustGet())
 }
 
-func (f patternExprImpl[T]) HasPrefix(value string) Expression {
+func (f patternExprImpl[T]) HasPrefix(value string) clause.Expression {
 	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, value + "%"}}
 }
 
-func (f patternExprImpl[T]) HasPrefixOpt(value mo.Option[string]) Expression {
+func (f patternExprImpl[T]) HasPrefixOpt(value mo.Option[string]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.HasPrefix(value.MustGet())
 }
 
-func (f patternExprImpl[T]) HasSuffix(value string) Expression {
+func (f patternExprImpl[T]) HasSuffix(value string) clause.Expression {
 	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, "%" + value}}
 }
 
-func (f patternExprImpl[T]) HasSuffixOpt(value mo.Option[string]) Expression {
+func (f patternExprImpl[T]) HasSuffixOpt(value mo.Option[string]) clause.Expression {
 	if value.IsAbsent() {
-		return emptyExpression
+		return field.EmptyExpression
 	}
 	return f.HasSuffix(value.MustGet())
 }

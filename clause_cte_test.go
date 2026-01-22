@@ -12,10 +12,10 @@ func TestCTEBasic(t *testing.T) {
 	// SELECT * FROM users
 	sql := With("user_summary",
 		Select(Field("id"), Field("name")).
-			From(TableName("users").Ptr()).
+			From(TN("users")).
 			Where(Expr("age > ?", 18)),
 	).Select(Star).
-		From(TableName("users").Ptr()).
+		From(TN("users")).
 		ToSQL()
 
 	t.Logf("CTE Basic SQL:\n%s", sql)
@@ -36,14 +36,14 @@ func TestCTEMultiple(t *testing.T) {
 	// SELECT * FROM combined
 	sql := With("young",
 		Select(Star).
-			From(TableName("users").Ptr()).
+			From(TN("users")).
 			Where(Expr("age < ?", 30)),
 	).And("old",
 		Select(Star).
-			From(TableName("users").Ptr()).
+			From(TN("users")).
 			Where(Expr("age >= ?", 30)),
 	).Select(Star).
-		From(TableName("combined").Ptr()).
+		From(TN("combined")).
 		ToSQL()
 
 	t.Logf("Multiple CTE SQL:\n%s", sql)
@@ -67,10 +67,10 @@ func TestCTEWithColumns(t *testing.T) {
 	// SELECT * FROM users
 	sql := With("user_info",
 		Select(Field("id"), Field("name")).
-			From(TableName("users").Ptr()),
+			From(TN("users")),
 		"user_id", "user_name", // 指定列名
 	).Select(Star).
-		From(TableName("users").Ptr()).
+		From(TN("users")).
 		ToSQL()
 
 	t.Logf("CTE with columns SQL:\n%s", sql)
@@ -91,9 +91,9 @@ func TestCTERecursive(t *testing.T) {
 	// SELECT * FROM numbers
 	sql := WithRecursive("numbers",
 		Select(Lit(1).AsF("n")).
-			From(TableName("dual").Ptr()),
+			From(TN("dual")),
 	).Select(Star).
-		From(TableName("numbers").Ptr()).
+		From(TN("numbers")).
 		ToSQL()
 
 	t.Logf("Recursive CTE SQL:\n%s", sql)
@@ -115,11 +115,11 @@ func TestCTEWithJoin(t *testing.T) {
 	// INNER JOIN active_users au ON o.user_id = au.id
 	sql := With("active_users",
 		Select(Field("id")).
-			From(TableName("users").Ptr()).
+			From(TN("users")).
 			Where(Expr("status = ?", "active")),
 	).Select(Star).
-		From(TableName("orders").Ptr()).
-		Join(InnerJoin(TableName("active_users").Ptr()).
+		From(TN("orders")).
+		Join(InnerJoin(TN("active_users")).
 			On(Expr("orders.user_id = active_users.id"))).
 		ToSQL()
 
@@ -140,9 +140,9 @@ func TestCTEWithJoin(t *testing.T) {
 func TestCTEWithWhere(t *testing.T) {
 	sql := With("summary",
 		Select(Field("id"), Field("total")).
-			From(TableName("orders").Ptr()),
+			From(TN("orders")),
 	).Select(Star).
-		From(TableName("summary").Ptr()).
+		From(TN("summary")).
 		Where(Expr("total > ?", 1000)).
 		ToSQL()
 

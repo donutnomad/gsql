@@ -6,6 +6,7 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // 白名单：允许的时间间隔单位
@@ -98,8 +99,8 @@ var Null field.ExpressionTo = ExprTo{clause.Expr{
 // SELECT RAND() * 100;
 // SELECT RAND(123);
 // SELECT * FROM users ORDER BY RAND() LIMIT 10;
-func RAND() field.FloatExprT[float64] {
-	return field.NewFloatExprT[float64](clause.Expr{SQL: "RAND()"})
+func RAND() fields.FloatExpr[float64] {
+	return fields.NewFloatExpr[float64](clause.Expr{SQL: "RAND()"})
 }
 
 // ==================== 聚合函数 ====================
@@ -111,11 +112,11 @@ func RAND() field.FloatExprT[float64] {
 //	COUNT()           // COUNT(*)
 //	COUNT(id)         // COUNT(id)
 //	COUNT().Gt(5)     // COUNT(*) > 5
-func COUNT(expr ...field.IField) field.IntExprT[int64] {
+func COUNT(expr ...field.IField) fields.IntExpr[int64] {
 	if len(expr) == 0 {
-		return field.NewIntExprT[int64](clause.Expr{SQL: "COUNT(*)"})
+		return fields.NewIntExpr[int64](clause.Expr{SQL: "COUNT(*)"})
 	}
-	return field.NewIntExprT[int64](clause.Expr{
+	return fields.NewIntExpr[int64](clause.Expr{
 		SQL:  "COUNT(?)",
 		Vars: []any{expr[0].ToExpr()},
 	})
@@ -127,8 +128,8 @@ func COUNT(expr ...field.IField) field.IntExprT[int64] {
 //
 //	COUNT_DISTINCT(city)       // COUNT(DISTINCT city)
 //	COUNT_DISTINCT(id).Gt(10)  // COUNT(DISTINCT id) > 10
-func COUNT_DISTINCT(expr field.IField) field.IntExprT[int64] {
-	return field.NewIntExprT[int64](clause.Expr{
+func COUNT_DISTINCT(expr field.IField) fields.IntExpr[int64] {
+	return fields.NewIntExpr[int64](clause.Expr{
 		SQL:  "COUNT(DISTINCT ?)",
 		Vars: []any{expr.ToExpr()},
 	})
@@ -193,15 +194,15 @@ func COUNT_DISTINCT(expr field.IField) field.IntExprT[int64] {
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
 // SELECT user_id, GROUP_CONCAT(product_name) FROM orders GROUP BY user_id;
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
-func GROUP_CONCAT(expr field.Expression, separator ...string) field.TextExpr[string] {
+func GROUP_CONCAT(expr field.Expression, separator ...string) fields.TextExpr[string] {
 	if len(separator) > 0 {
 		// 使用参数化查询代替字符串拼接
-		return field.NewTextExpr[string](clause.Expr{
+		return fields.NewTextExpr[string](clause.Expr{
 			SQL:  "GROUP_CONCAT(? SEPARATOR ?)",
 			Vars: []any{expr, separator[0]},
 		})
 	}
-	return field.NewTextExpr[string](clause.Expr{
+	return fields.NewTextExpr[string](clause.Expr{
 		SQL:  "GROUP_CONCAT(?)",
 		Vars: []any{expr},
 	})
@@ -309,8 +310,8 @@ func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
 // INSERT INTO logs (db_name) VALUES (DATABASE());
 // SELECT DATABASE() as current_db;
 // SELECT * FROM information_schema.tables WHERE table_schema = DATABASE();
-func DATABASE() field.TextExpr[string] {
-	return field.NewTextExpr[string](clause.Expr{SQL: "DATABASE()"})
+func DATABASE() fields.TextExpr[string] {
+	return fields.NewTextExpr[string](clause.Expr{SQL: "DATABASE()"})
 }
 
 // USER 返回当前MySQL用户名和主机名，格式为 'user@host'
@@ -318,8 +319,8 @@ func DATABASE() field.TextExpr[string] {
 // INSERT INTO audit_logs (user) VALUES (USER());
 // SELECT USER() as current_user;
 // SELECT * FROM connections WHERE user = USER();
-func USER() field.TextExpr[string] {
-	return field.NewTextExpr[string](clause.Expr{SQL: "USER()"})
+func USER() fields.TextExpr[string] {
+	return fields.NewTextExpr[string](clause.Expr{SQL: "USER()"})
 }
 
 // CURRENT_USER 返回当前MySQL用户名和主机名，与USER()相同
@@ -327,8 +328,8 @@ func USER() field.TextExpr[string] {
 // SELECT CURRENT_USER;
 // INSERT INTO access_logs (accessed_by) VALUES (CURRENT_USER());
 // SELECT CURRENT_USER() as authenticated_user;
-func CURRENT_USER() field.TextExpr[string] {
-	return field.NewTextExpr[string](clause.Expr{SQL: "CURRENT_USER()"})
+func CURRENT_USER() fields.TextExpr[string] {
+	return fields.NewTextExpr[string](clause.Expr{SQL: "CURRENT_USER()"})
 }
 
 // VERSION 返回MySQL服务器的版本号
@@ -336,8 +337,8 @@ func CURRENT_USER() field.TextExpr[string] {
 // SELECT VERSION() as mysql_version;
 // INSERT INTO system_info (version) VALUES (VERSION());
 // SELECT IF(VERSION() LIKE '8.%', 'MySQL 8', 'Older') as version_check;
-func VERSION() field.TextExpr[string] {
-	return field.NewTextExpr[string](clause.Expr{SQL: "VERSION()"})
+func VERSION() fields.TextExpr[string] {
+	return fields.NewTextExpr[string](clause.Expr{SQL: "VERSION()"})
 }
 
 // UUID 生成一个符合RFC 4122标准的通用唯一标识符（36字符的字符串）
@@ -345,8 +346,8 @@ func VERSION() field.TextExpr[string] {
 // INSERT INTO records (id) VALUES (UUID());
 // SELECT UUID() as unique_id;
 // UPDATE sessions SET session_id = UUID() WHERE session_id IS NULL;
-func UUID() field.TextExpr[string] {
-	return field.NewTextExpr[string](clause.Expr{SQL: "UUID()"})
+func UUID() fields.TextExpr[string] {
+	return fields.NewTextExpr[string](clause.Expr{SQL: "UUID()"})
 }
 
 //// INET_ATON 将点分十进制的IPv4地址转换为整数形式（网络字节序）

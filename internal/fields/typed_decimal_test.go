@@ -1,9 +1,10 @@
-package field
+package fields
 
 import (
 	"testing"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,7 +12,7 @@ import (
 // ==================== 比较操作测试 ====================
 
 func TestDecimalExprT_Eq(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Eq(99.99)
 
 	e, ok := result.(clause.Expr)
@@ -21,7 +22,7 @@ func TestDecimalExprT_Eq(t *testing.T) {
 }
 
 func TestDecimalExprT_EqOpt(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 
 	result := expr.EqOpt(mo.Some(99.99))
 	e, ok := result.(clause.Expr)
@@ -29,11 +30,11 @@ func TestDecimalExprT_EqOpt(t *testing.T) {
 	assert.Equal(t, "? = ?", e.SQL)
 
 	result2 := expr.EqOpt(mo.None[float64]())
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestDecimalExprT_Gt(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Gt(100.00)
 
 	e, ok := result.(clause.Expr)
@@ -42,7 +43,7 @@ func TestDecimalExprT_Gt(t *testing.T) {
 }
 
 func TestDecimalExprT_In(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.In(9.99, 19.99, 29.99)
 
 	e, ok := result.(clause.Expr)
@@ -50,11 +51,11 @@ func TestDecimalExprT_In(t *testing.T) {
 	assert.Equal(t, "? IN ?", e.SQL)
 
 	result2 := expr.In()
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestDecimalExprT_Between(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Between(10.00, 100.00)
 
 	e, ok := result.(clause.Expr)
@@ -65,7 +66,7 @@ func TestDecimalExprT_Between(t *testing.T) {
 // ==================== 算术运算测试 ====================
 
 func TestDecimalExprT_Add(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Add(10.00)
 
 	e := result.Gt(100.00)
@@ -74,7 +75,7 @@ func TestDecimalExprT_Add(t *testing.T) {
 }
 
 func TestDecimalExprT_Sub(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Sub(5.00)
 
 	e := result.Gte(0.00)
@@ -83,7 +84,7 @@ func TestDecimalExprT_Sub(t *testing.T) {
 }
 
 func TestDecimalExprT_Mul(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "quantity", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "quantity", Vars: nil})
 	result := expr.Mul(9.99)
 
 	e := result.Lte(1000.00)
@@ -92,7 +93,7 @@ func TestDecimalExprT_Mul(t *testing.T) {
 }
 
 func TestDecimalExprT_Div(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "total", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "total", Vars: nil})
 	result := expr.Div(2.00)
 
 	e := result.Gt(0.00)
@@ -101,7 +102,7 @@ func TestDecimalExprT_Div(t *testing.T) {
 }
 
 func TestDecimalExprT_Neg(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "balance", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "balance", Vars: nil})
 	result := expr.Neg()
 
 	e := result.Lt(0.00)
@@ -112,7 +113,7 @@ func TestDecimalExprT_Neg(t *testing.T) {
 // ==================== 数学函数测试 ====================
 
 func TestDecimalExprT_Abs(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "balance", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "balance", Vars: nil})
 	result := expr.Abs()
 
 	e := result.Gte(0.00)
@@ -121,7 +122,7 @@ func TestDecimalExprT_Abs(t *testing.T) {
 }
 
 func TestDecimalExprT_Sign(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "balance", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "balance", Vars: nil})
 	result := expr.Sign()
 
 	e := result.In(-1, 0, 1)
@@ -130,7 +131,7 @@ func TestDecimalExprT_Sign(t *testing.T) {
 }
 
 func TestDecimalExprT_Ceil(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Ceil()
 
 	e := result.Gte(int64(0))
@@ -139,7 +140,7 @@ func TestDecimalExprT_Ceil(t *testing.T) {
 }
 
 func TestDecimalExprT_Floor(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Floor()
 
 	e := result.Gte(int64(0))
@@ -148,7 +149,7 @@ func TestDecimalExprT_Floor(t *testing.T) {
 }
 
 func TestDecimalExprT_Round(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 
 	result := expr.Round()
 	e := result.Gte(0.00)
@@ -162,7 +163,7 @@ func TestDecimalExprT_Round(t *testing.T) {
 }
 
 func TestDecimalExprT_Truncate(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Truncate(2)
 
 	e := result.Gte(0.00)
@@ -171,7 +172,7 @@ func TestDecimalExprT_Truncate(t *testing.T) {
 }
 
 func TestDecimalExprT_Pow(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "base", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "base", Vars: nil})
 	result := expr.Pow(2)
 
 	e := result.Gt(0.00)
@@ -180,7 +181,7 @@ func TestDecimalExprT_Pow(t *testing.T) {
 }
 
 func TestDecimalExprT_Sqrt(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "area", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "area", Vars: nil})
 	result := expr.Sqrt()
 
 	e := result.Gte(0.00)
@@ -189,7 +190,7 @@ func TestDecimalExprT_Sqrt(t *testing.T) {
 }
 
 func TestDecimalExprT_Mod(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "total", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "total", Vars: nil})
 	result := expr.Mod(100.00)
 
 	e := result.Lt(100.00)
@@ -200,7 +201,7 @@ func TestDecimalExprT_Mod(t *testing.T) {
 // ==================== 类型转换测试 ====================
 
 func TestDecimalExprT_Cast(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Cast("SIGNED")
 
 	e, ok := result.(clause.Expr)
@@ -209,7 +210,7 @@ func TestDecimalExprT_Cast(t *testing.T) {
 }
 
 func TestDecimalExprT_CastSigned(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.CastSigned()
 
 	e := result.Gte(int64(0))
@@ -218,7 +219,7 @@ func TestDecimalExprT_CastSigned(t *testing.T) {
 }
 
 func TestDecimalExprT_CastUnsigned(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.CastUnsigned()
 
 	e := result.Gte(uint64(0))
@@ -227,7 +228,7 @@ func TestDecimalExprT_CastUnsigned(t *testing.T) {
 }
 
 func TestDecimalExprT_CastDecimal(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "value", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "value", Vars: nil})
 	result := expr.CastDecimal(10, 2)
 
 	e := result.Gte(0.00)
@@ -236,7 +237,7 @@ func TestDecimalExprT_CastDecimal(t *testing.T) {
 }
 
 func TestDecimalExprT_CastFloat(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.CastFloat()
 
 	e := result.Gt(0.0)
@@ -245,7 +246,7 @@ func TestDecimalExprT_CastFloat(t *testing.T) {
 }
 
 func TestDecimalExprT_CastChar(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.CastChar()
 
 	e := result.Like("99%")
@@ -256,7 +257,7 @@ func TestDecimalExprT_CastChar(t *testing.T) {
 // ==================== 条件函数测试 ====================
 
 func TestDecimalExprT_IfNull(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.IfNull(0.00)
 
 	e := result.Gte(0.00)
@@ -265,7 +266,7 @@ func TestDecimalExprT_IfNull(t *testing.T) {
 }
 
 func TestDecimalExprT_Coalesce(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Coalesce(0.00)
 
 	e := result.Gte(0.00)
@@ -274,7 +275,7 @@ func TestDecimalExprT_Coalesce(t *testing.T) {
 }
 
 func TestDecimalExprT_Nullif(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Nullif(0.00)
 
 	e := result.IsNull()
@@ -283,7 +284,7 @@ func TestDecimalExprT_Nullif(t *testing.T) {
 }
 
 func TestDecimalExprT_Greatest(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "a", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "a", Vars: nil})
 	result := expr.Greatest(10.00, 20.00)
 
 	e := result.Eq(20.00)
@@ -292,7 +293,7 @@ func TestDecimalExprT_Greatest(t *testing.T) {
 }
 
 func TestDecimalExprT_Least(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "a", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "a", Vars: nil})
 	result := expr.Least(10.00, 20.00)
 
 	e := result.Eq(10.00)
@@ -303,7 +304,7 @@ func TestDecimalExprT_Least(t *testing.T) {
 // ==================== 格式化测试 ====================
 
 func TestDecimalExprT_Format(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Format(2)
 
 	e := result.Like("1,234%")
@@ -314,7 +315,7 @@ func TestDecimalExprT_Format(t *testing.T) {
 // ==================== 空值判断测试 ====================
 
 func TestDecimalExprT_IsNull(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.IsNull()
 
 	e, ok := result.(clause.Expr)
@@ -323,7 +324,7 @@ func TestDecimalExprT_IsNull(t *testing.T) {
 }
 
 func TestDecimalExprT_IsNotNull(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.IsNotNull()
 
 	e, ok := result.(clause.Expr)
@@ -334,7 +335,7 @@ func TestDecimalExprT_IsNotNull(t *testing.T) {
 // ==================== 链式调用测试 ====================
 
 func TestDecimalExprT_Chaining(t *testing.T) {
-	expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 
 	// 链式调用: (price + tax) * quantity
 	result := expr.Add(10.00).Mul(2)
@@ -343,7 +344,7 @@ func TestDecimalExprT_Chaining(t *testing.T) {
 	assert.True(t, ok)
 
 	// 链式调用: ROUND(ABS(balance), 2)
-	balance := NewDecimalExprT[float64](clause.Expr{SQL: "balance", Vars: nil})
+	balance := NewDecimalExpr[float64](clause.Expr{SQL: "balance", Vars: nil})
 	result2 := balance.Abs().Round(2)
 	e2 := result2.Gte(0.00)
 	_, ok = e2.(clause.Expr)
@@ -354,17 +355,17 @@ func TestDecimalExprT_Chaining(t *testing.T) {
 
 func TestDecimalExprT_TypeSafety(t *testing.T) {
 	// float64 类型 (常用)
-	f64Expr := NewDecimalExprT[float64](clause.Expr{SQL: "price", Vars: nil})
+	f64Expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	_ = f64Expr.Eq(99.99)
 	_ = f64Expr.In(9.99, 19.99, 29.99)
 	_ = f64Expr.Between(0.00, 100.00)
 
 	// float32 类型
-	f32Expr := NewDecimalExprT[float32](clause.Expr{SQL: "small_price", Vars: nil})
+	f32Expr := NewDecimalExpr[float32](clause.Expr{SQL: "small_price", Vars: nil})
 	_ = f32Expr.Eq(float32(9.99))
 	_ = f32Expr.Gte(float32(0))
 
 	// string 类型 (用于自定义 Decimal 类型如 shopspring/decimal)
-	strExpr := NewDecimalExprT[string](clause.Expr{SQL: "big_decimal", Vars: nil})
+	strExpr := NewDecimalExpr[string](clause.Expr{SQL: "big_decimal", Vars: nil})
 	_ = strExpr.Eq("123456789.123456789")
 }

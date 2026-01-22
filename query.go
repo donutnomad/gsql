@@ -36,7 +36,7 @@ func (b *baseQueryBuilder) Select(fields ...field.IField) *baseQueryBuilder {
 	return b
 }
 
-func (b *baseQueryBuilder) From(table interface{ TableName() string }) *QueryBuilder {
+func (b *baseQueryBuilder) From(table ITableName) *QueryBuilder {
 	return &QueryBuilder{
 		selects: b.selects,
 		from:    table,
@@ -53,7 +53,7 @@ func (b *QueryBuilder) Join(clauses ...JoinClause) *QueryBuilder {
 	return b
 }
 
-func (b *QueryBuilder) Where(exprs ...field.Expression) *QueryBuilder {
+func (b *QueryBuilder) Where(exprs ...clause.Expression) *QueryBuilder {
 	b.as().Where(exprs...)
 	return b
 }
@@ -94,12 +94,12 @@ func (b *QueryBuilder) OrderBy(fields ...FieldOrder) *QueryBuilder {
 }
 
 // GroupBy -------- group by / having --------
-func (b *QueryBuilder) GroupBy(cols ...field.IField) *QueryBuilder {
+func (b *QueryBuilder) GroupBy(cols ...clause.Expression) *QueryBuilder {
 	b.as().GroupBy(cols...)
 	return b
 }
 
-func (b *QueryBuilder) Having(exprs ...field.Expression) *QueryBuilder {
+func (b *QueryBuilder) Having(exprs ...clause.Expression) *QueryBuilder {
 	b.as().Having(exprs...)
 	return b
 }
@@ -126,6 +126,7 @@ func (b *QueryBuilder) SkipLocked() *QueryBuilder {
 }
 
 // -------- index hint / partition on FROM --------
+
 func (b *QueryBuilder) Partition(parts ...string) *QueryBuilder {
 	b.as().Partition(parts...)
 	return b

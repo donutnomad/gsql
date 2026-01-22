@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	gsql "github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== CTE Tests ====================
@@ -156,7 +157,7 @@ func TestAdv_RowNumber(t *testing.T) {
 	// MySQL: ROW_NUMBER() OVER (PARTITION BY sales_records.region ORDER BY sales_records.amount ASC) AS row_num
 	rn := gsql.RowNumber().
 		PartitionBy(s.Region).
-		OrderBy(s.Amount, true).
+		OrderBy(s.Amount.Desc()).
 		AsF("row_num")
 
 	type Result struct {
@@ -212,12 +213,12 @@ func TestAdv_RankDenseRank(t *testing.T) {
 
 	// RANK()
 	rank := gsql.Rank().
-		OrderBy(s.Amount, true).
+		OrderBy(s.Amount.Desc()).
 		AsF("rank_num")
 
 	// DENSE_RANK()
 	denseRank := gsql.DenseRank().
-		OrderBy(s.Amount, true).
+		OrderBy(s.Amount.Desc()).
 		AsF("dense_rank_num")
 
 	type Result struct {
@@ -258,7 +259,7 @@ func TestAdv_NthValue(t *testing.T) {
 
 	// ROW_NUMBER with ORDER BY to get ranked results
 	rn := gsql.RowNumber().
-		OrderBy(s.Amount, true). // DESC
+		OrderBy(s.Amount.Desc()). // DESC
 		AsF("rank_num")
 
 	type Result struct {
@@ -729,7 +730,7 @@ func TestAdv_Exist(t *testing.T) {
 	// Initially no products
 	// MySQL: SELECT EXISTS(SELECT 1 FROM products WHERE products.category = 'Electronics')
 	exists, err := gsql.Select(p.ID).
-		From(&p).
+		From(p).
 		Where(p.Category.Eq("Electronics")).
 		Exist(db)
 
@@ -821,15 +822,17 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 		derivedTable := gsql.DefineTable[any, CustomerOrderCount]("sub", CustomerOrderCount{}, subquery)
 
 		// 4. Use typed column from derived table
-		orderCount := field.IntColumn("order_count").From(&derivedTable)
+		orderCount := fields.IntColumn("order_count").From(&derivedTable)
 		customerID := field.NewComparable[uint64]("sub", "customer_id")
 
 		// 5. Build main query with typed column comparison
 		var results []CustomerOrderCount
-		err := gsql.Select(
-			customerID,
-			orderCount,
-		).From(&derivedTable).
+		err := gsql.
+			Select(
+				customerID,
+				orderCount,
+			).
+			From(&derivedTable).
 			Where(orderCount.Gt(1)).
 			Find(db, &results)
 
@@ -863,7 +866,7 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 			GroupBy(o.CustomerID)
 
 		derivedTable := gsql.DefineTable[any, CustomerOrderCount]("sub", CustomerOrderCount{}, subquery)
-		orderCount := field.IntColumn("order_count").From(&derivedTable)
+		orderCount := fields.IntColumn("order_count").From(&derivedTable)
 
 		sql := gsql.Select(
 			gsql.Field("customer_id"),

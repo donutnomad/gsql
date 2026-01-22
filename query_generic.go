@@ -9,6 +9,7 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
@@ -19,14 +20,11 @@ import (
 type ScopeFuncG[Model any] func(b *QueryBuilderG[Model])
 type Builder = QueryBuilderG[any]
 type ScopeFunc func(builder *Builder)
-type FieldOrder struct {
-	Field field.IField
-	Asc   bool
-}
+type FieldOrder = types.OrderItem
 
 type QueryBuilderG[T any] struct {
 	selects  []field.IField
-	from     interface{ TableName() string }
+	from     ITableName
 	joins    []JoinClause
 	wheres   []clause.Expression
 	orders   []order
@@ -35,7 +33,7 @@ type QueryBuilderG[T any] struct {
 	unscoped bool
 	distinct bool
 	// group by / having
-	groupBy []field.IField
+	groupBy []clause.Expression
 	having  []clause.Expression
 	// locking (FOR UPDATE/SHARE ... NOWAIT/SKIP LOCKED)
 	locking *clause.Locking
@@ -148,13 +146,13 @@ func (b *QueryBuilderG[T]) Clone() *QueryBuilderG[T] {
 }
 
 func (b *QueryBuilderG[T]) Order(column field.IField, asc ...bool) *QueryBuilderG[T] {
-	b.orders = append(b.orders, order{column, utils.Optional(asc, true)})
+	b.orders = append(b.orders, order{column.ToExpr(), utils.Optional(asc, true)})
 	return b
 }
 
 func (b *QueryBuilderG[T]) OrderBy(fields ...FieldOrder) *QueryBuilderG[T] {
 	for _, item := range fields {
-		b.orders = append(b.orders, order{item.Field, item.Asc})
+		b.orders = append(b.orders, order{item.Expr, item.Asc})
 	}
 	return b
 }
@@ -178,13 +176,13 @@ func (b *QueryBuilderG[T]) Limit(limit int) *QueryBuilderG[T] {
 }
 
 // GroupBy adds GROUP BY columns
-func (b *QueryBuilderG[T]) GroupBy(cols ...field.IField) *QueryBuilderG[T] {
+func (b *QueryBuilderG[T]) GroupBy(cols ...clause.Expression) *QueryBuilderG[T] {
 	b.groupBy = append(b.groupBy, cols...)
 	return b
 }
 
 // Having adds HAVING expressions
-func (b *QueryBuilderG[T]) Having(exprs ...field.Expression) *QueryBuilderG[T] {
+func (b *QueryBuilderG[T]) Having(exprs ...clause.Expression) *QueryBuilderG[T] {
 	b.having = append(b.having, exprs...)
 	return b
 }
@@ -419,9 +417,8 @@ func (b *QueryBuilderG[T]) AsF(asName ...string) field.IField {
 		//} else {
 		//	panic("")
 		//}
-	} else {
-		b.selects = b.selects[0:1]
 	}
+	b.selects = b.selects[0:1]
 	return FieldExpr(b.ToExpr(), utils.Optional(asName, ""))
 }
 
@@ -540,15 +537,8 @@ func (b *QueryBuilderG[T]) buildStmt(stmt *Statement, quote func(field string) s
 	}
 	var orderBy clause.OrderBy
 	for _, order := range b.orders {
-		c := order.field
-		if c.IsExpr() {
-			continue
-		}
 		orderBy.Columns = append(orderBy.Columns, clause.OrderByColumn{
-			Column: clause.Column{
-				Name: c.FullName(),
-				Raw:  true,
-			},
+			Expr: order.field,
 			Desc: !order.asc,
 		})
 	}
@@ -557,14 +547,7 @@ func (b *QueryBuilderG[T]) buildStmt(stmt *Statement, quote func(field string) s
 	}
 	// GROUP BY / HAVING
 	if len(b.groupBy) > 0 || len(b.having) > 0 {
-		var cols []clause.Column
-		if len(b.groupBy) > 0 {
-			cols = make([]clause.Column, 0, len(b.groupBy))
-			for _, gb := range b.groupBy {
-				cols = append(cols, clause.Column{Name: gb.FullName(), Raw: true})
-			}
-		}
-		stmt.AddClause(clause.GroupBy{Columns: cols, Having: b.having})
+		stmt.AddClause(clause.GroupBy{Columns: b.groupBy, Having: b.having})
 	}
 	// FOR locking
 	if b.locking != nil {

@@ -204,6 +204,12 @@ func ifieldToBase(field IField) Base {
 	return base
 }
 
+// IFieldToBase 将 IField 转换为 Base
+// 用于 internal/fields 包中创建类型化字段
+func IFieldToBase(f IField) Base {
+	return ifieldToBase(f)
+}
+
 // TODO: 增加一个Blob类型(支持比较 + LIKE(字符串操作))
 // TODO: 增加一个空间类型（不支持比较)
 

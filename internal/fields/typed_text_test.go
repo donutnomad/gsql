@@ -1,9 +1,10 @@
-package field
+package fields
 
 import (
 	"testing"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +42,7 @@ func TestTextExpr_LikeOpt(t *testing.T) {
 
 	// 无值时返回空表达式
 	result2 := expr.LikeOpt(mo.None[string]())
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_NotLike(t *testing.T) {
@@ -73,7 +74,7 @@ func TestTextExpr_ContainsOpt(t *testing.T) {
 	assert.Equal(t, "%test%", e.Vars[1])
 
 	result2 := expr.ContainsOpt(mo.None[string]())
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_HasPrefix(t *testing.T) {
@@ -95,7 +96,7 @@ func TestTextExpr_HasPrefixOpt(t *testing.T) {
 	assert.Equal(t, "PRE_%", e.Vars[1])
 
 	result2 := expr.HasPrefixOpt(mo.None[string]())
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_HasSuffix(t *testing.T) {
@@ -117,7 +118,7 @@ func TestTextExpr_HasSuffixOpt(t *testing.T) {
 	assert.Equal(t, "%.txt", e.Vars[1])
 
 	result2 := expr.HasSuffixOpt(mo.None[string]())
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_Eq(t *testing.T) {
@@ -139,7 +140,7 @@ func TestTextExpr_EqOpt(t *testing.T) {
 	assert.Equal(t, "? = ?", e.SQL)
 
 	result2 := expr.EqOpt(mo.None[string]())
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_Not(t *testing.T) {
@@ -162,7 +163,7 @@ func TestTextExpr_In(t *testing.T) {
 
 	// 空列表返回空表达式
 	result2 := expr.In()
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_NotIn(t *testing.T) {
@@ -175,7 +176,7 @@ func TestTextExpr_NotIn(t *testing.T) {
 
 	// 空列表返回空表达式
 	result2 := expr.NotIn()
-	assert.Equal(t, emptyExpression, result2)
+	assert.Equal(t, field.EmptyExpression, result2)
 }
 
 func TestTextExpr_IsNull(t *testing.T) {

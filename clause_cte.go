@@ -5,7 +5,6 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// CTEDefinition 表示单个 CTE 定义
 type CTEDefinition struct {
 	Name    string
 	Columns []string // 可选的列名列表
