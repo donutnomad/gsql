@@ -62,6 +62,17 @@ func (e JsonExpr) Unquote() TextExpr[string] {
 	})
 }
 
+// Quote 为 JSON 值添加引号，使其成为有效的 JSON 字符串值 (JSON_QUOTE)
+// SELECT JSON_QUOTE('Hello World');
+// SELECT JSON_QUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
+// 示例: gsql.AsJson(u.Profile).Extract("$.name").Quote()
+func (e JsonExpr) Quote() TextExpr[string] {
+	return NewTextExpr[string](clause.Expr{
+		SQL:  "JSON_QUOTE(?)",
+		Vars: []any{e.Expression},
+	})
+}
+
 // Keys 返回 JSON 对象的键 (JSON_KEYS)
 // SELECT JSON_KEYS('{"a":1,"b":2}');
 // SELECT JSON_KEYS('{"a":{"x":1,"y":2},"b":3}', '$.a');
