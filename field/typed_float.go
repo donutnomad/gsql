@@ -280,3 +280,45 @@ func (e FloatExprT[T]) Least(values ...any) FloatExprT[T] {
 func (e FloatExprT[T]) Format(decimals int) TextExpr[string] {
 	return NewTextExpr[string](e.formatExpr(decimals))
 }
+
+// ==================== 聚合函数 ====================
+
+// Sum 计算数值的总和 (SUM)
+// SELECT SUM(price) FROM products;
+// SELECT category, SUM(amount) FROM orders GROUP BY category;
+func (e FloatExprT[T]) Sum() FloatExprT[T] {
+	return NewFloatExprT[T](clause.Expr{
+		SQL:  "SUM(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Avg 计算数值的平均值 (AVG)
+// SELECT AVG(price) FROM products;
+// SELECT category, AVG(rating) FROM reviews GROUP BY category;
+func (e FloatExprT[T]) Avg() FloatExprT[T] {
+	return NewFloatExprT[T](clause.Expr{
+		SQL:  "AVG(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Max 返回最大值 (MAX)
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(temperature) FROM readings GROUP BY category;
+func (e FloatExprT[T]) Max() FloatExprT[T] {
+	return NewFloatExprT[T](clause.Expr{
+		SQL:  "MAX(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Min 返回最小值 (MIN)
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(temperature) FROM readings GROUP BY category;
+func (e FloatExprT[T]) Min() FloatExprT[T] {
+	return NewFloatExprT[T](clause.Expr{
+		SQL:  "MIN(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}

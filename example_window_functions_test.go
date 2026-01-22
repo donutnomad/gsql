@@ -92,7 +92,7 @@ func TestDD(t *testing.T) {
 	fmt.Println(b.SQL.String())
 	fmt.Println(b.Vars)
 	f := field.NewComparableFrom[string](
-		gsql.JSON_EXTRACT(bookF, "$.name").AsF(),
+		gsql.JSON_EXTRACT(bookF, "$.name").As(""),
 	)
 	_ = f
 	f1 := field.NewComparableFrom[string](
@@ -100,10 +100,7 @@ func TestDD(t *testing.T) {
 	)
 	_ = f1
 	s := gsql.Select().From(gsql.TN("books")).Where(
-		gsql.Eq(
-			gsql.JSON_EXTRACT(bookF, "$.name"),
-			gsql.Lit("2"),
-		),
+		gsql.JSON_EXTRACT(bookF, "$.name").Eq("2"),
 	).ToSQL()
 	fmt.Println(s)
 

@@ -101,8 +101,8 @@ type EmployeeSchemaType struct {
 	Email      field.TextExprField[string]
 	Department field.TextExprField[string]
 	Salary     field.FloatExprField[float64]
-	HireDate   field.Comparable[time.Time]
-	BirthDate  field.Comparable[time.Time]
+	HireDate   field.DateTimeExprField[time.Time]
+	BirthDate  field.DateTimeExprField[time.Time]
 	IsActive   field.Comparable[bool]
 	fieldType  Employee
 	alias      string
@@ -171,8 +171,8 @@ var EmployeeSchema = EmployeeSchemaType{
 	Email:      field.NewTextExprField[string]("employees", "email", field.FlagIndex),
 	Department: field.NewTextExprField[string]("employees", "department"),
 	Salary:     field.NewFloatExprField[float64]("employees", "salary"),
-	HireDate:   field.NewComparable[time.Time]("employees", "hire_date"),
-	BirthDate:  field.NewComparable[time.Time]("employees", "birth_date"),
+	HireDate:   field.NewDateTimeExprField[time.Time]("employees", "hire_date"),
+	BirthDate:  field.NewDateTimeExprField[time.Time]("employees", "birth_date"),
 	IsActive:   field.NewComparable[bool]("employees", "is_active"),
 	fieldType:  Employee{},
 }

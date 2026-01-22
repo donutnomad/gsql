@@ -19,12 +19,12 @@ type JsonInput interface {
 // 支持作为 JSON 函数的输入参数，提供类型安全
 // 支持链式调用 JSON 操作方法
 type JsonExpr struct {
-	numericExprBase // 复用比较操作（JSON 值也可以比较）
+	baseComparableImpl[string] // 复用比较操作（JSON 值也可以比较）
 }
 
 // NewJsonExpr 创建一个新的 JsonExpr 实例
 func NewJsonExpr(expr clause.Expression) JsonExpr {
-	return JsonExpr{numericExprBase{Expression: expr}}
+	return JsonExpr{baseComparableImpl[string]{Expression: expr}}
 }
 
 // jsonInput 实现 JsonInput 接口
@@ -57,8 +57,8 @@ func (e JsonExpr) Extract(paths ...string) JsonExpr {
 // SELECT JSON_UNQUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
 // 示例: gsql.AsJson(u.Profile).Extract("$.name").Unquote()
 // 独立函数: gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.name"))
-func (e JsonExpr) Unquote() StringExpr {
-	return NewStringExpr(clause.Expr{
+func (e JsonExpr) Unquote() TextExpr[string] {
+	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_UNQUOTE(?)",
 		Vars: []any{e.Expression},
 	})
@@ -87,14 +87,14 @@ func (e JsonExpr) Keys(path ...string) JsonExpr {
 // SELECT JSON_LENGTH('{"a":1,"b":2}');
 // 示例: gsql.AsJson(u.Profile).Length("$.skills")
 // 独立函数: gsql.JSON_LENGTH(gsql.AsJson(u.Profile), "$.skills")
-func (e JsonExpr) Length(path ...string) IntExpr {
+func (e JsonExpr) Length(path ...string) IntExprT[int64] {
 	if len(path) > 0 {
-		return NewIntExpr(clause.Expr{
+		return NewIntExprT[int64](clause.Expr{
 			SQL:  "JSON_LENGTH(?, ?)",
 			Vars: []any{e.Expression, path[0]},
 		})
 	}
-	return NewIntExpr(clause.Expr{
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_LENGTH(?)",
 		Vars: []any{e.Expression},
 	})
@@ -105,14 +105,14 @@ func (e JsonExpr) Length(path ...string) IntExpr {
 // SELECT JSON_CONTAINS('[1,2,3]', '2');
 // 示例: gsql.AsJson(u.Profile).Contains(gsql.JsonLit(`"go"`), "$.skills")
 // 独立函数: gsql.JSON_CONTAINS(gsql.AsJson(u.Profile), gsql.JsonLit(`"go"`), "$.skills")
-func (e JsonExpr) Contains(candidate JsonInput, path ...string) IntExpr {
+func (e JsonExpr) Contains(candidate JsonInput, path ...string) IntExprT[int64] {
 	if len(path) > 0 {
-		return NewIntExpr(clause.Expr{
+		return NewIntExprT[int64](clause.Expr{
 			SQL:  "JSON_CONTAINS(?, ?, ?)",
 			Vars: []any{e.Expression, candidate, path[0]},
 		})
 	}
-	return NewIntExpr(clause.Expr{
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_CONTAINS(?, ?)",
 		Vars: []any{e.Expression, candidate},
 	})
@@ -124,7 +124,7 @@ func (e JsonExpr) Contains(candidate JsonInput, path ...string) IntExpr {
 // mode: 'one' 或 'all'
 // 示例: gsql.AsJson(u.Profile).ContainsPath("one", "$.name", "$.age")
 // 独立函数: gsql.JSON_CONTAINS_PATH(gsql.AsJson(u.Profile), "one", "$.name", "$.age")
-func (e JsonExpr) ContainsPath(mode string, paths ...string) IntExpr {
+func (e JsonExpr) ContainsPath(mode string, paths ...string) IntExprT[int64] {
 	vars := make([]any, 0, len(paths)+2)
 	placeholders := make([]string, 0, len(paths)+2)
 	vars = append(vars, e.Expression, mode)
@@ -133,7 +133,7 @@ func (e JsonExpr) ContainsPath(mode string, paths ...string) IntExpr {
 		placeholders = append(placeholders, "?")
 		vars = append(vars, path)
 	}
-	return NewIntExpr(clause.Expr{
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_CONTAINS_PATH(" + strings.Join(placeholders, ", ") + ")",
 		Vars: vars,
 	})
@@ -145,8 +145,8 @@ func (e JsonExpr) ContainsPath(mode string, paths ...string) IntExpr {
 // 返回: OBJECT, ARRAY, INTEGER, DOUBLE, STRING, BOOLEAN, NULL
 // 示例: gsql.AsJson(u.Profile).Type()
 // 独立函数: gsql.JSON_TYPE(gsql.AsJson(u.Profile))
-func (e JsonExpr) Type() StringExpr {
-	return NewStringExpr(clause.Expr{
+func (e JsonExpr) Type() TextExpr[string] {
+	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_TYPE(?)",
 		Vars: []any{e.Expression},
 	})
@@ -157,8 +157,8 @@ func (e JsonExpr) Type() StringExpr {
 // SELECT JSON_DEPTH('[1,[2,[3]]]');
 // 示例: gsql.AsJson(u.Profile).Depth()
 // 独立函数: gsql.JSON_DEPTH(gsql.AsJson(u.Profile))
-func (e JsonExpr) Depth() IntExpr {
-	return NewIntExpr(clause.Expr{
+func (e JsonExpr) Depth() IntExprT[int64] {
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_DEPTH(?)",
 		Vars: []any{e.Expression},
 	})
@@ -169,8 +169,8 @@ func (e JsonExpr) Depth() IntExpr {
 // SELECT JSON_VALID('invalid json');
 // 示例: gsql.AsJson(u.Profile).Valid()
 // 独立函数: gsql.JSON_VALID(gsql.AsJson(u.Profile))
-func (e JsonExpr) Valid() IntExpr {
-	return NewIntExpr(clause.Expr{
+func (e JsonExpr) Valid() IntExprT[int64] {
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_VALID(?)",
 		Vars: []any{e.Expression},
 	})
@@ -180,8 +180,8 @@ func (e JsonExpr) Valid() IntExpr {
 // SELECT JSON_PRETTY('{"a":1,"b":2}');
 // 示例: gsql.AsJson(u.Profile).Pretty()
 // 独立函数: gsql.JSON_PRETTY(gsql.AsJson(u.Profile))
-func (e JsonExpr) Pretty() StringExpr {
-	return NewStringExpr(clause.Expr{
+func (e JsonExpr) Pretty() TextExpr[string] {
+	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_PRETTY(?)",
 		Vars: []any{e.Expression},
 	})
@@ -192,8 +192,8 @@ func (e JsonExpr) Pretty() StringExpr {
 // SELECT JSON_STORAGE_SIZE('[1,2,3,4,5]');
 // 示例: gsql.AsJson(u.Profile).StorageSize()
 // 独立函数: gsql.JSON_STORAGE_SIZE(gsql.AsJson(u.Profile))
-func (e JsonExpr) StorageSize() IntExpr {
-	return NewIntExpr(clause.Expr{
+func (e JsonExpr) StorageSize() IntExprT[int64] {
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_STORAGE_SIZE(?)",
 		Vars: []any{e.Expression},
 	})
@@ -203,8 +203,8 @@ func (e JsonExpr) StorageSize() IntExpr {
 // SELECT JSON_STORAGE_FREE(data) FROM users;
 // 示例: gsql.AsJson(u.Profile).StorageFree()
 // 独立函数: gsql.JSON_STORAGE_FREE(gsql.AsJson(u.Profile))
-func (e JsonExpr) StorageFree() IntExpr {
-	return NewIntExpr(clause.Expr{
+func (e JsonExpr) StorageFree() IntExprT[int64] {
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_STORAGE_FREE(?)",
 		Vars: []any{e.Expression},
 	})
@@ -216,14 +216,14 @@ func (e JsonExpr) StorageFree() IntExpr {
 // mode: 'one' 或 'all'
 // 示例: gsql.AsJson(u.Profile).Search("one", "abc")
 // 独立函数: gsql.JSON_SEARCH(gsql.AsJson(u.Profile), "one", "abc")
-func (e JsonExpr) Search(mode string, searchStr any, escapePath ...any) StringExpr {
+func (e JsonExpr) Search(mode string, searchStr any, escapePath ...any) TextExpr[string] {
 	vars := []any{e.Expression, mode, searchStr}
 	placeholders := []string{"?", "?", "?"}
 	for _, ep := range escapePath {
 		placeholders = append(placeholders, "?")
 		vars = append(vars, ep)
 	}
-	return NewStringExpr(clause.Expr{
+	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_SEARCH(" + strings.Join(placeholders, ", ") + ")",
 		Vars: vars,
 	})
@@ -345,8 +345,8 @@ func (e JsonExpr) MergePatch(others ...JsonInput) JsonExpr {
 // SELECT JSON_OVERLAPS('[1,3,5]', '[2,3,4]');
 // SELECT JSON_OVERLAPS('{"a":1}', '{"a":1,"b":2}');
 // 示例: gsql.AsJson(u.Tags).Overlaps(gsql.JsonLit(`["go","python"]`))
-func (e JsonExpr) Overlaps(other JsonInput) IntExpr {
-	return NewIntExpr(clause.Expr{
+func (e JsonExpr) Overlaps(other JsonInput) IntExprT[int64] {
+	return NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_OVERLAPS(?, ?)",
 		Vars: []any{e.Expression, other},
 	})
@@ -357,11 +357,15 @@ func (e JsonExpr) Overlaps(other JsonInput) IntExpr {
 // SELECT JSON_VALUE('{"age":30}', '$.age' RETURNING SIGNED);
 // 示例: gsql.AsJson(u.Profile).Value("$.name")
 // 注意: 比 Extract + Unquote 更简洁，直接返回标量值
-func (e JsonExpr) Value(path string) StringExpr {
-	return NewStringExpr(clause.Expr{
+func (e JsonExpr) Value(path string) TextExpr[string] {
+	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_VALUE(?, ?)",
 		Vars: []any{e.Expression, path},
 	})
+}
+
+func (e JsonExpr) As(alias string) IField {
+	return NewBaseFromSql(e.Expression, alias)
 }
 
 // ==================== JSON 聚合函数 ====================

@@ -2,12 +2,10 @@ package gsql
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"github.com/samber/lo"
 )
 
 // 白名单：允许的时间间隔单位
@@ -34,31 +32,9 @@ type CastType string
 
 const (
 	// 二进制类型
-	CastTypeBinary CastType = "BINARY" // 二进制字符串
-	CastTypeChar   CastType = "CHAR"   // 字符串
-
-	// 日期时间类型
-	CastTypeDate     CastType = "DATE"     // 日期 (YYYY-MM-DD)
-	CastTypeDatetime CastType = "DATETIME" // 日期时间 (YYYY-MM-DD HH:MM:SS)
-	CastTypeTime     CastType = "TIME"     // 时间 (HH:MM:SS)
-
+	//CastTypeChar CastType = "CHAR" // 字符串
 	// 数值类型
-	CastTypeDecimal  CastType = "DECIMAL"  // 十进制数，可指定精度如 DECIMAL(10,2)
-	CastTypeSigned   CastType = "SIGNED"   // 有符号整数
-	CastTypeUnsigned CastType = "UNSIGNED" // 无符号整数
-	CastTypeInteger  CastType = "INTEGER"  // 整数，与SIGNED等价
-	CastTypeInt      CastType = "INT"      // 整数，与SIGNED等价
-
-	// 浮点数类型
-	CastTypeFloat  CastType = "FLOAT"  // 单精度浮点数
-	CastTypeDouble CastType = "DOUBLE" // 双精度浮点数
-	CastTypeReal   CastType = "REAL"   // 实数，与DOUBLE等价
-
-	// JSON类型
-	CastTypeJSON CastType = "JSON" // JSON格式
-
-	// 其他类型
-	CastTypeYear CastType = "YEAR" // 年份
+	CastTypeSigned CastType = "SIGNED" // 有符号整数
 )
 
 // Deprecated: 使用 Lit 替代。
@@ -87,46 +63,6 @@ func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) field.Expression {
 	return Expr("? != ?", val1, val2)
 }
 
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Mul 方法替代，如 expr1.Mul(expr2)
-func Mul(expr1, expr2 field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "? * ?",
-		Vars: []any{expr1, expr2},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Div 方法替代，如 expr1.Div(expr2)
-func Div(expr1, expr2 field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "? / ?",
-		Vars: []any{expr1, expr2},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Add 方法替代，如 expr1.Add(expr2)
-func Add(expr1, expr2 field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "? + ?",
-		Vars: []any{expr1, expr2},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Sub 方法替代，如 expr1.Sub(expr2)
-func Sub(expr1, expr2 field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "? - ?",
-		Vars: []any{expr1, expr2},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Mod 方法替代，如 expr1.Mod(expr2)
-func Mod(expr1, expr2 field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "? % ?",
-		Vars: []any{expr1, expr2},
-	})
-}
-
 func StarWith(tableName string) field.IField {
 	return field.NewBaseFromSql(Expr("?.*", quoteClause{
 		name: tableName,
@@ -141,820 +77,29 @@ func (q quoteClause) Build(builder clause.Builder) {
 	builder.WriteQuoted(q.name)
 }
 
-// FALSE 返回布尔值假
+// False 返回布尔值假
 // SELECT FALSE;
 // SELECT FALSE = 0;
 // SELECT users.* FROM users WHERE users.is_active = FALSE;
-func FALSE() field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL: "FALSE",
-	}}
-}
+var False field.ExpressionTo = ExprTo{clause.Expr{
+	SQL: "FALSE",
+}}
 
-// NULL 返回空值
+// Null 返回空值
 // SELECT NULL;
 // SELECT IFNULL(users.nickname, NULL) FROM users;
 // UPDATE users SET deleted_at = NULL WHERE id = 1;
-func NULL() field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL: "NULL",
-	}}
-}
-
-// CURRENT_TIMESTAMP 返回当前日期和时间 (YYYY-MM-DD HH:MM:SS)，是NOW()的同义词
-// SELECT CURRENT_TIMESTAMP;
-// SELECT CURRENT_TIMESTAMP();
-// INSERT INTO logs (created_at) VALUES (CURRENT_TIMESTAMP);
-// UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = 1;
-func CURRENT_TIMESTAMP() field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL: "CURRENT_TIMESTAMP",
-	}}
-}
-
-// ==================== 日期和时间函数 ====================
-
-// NOW 返回当前日期和时间 (YYYY-MM-DD HH:MM:SS)
-// SELECT NOW();
-// SELECT NOW() + 0;
-// INSERT INTO logs (created_at) VALUES (NOW());
-// SELECT * FROM orders WHERE order_time > NOW() - INTERVAL 1 DAY;
-func NOW() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "NOW()"}}
-}
-
-// CURRENT_DATE 返回当前日期 (YYYY-MM-DD)，不包含时间部分
-// SELECT CURRENT_DATE;
-// SELECT CURRENT_DATE();
-// SELECT * FROM users WHERE DATE(created_at) = CURRENT_DATE;
-// SELECT DATEDIFF(CURRENT_DATE, users.birthday) FROM users;
-func CURRENT_DATE() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "CURRENT_DATE()"}}
-}
-
-// CURDATE 返回当前日期 (YYYY-MM-DD)，是CURRENT_DATE的同义词
-// SELECT CURDATE();
-// SELECT CURDATE() + 0;
-// SELECT * FROM events WHERE event_date >= CURDATE();
-// SELECT YEAR(CURDATE()), MONTH(CURDATE()), DAY(CURDATE());
-func CURDATE() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "CURDATE()"}}
-}
-
-// CURRENT_TIME 返回当前时间 (HH:MM:SS)，不包含日期部分
-// SELECT CURRENT_TIME;
-// SELECT CURRENT_TIME();
-// SELECT CURRENT_TIME + 0;
-// SELECT * FROM schedules WHERE start_time <= CURRENT_TIME AND end_time >= CURRENT_TIME;
-func CURRENT_TIME() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "CURRENT_TIME()"}}
-}
-
-// CURTIME 返回当前时间 (HH:MM:SS)，是CURRENT_TIME的同义词
-// SELECT CURTIME();
-// SELECT CURTIME() + 0;
-// SELECT HOUR(CURTIME()), MINUTE(CURTIME()), SECOND(CURTIME());
-// SELECT * FROM shifts WHERE shift_start <= CURTIME() AND shift_end >= CURTIME();
-func CURTIME() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "CURTIME()"}}
-}
-
-// UTC_TIMESTAMP 返回当前的UTC日期和时间 (YYYY-MM-DD HH:MM:SS)
-// SELECT UTC_TIMESTAMP;
-// SELECT UTC_TIMESTAMP();
-// SELECT UTC_TIMESTAMP(), NOW();
-// INSERT INTO global_logs (created_at_utc) VALUES (UTC_TIMESTAMP());
-func UTC_TIMESTAMP() field.ExpressionTo {
-	return ExprTo{clause.Expr{SQL: "UTC_TIMESTAMP()"}}
-}
-
-// UNIX_TIMESTAMP 返回Unix时间戳（秒），如果不提供参数则返回当前时间戳，提供参数则转换指定时间为时间戳
-// SELECT UNIX_TIMESTAMP();
-// SELECT UNIX_TIMESTAMP('2023-10-26 10:30:00');
-// SELECT UNIX_TIMESTAMP(NOW());
-// SELECT UNIX_TIMESTAMP(users.created_at) FROM users;
-// SELECT * FROM orders WHERE UNIX_TIMESTAMP(order_time) > 1698306600;
-func UNIX_TIMESTAMP(date ...field.Expression) field.IntExpr {
-	if len(date) == 0 {
-		return field.NewIntExpr(clause.Expr{SQL: "UNIX_TIMESTAMP()"})
-	}
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "UNIX_TIMESTAMP(?)",
-		Vars: []any{date[0]},
-	})
-}
-
-// FROM_UNIXTIME 将Unix时间戳（秒）转换为DATETIME类型，如果提供了format，将转换为VARCHAR类型
-// SELECT FROM_UNIXTIME(1698306600, '%Y年%m月%d日 %H时%i分%s秒');
-// SELECT FROM_UNIXTIME(1698306600);
-// SELECT FROM_UNIXTIME(users.time);
-// SELECT FROM_UNIXTIME(users.time + 3600);
-func FROM_UNIXTIME(date field.Expression, format ...string) field.ExpressionTo {
-	if len(format) > 0 {
-		return ExprTo{clause.Expr{
-			SQL:  "FROM_UNIXTIME(?, ?)",
-			Vars: []any{date, format[0]},
-		}}
-	}
-	return ExprTo{clause.Expr{
-		SQL:  "FROM_UNIXTIME(?)",
-		Vars: []any{date},
-	}}
-}
-
-// DATE_FORMAT 格式化日期/时间为指定字符串，支持各种格式化符号
-// SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s');
-// SELECT DATE_FORMAT('2023-10-26', '%Y年%m月%d日');
-// SELECT DATE_FORMAT(users.birthday, '%W %M %Y') FROM users;
-// SELECT DATE_FORMAT(NOW(), '%Y%m%d%H%i%s');
-func DATE_FORMAT(date field.Expression, format string) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "DATE_FORMAT(?, ?)",
-		Vars: []any{date, format},
-	})
-}
-
-// STR_TO_DATE 将字符串按照指定格式转换为日期/时间，格式需要与字符串匹配
-// SELECT STR_TO_DATE('2023-10-26', '%Y-%m-%d');
-// SELECT STR_TO_DATE('2023年10月26日', '%Y年%m月%d日');
-// SELECT STR_TO_DATE('10/26/2023 10:30:45', '%m/%d/%Y %H:%i:%s');
-// SELECT * FROM orders WHERE order_date = STR_TO_DATE('20231026', '%Y%m%d');
-func STR_TO_DATE(str string, format string) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "STR_TO_DATE(?, ?)",
-		Vars: []any{str, format},
-	}}
-}
-
-// YEAR 提取日期中的年份部分 (1000-9999)
-// SELECT YEAR(NOW());
-// SELECT YEAR('2023-10-26');
-// SELECT * FROM users WHERE YEAR(birthday) = 1990;
-// SELECT YEAR(users.created_at) as year FROM users GROUP BY year;
-func YEAR(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "YEAR(?)",
-		Vars: []any{date},
-	})
-}
-
-// MONTH 提取日期中的月份部分 (1-12)
-// SELECT MONTH(NOW());
-// SELECT MONTH('2023-10-26');
-// SELECT * FROM orders WHERE MONTH(order_date) = 10;
-// SELECT MONTH(users.birthday), COUNT(*) FROM users GROUP BY MONTH(users.birthday);
-func MONTH(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "MONTH(?)",
-		Vars: []any{date},
-	})
-}
-
-// DAY 提取日期中一个月中的天数 (1-31)，是DAYOFMONTH的同义词
-// SELECT DAY(NOW());
-// SELECT DAY('2023-10-26');
-// SELECT * FROM events WHERE DAY(event_date) = 15;
-// SELECT YEAR(date), MONTH(date), DAY(date) FROM logs;
-func DAY(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "DAY(?)",
-		Vars: []any{date},
-	})
-}
-
-// DAYOFMONTH 提取日期中一个月中的天数 (1-31)，是DAY的同义词
-// SELECT DAYOFMONTH(NOW());
-// SELECT DAYOFMONTH('2023-10-26');
-// SELECT * FROM users WHERE DAYOFMONTH(birthday) = 1;
-// SELECT DAYOFMONTH(created_at) FROM orders;
-func DAYOFMONTH(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "DAYOFMONTH(?)",
-		Vars: []any{date},
-	})
-}
-
-// WEEK 提取日期在一年中的周数 (0-53)，可选第二个参数指定周开始于周日还是周一
-// SELECT WEEK(NOW());
-// SELECT WEEK('2023-10-26');
-// SELECT WEEK(NOW(), 1);
-// SELECT * FROM orders WHERE WEEK(order_date) = WEEK(NOW());
-func WEEK(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "WEEK(?)",
-		Vars: []any{date},
-	})
-}
-
-// WEEKOFYEAR 提取日期在一年中的周数 (1-53)，相当于WEEK(date, 3)
-// SELECT WEEKOFYEAR(NOW());
-// SELECT WEEKOFYEAR('2023-10-26');
-// SELECT * FROM events WHERE WEEKOFYEAR(event_date) = 43;
-// SELECT WEEKOFYEAR(created_at), COUNT(*) FROM orders GROUP BY WEEKOFYEAR(created_at);
-func WEEKOFYEAR(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "WEEKOFYEAR(?)",
-		Vars: []any{date},
-	})
-}
-
-// HOUR 提取时间中的小时部分 (0-23)
-// SELECT HOUR(NOW());
-// SELECT HOUR('2023-10-26 14:30:45');
-// SELECT * FROM logs WHERE HOUR(log_time) BETWEEN 9 AND 17;
-// SELECT HOUR(users.last_login) FROM users;
-func HOUR(time field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "HOUR(?)",
-		Vars: []any{time},
-	})
-}
-
-// MINUTE 提取时间中的分钟部分 (0-59)
-// SELECT MINUTE(NOW());
-// SELECT MINUTE('2023-10-26 14:30:45');
-// SELECT * FROM schedules WHERE MINUTE(start_time) = 0;
-// SELECT HOUR(time), MINUTE(time) FROM appointments;
-func MINUTE(time field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "MINUTE(?)",
-		Vars: []any{time},
-	})
-}
-
-// SECOND 提取时间中的秒数部分 (0-59)
-// SELECT SECOND(NOW());
-// SELECT SECOND('2023-10-26 14:30:45');
-// SELECT * FROM events WHERE SECOND(event_time) = 0;
-// SELECT HOUR(time), MINUTE(time), SECOND(time) FROM logs;
-func SECOND(time field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "SECOND(?)",
-		Vars: []any{time},
-	})
-}
-
-// DAYOFWEEK 返回日期在一周中的索引 (1=周日, 2=周一, ..., 7=周六)
-// SELECT DAYOFWEEK(NOW());
-// SELECT DAYOFWEEK('2023-10-26');
-// SELECT * FROM events WHERE DAYOFWEEK(event_date) IN (1, 7);
-// SELECT CASE DAYOFWEEK(date) WHEN 1 THEN '周日' WHEN 2 THEN '周一' END FROM logs;
-func DAYOFWEEK(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "DAYOFWEEK(?)",
-		Vars: []any{date},
-	})
-}
-
-// DAYOFYEAR 返回日期在一年中的天数 (1-366)
-// SELECT DAYOFYEAR(NOW());
-// SELECT DAYOFYEAR('2023-10-26');
-// SELECT * FROM logs WHERE DAYOFYEAR(log_date) = 1;
-// SELECT DAYOFYEAR(created_at), COUNT(*) FROM orders GROUP BY DAYOFYEAR(created_at);
-func DAYOFYEAR(date field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "DAYOFYEAR(?)",
-		Vars: []any{date},
-	})
-}
-
-// DATE_ADD 在日期上增加一个时间间隔，支持多种时间单位
-// SELECT DATE_ADD(NOW(), INTERVAL 1 DAY);
-// SELECT DATE_ADD('2023-10-26', INTERVAL 2 HOUR);
-// SELECT DATE_ADD(users.created_at, INTERVAL 7 DAY) FROM users;
-// SELECT * FROM orders WHERE DATE_ADD(order_date, INTERVAL 30 DAY) > NOW();
-// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
-func DATE_ADD(date field.Expression, interval string) field.ExpressionTo {
-	// 解析并验证 interval 格式 (例如: "1 DAY")
-	parts := strings.Fields(interval)
-	if len(parts) != 2 {
-		panic("DATE_ADD: invalid interval format, expected '<number> <unit>' (e.g., '1 DAY')")
-	}
-
-	// 验证数字部分
-	num, err := strconv.Atoi(parts[0])
-	if err != nil {
-		panic(fmt.Sprintf("DATE_ADD: interval value must be a number, got: %s", parts[0]))
-	}
-
-	// 验证单位部分
-	unit := strings.ToUpper(parts[1])
-	if !allowedIntervalUnits[unit] {
-		panic(fmt.Sprintf("DATE_ADD: invalid interval unit: %s", unit))
-	}
-
-	// 使用验证后的值重新构建 interval，而不是使用原始输入
-	// 这样可以防止恶意输入绕过验证
-	safeInterval := fmt.Sprintf("%d %s", num, unit)
-
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("DATE_ADD(?, INTERVAL %s)", safeInterval),
-		Vars: []any{date},
-	}}
-}
-
-// DATE_SUB 从日期中减去一个时间间隔，支持多种时间单位
-// SELECT DATE_SUB(NOW(), INTERVAL 1 DAY);
-// SELECT DATE_SUB('2023-10-26', INTERVAL 2 HOUR);
-// SELECT DATE_SUB(users.expire_date, INTERVAL 1 MONTH) FROM users;
-// SELECT * FROM logs WHERE log_date >= DATE_SUB(NOW(), INTERVAL 7 DAY);
-// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
-func DATE_SUB(date field.Expression, interval string) field.ExpressionTo {
-	// 解析并验证 interval 格式 (例如: "1 DAY")
-	parts := strings.Fields(interval)
-	if len(parts) != 2 {
-		panic("DATE_SUB: invalid interval format, expected '<number> <unit>' (e.g., '1 DAY')")
-	}
-
-	// 验证数字部分
-	num, err := strconv.Atoi(parts[0])
-	if err != nil {
-		panic(fmt.Sprintf("DATE_SUB: interval value must be a number, got: %s", parts[0]))
-	}
-
-	// 验证单位部分
-	unit := strings.ToUpper(parts[1])
-	if !allowedIntervalUnits[unit] {
-		panic(fmt.Sprintf("DATE_SUB: invalid interval unit: %s", unit))
-	}
-
-	// 使用验证后的值重新构建 interval，而不是使用原始输入
-	// 这样可以防止恶意输入绕过验证
-	safeInterval := fmt.Sprintf("%d %s", num, unit)
-
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("DATE_SUB(?, INTERVAL %s)", safeInterval),
-		Vars: []any{date},
-	}}
-}
-
-// DATEDIFF 返回两个日期之间相差的天数 (date1 - date2)，只计算日期部分，忽略时间
-// SELECT DATEDIFF(NOW(), '2023-01-01');
-// SELECT DATEDIFF('2023-10-26', '2023-10-20');
-// SELECT users.name, DATEDIFF(NOW(), users.birthday) / 365 as age FROM users;
-// SELECT * FROM orders WHERE DATEDIFF(NOW(), order_date) > 30;
-func DATEDIFF(expr1, expr2 field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "DATEDIFF(?, ?)",
-		Vars: []any{expr1, expr2},
-	})
-}
-
-// TIMEDIFF 返回两个时间/日期时间之间的差值，结果为时间格式 (HH:MM:SS)
-// SELECT TIMEDIFF(NOW(), '2023-10-26 10:00:00');
-// SELECT TIMEDIFF('14:30:00', '10:15:00');
-// SELECT TIMEDIFF(end_time, start_time) FROM events;
-// SELECT * FROM logs WHERE TIMEDIFF(NOW(), log_time) > '01:00:00';
-func TIMEDIFF(expr1, expr2 field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "TIMEDIFF(?, ?)",
-		Vars: []any{expr1, expr2},
-	}}
-}
-
-// TIMESTAMPDIFF 返回两个日期时间表达式之间的差值，以指定单位表示 (expr2 - expr1)
-// SELECT TIMESTAMPDIFF(SECOND, '2023-10-26 10:00:00', '2023-10-26 10:05:00');
-// SELECT TIMESTAMPDIFF(HOUR, start_time, end_time) FROM events;
-// SELECT TIMESTAMPDIFF(YEAR, users.birthday, NOW()) as age FROM users;
-// SELECT * FROM orders WHERE TIMESTAMPDIFF(DAY, order_date, NOW()) > 30;
-// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
-func TIMESTAMPDIFF(unit string, expr1, expr2 field.Expression) field.IntExpr {
-	// 验证单位参数
-	unit = strings.ToUpper(strings.TrimSpace(unit))
-	if !allowedIntervalUnits[unit] {
-		panic(fmt.Sprintf("TIMESTAMPDIFF: invalid unit: %s", unit))
-	}
-
-	return field.NewIntExpr(clause.Expr{
-		SQL:  fmt.Sprintf("TIMESTAMPDIFF(%s, ?, ?)", unit),
-		Vars: []any{expr1, expr2},
-	})
-}
-
-// ==================== 字符串函数 ====================
-
-// Deprecated: 使用 TextExpr 的 Concat 方法替代，如 textExpr.Concat(args...)
-// CONCAT 拼接多个字符串，任意参数为NULL则返回NULL
-// SELECT CONCAT('Hello', ' ', 'World');
-// SELECT CONCAT(users.first_name, ' ', users.last_name) as full_name FROM users;
-// SELECT CONCAT('User:', users.id) FROM users;
-// SELECT CONCAT(YEAR(NOW()), '-', MONTH(NOW()));
-func CONCAT(args ...field.Expression) field.StringExpr {
-	placeholders := ""
-	for i := range args {
-		if i > 0 {
-			placeholders += ", "
-		}
-		placeholders += "?"
-	}
-	return field.NewStringExpr(clause.Expr{
-		SQL:  fmt.Sprintf("CONCAT(%s)", placeholders),
-		Vars: lo.ToAnySlice(args),
-	})
-}
-
-// CONCAT_WS 用指定分隔符拼接多个字符串，自动跳过NULL值，分隔符为NULL则返回NULL
-// SELECT CONCAT_WS(',', 'A', 'B', 'C');
-// SELECT CONCAT_WS('-', users.last_name, users.first_name) FROM users;
-// SELECT CONCAT_WS('/', YEAR(date), MONTH(date), DAY(date)) FROM logs;
-// SELECT CONCAT_WS(', ', city, state, country) FROM addresses;
-func CONCAT_WS(separator string, args ...any) field.StringExpr {
-	placeholders := "?"
-	allArgs := []any{separator}
-	for range args {
-		placeholders += ", ?"
-	}
-	allArgs = append(allArgs, args...)
-	return field.NewStringExpr(clause.Expr{
-		SQL:  fmt.Sprintf("CONCAT_WS(%s)", placeholders),
-		Vars: allArgs,
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Length 方法替代，如 textExpr.Length()
-// LENGTH 返回字符串的字节长度，UTF-8编码中一个中文字符通常占3个字节
-// SELECT LENGTH('Hello');
-// SELECT LENGTH('你好');
-// SELECT users.name, LENGTH(users.name) FROM users;
-// SELECT * FROM products WHERE LENGTH(product_code) = 8;
-func LENGTH(str field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "LENGTH(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 CharLength 方法替代，如 textExpr.CharLength()
-// CHAR_LENGTH 返回字符串的字符长度，多字节字符按一个字符计算，是CHARACTER_LENGTH的同义词
-// SELECT CHAR_LENGTH('Hello');
-// SELECT CHAR_LENGTH('你好');
-// SELECT users.name, CHAR_LENGTH(users.name) FROM users;
-// SELECT * FROM articles WHERE CHAR_LENGTH(content) > 1000;
-func CHAR_LENGTH(str field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "CHAR_LENGTH(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 CharLength 方法替代，如 textExpr.CharLength()
-// CHARACTER_LENGTH 返回字符串的字符长度，多字节字符按一个字符计算，是CHAR_LENGTH的同义词
-// SELECT CHARACTER_LENGTH('Hello');
-// SELECT CHARACTER_LENGTH('你好世界');
-// SELECT CHARACTER_LENGTH(description) FROM products;
-// SELECT * FROM posts WHERE CHARACTER_LENGTH(title) < 50;
-func CHARACTER_LENGTH(str field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "CHARACTER_LENGTH(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Upper 方法替代，如 textExpr.Upper()
-// UPPER 将字符串转换为大写，只对英文字母有效
-// SELECT UPPER('hello world');
-// SELECT UPPER(users.username) FROM users;
-// SELECT * FROM products WHERE UPPER(product_code) = 'ABC123';
-// UPDATE users SET username = UPPER(username) WHERE id = 1;
-func UPPER(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "UPPER(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Upper 方法替代，如 textExpr.Upper()
-// UCASE 将字符串转换为大写，是UPPER的同义词
-// SELECT UCASE('hello world');
-// SELECT UCASE(email) FROM users;
-// SELECT * FROM codes WHERE UCASE(code) LIKE 'A%';
-// SELECT CONCAT(UCASE(LEFT(name, 1)), SUBSTRING(name, 2)) FROM users;
-func UCASE(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "UCASE(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Lower 方法替代，如 textExpr.Lower()
-// LOWER 将字符串转换为小写，只对英文字母有效
-// SELECT LOWER('HELLO WORLD');
-// SELECT LOWER(users.email) FROM users;
-// SELECT * FROM users WHERE LOWER(username) = 'admin';
-// UPDATE users SET email = LOWER(email);
-func LOWER(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "LOWER(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Lower 方法替代，如 textExpr.Lower()
-// LCASE 将字符串转换为小写，是LOWER的同义词
-// SELECT LCASE('HELLO WORLD');
-// SELECT LCASE(company_name) FROM companies;
-// SELECT * FROM domains WHERE LCASE(domain) = 'example.com';
-// SELECT LCASE(TRIM(email)) FROM users;
-func LCASE(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "LCASE(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Substring 方法替代，如 textExpr.Substring(pos, length)
-// SUBSTRING 从字符串中提取子字符串，位置从1开始，是SUBSTR的同义词
-// SELECT SUBSTRING('Hello World', 1, 5);
-// SELECT SUBSTRING('Hello World', 7);
-// SELECT SUBSTRING(users.email, 1, LOCATE('@', users.email) - 1) FROM users;
-// SELECT SUBSTRING(product_code, 4, 3) FROM products;
-func SUBSTRING(str field.Expression, pos, length int) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "SUBSTRING(?, ?, ?)",
-		Vars: []any{str, pos, length},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Substring 方法替代，如 textExpr.Substring(pos, length)
-// SUBSTR 从字符串中提取子字符串，位置从1开始，是SUBSTRING的同义词
-// SELECT SUBSTR('Hello World', 1, 5);
-// SELECT SUBSTR('Hello World', 7);
-// SELECT SUBSTR(description, 1, 100) FROM articles;
-// SELECT SUBSTR(phone, -4) FROM users;
-func SUBSTR(str field.Expression, pos, length int) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "SUBSTR(?, ?, ?)",
-		Vars: []any{str, pos, length},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Left 方法替代，如 textExpr.Left(length)
-// LEFT 从字符串左侧提取指定长度的子字符串
-// SELECT LEFT('Hello World', 5);
-// SELECT LEFT(users.name, 1) as initial FROM users;
-// SELECT * FROM products WHERE LEFT(product_code, 2) = 'AB';
-// SELECT LEFT(email, LOCATE('@', email) - 1) FROM users;
-func LEFT(str field.Expression, length int) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "LEFT(?, ?)",
-		Vars: []any{str, length},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Right 方法替代，如 textExpr.Right(length)
-// RIGHT 从字符串右侧提取指定长度的子字符串
-// SELECT RIGHT('Hello World', 5);
-// SELECT RIGHT(phone, 4) as last_four FROM users;
-// SELECT * FROM files WHERE RIGHT(filename, 4) = '.pdf';
-// SELECT RIGHT(product_code, 3) FROM products;
-func RIGHT(str field.Expression, length int) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "RIGHT(?, ?)",
-		Vars: []any{str, length},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Locate 方法替代，如 textExpr.Locate(substr)
-// LOCATE 返回子字符串在字符串中第一次出现的位置（从1开始），未找到返回0，可选起始位置
-// SELECT LOCATE('World', 'Hello World');
-// SELECT LOCATE('o', 'Hello World');
-// SELECT LOCATE('o', 'Hello World', 6);
-// SELECT * FROM users WHERE LOCATE('@', email) > 0;
-func LOCATE(substr, str field.Expression, pos ...int) field.IntExpr {
-	if len(pos) > 0 {
-		return field.NewIntExpr(clause.Expr{
-			SQL:  "LOCATE(?, ?, ?)",
-			Vars: []any{substr, str, pos[0]},
-		})
-	}
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "LOCATE(?, ?)",
-		Vars: []any{substr, str},
-	})
-}
-
-// INSTR 返回子字符串在字符串中第一次出现的位置（从1开始），未找到返回0
-// SELECT INSTR('Hello World', 'World');
-// SELECT INSTR('Hello World', 'o');
-// SELECT * FROM urls WHERE INSTR(url, 'https://') = 1;
-// SELECT INSTR(email, '@') as at_position FROM users;
-func INSTR(str, substr field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "INSTR(?, ?)",
-		Vars: []any{str, substr},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Replace 方法替代，如 textExpr.Replace(from, to)
-// REPLACE 替换字符串中所有出现的子字符串
-// SELECT REPLACE('Hello World', 'World', 'MySQL');
-// SELECT REPLACE('www.example.com', 'www', 'mail');
-// SELECT REPLACE(phone, '-', ") FROM users;
-// UPDATE products SET description = REPLACE(description, 'old', 'new');
-func REPLACE(str, fromStr, toStr field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "REPLACE(?, ?, ?)",
-		Vars: []any{str, fromStr, toStr},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 Trim 方法替代，如 textExpr.Trim()
-// TRIM 去除字符串两端的空格，也可指定去除的字符
-// SELECT TRIM('  Hello World  ');
-// SELECT TRIM(BOTH 'x' FROM 'xxxHelloxxx');
-// SELECT TRIM(users.username) FROM users;
-// UPDATE users SET email = TRIM(email);
-func TRIM(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "TRIM(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 LTrim 方法替代，如 textExpr.LTrim()
-// LTRIM 去除字符串左侧的空格
-// SELECT LTRIM('  Hello World  ');
-// SELECT LTRIM(users.name) FROM users;
-// SELECT * FROM products WHERE LTRIM(code) != code;
-// UPDATE users SET username = LTRIM(username);
-func LTRIM(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "LTRIM(?)",
-		Vars: []any{str},
-	})
-}
-
-// Deprecated: 使用 TextExpr 的 RTrim 方法替代，如 textExpr.RTrim()
-// RTRIM 去除字符串右侧的空格
-// SELECT RTRIM('  Hello World  ');
-// SELECT RTRIM(description) FROM products;
-// SELECT * FROM users WHERE RTRIM(email) != email;
-// UPDATE articles SET title = RTRIM(title);
-func RTRIM(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "RTRIM(?)",
-		Vars: []any{str},
-	})
-}
-
-// ==================== 数值函数 ====================
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Abs 方法替代，如 expr.Abs()
-// ABS 返回数值的绝对值
-// SELECT ABS(-10);
-// SELECT ABS(10);
-// SELECT ABS(users.balance) FROM users;
-// SELECT * FROM transactions WHERE ABS(amount) > 1000;
-func ABS(x field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "ABS(?)",
-		Vars: []any{x},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Ceil 方法替代，如 expr.Ceil()
-// CEIL 向上取整，返回大于或等于X的最小整数，是CEILING的同义词
-// SELECT CEIL(4.3);
-// SELECT CEIL(4.9);
-// SELECT CEIL(-4.3);
-// SELECT CEIL(price * 1.1) FROM products;
-func CEIL(x field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "CEIL(?)",
-		Vars: []any{x},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Ceil 方法替代，如 expr.Ceil()
-// CEILING 向上取整，返回大于或等于X的最小整数，是CEIL的同义词
-// SELECT CEILING(4.3);
-// SELECT CEILING(4.9);
-// SELECT CEILING(-4.3);
-// SELECT CEILING(total / 10) * 10 FROM orders;
-func CEILING(x field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "CEILING(?)",
-		Vars: []any{x},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Floor 方法替代，如 expr.Floor()
-// FLOOR 向下取整，返回小于或等于X的最大整数
-// SELECT FLOOR(4.3);
-// SELECT FLOOR(4.9);
-// SELECT FLOOR(-4.3);
-// SELECT FLOOR(price * 0.9) FROM products;
-func FLOOR(x field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "FLOOR(?)",
-		Vars: []any{x},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Round 方法替代，如 expr.Round(decimals...)
-// ROUND 四舍五入到指定小数位数，默认四舍五入到整数
-// SELECT ROUND(4.567);
-// SELECT ROUND(4.567, 2);
-// SELECT ROUND(4.567, 0);
-// SELECT ROUND(price, 2) FROM products;
-// SELECT ROUND(123.456, -1);
-func ROUND(x field.Expression, d ...int) field.FloatExpr {
-	if len(d) > 0 {
-		return field.NewFloatExpr(clause.Expr{
-			SQL:  "ROUND(?, ?)",
-			Vars: []any{x, d[0]},
-		})
-	}
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "ROUND(?)",
-		Vars: []any{x},
-	})
-}
-
-// MOD 返回N除以M的余数（模运算）
-// SELECT MOD(10, 3);
-// SELECT MOD(234, 10);
-// SELECT MOD(-10, 3);
-// SELECT * FROM users WHERE MOD(id, 2) = 0;
-func MOD(n, m field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "MOD(?, ?)",
-		Vars: []any{n, m},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Pow 方法替代，如 expr.Pow(exponent)
-// POWER 返回X的Y次幂，是POW的同义词
-// SELECT POWER(2, 3);
-// SELECT POWER(10, 2);
-// SELECT POWER(5, -1);
-// SELECT POWER(users.level, 2) FROM users;
-func POWER(x, y field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "POWER(?, ?)",
-		Vars: []any{x, y},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Pow 方法替代，如 expr.Pow(exponent)
-// POW 返回X的Y次幂，是POWER的同义词
-// SELECT POW(2, 3);
-// SELECT POW(10, 2);
-// SELECT POW(distance, 2) FROM locations;
-// SELECT SQRT(POW(x2 - x1, 2) + POW(y2 - y1, 2)) as distance FROM points;
-func POW(x, y field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "POW(?, ?)",
-		Vars: []any{x, y},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Sqrt 方法替代，如 expr.Sqrt()
-// SQRT 返回X的平方根，X必须为非负数
-// SELECT SQRT(4);
-// SELECT SQRT(16);
-// SELECT SQRT(2);
-// SELECT SQRT(area) as side_length FROM squares;
-func SQRT(x field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "SQRT(?)",
-		Vars: []any{x},
-	})
-}
+var Null field.ExpressionTo = ExprTo{clause.Expr{
+	SQL: "NULL",
+}}
 
 // RAND 返回0到1之间的随机浮点数，可选种子参数
 // SELECT RAND();
 // SELECT RAND() * 100;
 // SELECT RAND(123);
 // SELECT * FROM users ORDER BY RAND() LIMIT 10;
-func RAND() field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{SQL: "RAND()"})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Sign 方法替代，如 expr.Sign()
-// SIGN 返回数值的符号：负数返回-1，零返回0，正数返回1
-// SELECT SIGN(-10);
-// SELECT SIGN(0);
-// SELECT SIGN(10);
-// SELECT SIGN(balance) FROM accounts;
-func SIGN(x field.Expression) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "SIGN(?)",
-		Vars: []any{x},
-	})
-}
-
-// Deprecated: 使用 IntExprT/FloatExprT/DecimalExprT 的 Truncate 方法替代，如 expr.Truncate(decimals)
-// TRUNCATE 截断数值到指定小数位数，不进行四舍五入
-// SELECT TRUNCATE(4.567, 2);
-// SELECT TRUNCATE(4.567, 0);
-// SELECT TRUNCATE(123.456, -1);
-// SELECT TRUNCATE(price, 2) FROM products;
-func TRUNCATE(x field.Expression, d int) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "TRUNCATE(?, ?)",
-		Vars: []any{x, d},
-	})
+func RAND() field.FloatExprT[float64] {
+	return field.NewFloatExprT[float64](clause.Expr{SQL: "RAND()"})
 }
 
 // ==================== 聚合函数 ====================
@@ -966,11 +111,11 @@ func TRUNCATE(x field.Expression, d int) field.FloatExpr {
 //	COUNT()           // COUNT(*)
 //	COUNT(id)         // COUNT(id)
 //	COUNT().Gt(5)     // COUNT(*) > 5
-func COUNT(expr ...field.IField) field.IntExpr {
+func COUNT(expr ...field.IField) field.IntExprT[int64] {
 	if len(expr) == 0 {
-		return field.NewIntExpr(clause.Expr{SQL: "COUNT(*)"})
+		return field.NewIntExprT[int64](clause.Expr{SQL: "COUNT(*)"})
 	}
-	return field.NewIntExpr(clause.Expr{
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "COUNT(?)",
 		Vars: []any{expr[0].ToExpr()},
 	})
@@ -982,81 +127,81 @@ func COUNT(expr ...field.IField) field.IntExpr {
 //
 //	COUNT_DISTINCT(city)       // COUNT(DISTINCT city)
 //	COUNT_DISTINCT(id).Gt(10)  // COUNT(DISTINCT id) > 10
-func COUNT_DISTINCT(expr field.IField) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
+func COUNT_DISTINCT(expr field.IField) field.IntExprT[int64] {
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "COUNT(DISTINCT ?)",
 		Vars: []any{expr.ToExpr()},
 	})
 }
 
-// SUM 计算数值列的总和，忽略NULL值
-// 返回 FloatExpr，支持比较操作
-// 示例: SUM(amount).Gt(1000)
-// SELECT SUM(amount) FROM orders;
-// SELECT SUM(price * quantity) FROM order_items;
-// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-// SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
-func SUM(expr field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "SUM(?)",
-		Vars: []any{expr},
-	})
-}
-
-// AVG 计算数值列的平均值，忽略NULL值
-// 返回 FloatExpr，支持比较操作
-// 示例: AVG(price).Between(10, 100)
-// SELECT AVG(price) FROM products;
-// SELECT AVG(age) FROM users;
-// SELECT category, AVG(price) FROM products GROUP BY category;
-// SELECT AVG(TIMESTAMPDIFF(YEAR, birthday, NOW())) FROM users;
-func AVG(expr field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "AVG(?)",
-		Vars: []any{expr},
-	})
-}
-
-// MAX 返回列的最大值，可用于数值、字符串、日期等类型
-// 返回 FloatExpr，支持比较操作
-// SELECT MAX(price) FROM products;
-// SELECT MAX(created_at) FROM orders;
-// SELECT MAX(LENGTH(description)) FROM articles;
-// SELECT category, MAX(price) FROM products GROUP BY category;
-func MAX(expr field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "MAX(?)",
-		Vars: []any{expr},
-	})
-}
-
-// MIN 返回列的最小值，可用于数值、字符串、日期等类型
-// 返回 FloatExpr，支持比较操作
-// SELECT MIN(price) FROM products;
-// SELECT MIN(created_at) FROM users;
-// SELECT MIN(stock) FROM inventory;
-// SELECT category, MIN(price) FROM products GROUP BY category;
-func MIN(expr field.Expression) field.FloatExpr {
-	return field.NewFloatExpr(clause.Expr{
-		SQL:  "MIN(?)",
-		Vars: []any{expr},
-	})
-}
+//// SUM 计算数值列的总和，忽略NULL值
+//// 返回 FloatExpr，支持比较操作
+//// 示例: SUM(amount).Gt(1000)
+//// SELECT SUM(amount) FROM orders;
+//// SELECT SUM(price * quantity) FROM order_items;
+//// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+//// SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
+//func SUM(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "SUM(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// AVG 计算数值列的平均值，忽略NULL值
+//// 返回 FloatExpr，支持比较操作
+//// 示例: AVG(price).Between(10, 100)
+//// SELECT AVG(price) FROM products;
+//// SELECT AVG(age) FROM users;
+//// SELECT category, AVG(price) FROM products GROUP BY category;
+//// SELECT AVG(TIMESTAMPDIFF(YEAR, birthday, NOW())) FROM users;
+//func AVG(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "AVG(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// MAX 返回列的最大值，可用于数值、字符串、日期等类型
+//// 返回 FloatExpr，支持比较操作
+//// SELECT MAX(price) FROM products;
+//// SELECT MAX(created_at) FROM orders;
+//// SELECT MAX(LENGTH(description)) FROM articles;
+//// SELECT category, MAX(price) FROM products GROUP BY category;
+//func MAX(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "MAX(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// MIN 返回列的最小值，可用于数值、字符串、日期等类型
+//// 返回 FloatExpr，支持比较操作
+//// SELECT MIN(price) FROM products;
+//// SELECT MIN(created_at) FROM users;
+//// SELECT MIN(stock) FROM inventory;
+//// SELECT category, MIN(price) FROM products GROUP BY category;
+//func MIN(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "MIN(?)",
+//		Vars: []any{expr},
+//	})
+//}
 
 // GROUP_CONCAT 将分组内的字符串连接起来，默认用逗号分隔，可指定分隔符
 // SELECT GROUP_CONCAT(name) FROM users;
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
 // SELECT user_id, GROUP_CONCAT(product_name) FROM orders GROUP BY user_id;
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
-func GROUP_CONCAT(expr field.Expression, separator ...string) field.StringExpr {
+func GROUP_CONCAT(expr field.Expression, separator ...string) field.TextExpr[string] {
 	if len(separator) > 0 {
 		// 使用参数化查询代替字符串拼接
-		return field.NewStringExpr(clause.Expr{
+		return field.NewTextExpr[string](clause.Expr{
 			SQL:  "GROUP_CONCAT(? SEPARATOR ?)",
 			Vars: []any{expr, separator[0]},
 		})
 	}
-	return field.NewStringExpr(clause.Expr{
+	return field.NewTextExpr[string](clause.Expr{
 		SQL:  "GROUP_CONCAT(?)",
 		Vars: []any{expr},
 	})
@@ -1164,8 +309,8 @@ func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
 // INSERT INTO logs (db_name) VALUES (DATABASE());
 // SELECT DATABASE() as current_db;
 // SELECT * FROM information_schema.tables WHERE table_schema = DATABASE();
-func DATABASE() field.StringExpr {
-	return field.NewStringExpr(clause.Expr{SQL: "DATABASE()"})
+func DATABASE() field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{SQL: "DATABASE()"})
 }
 
 // USER 返回当前MySQL用户名和主机名，格式为 'user@host'
@@ -1173,8 +318,8 @@ func DATABASE() field.StringExpr {
 // INSERT INTO audit_logs (user) VALUES (USER());
 // SELECT USER() as current_user;
 // SELECT * FROM connections WHERE user = USER();
-func USER() field.StringExpr {
-	return field.NewStringExpr(clause.Expr{SQL: "USER()"})
+func USER() field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{SQL: "USER()"})
 }
 
 // CURRENT_USER 返回当前MySQL用户名和主机名，与USER()相同
@@ -1182,8 +327,8 @@ func USER() field.StringExpr {
 // SELECT CURRENT_USER;
 // INSERT INTO access_logs (accessed_by) VALUES (CURRENT_USER());
 // SELECT CURRENT_USER() as authenticated_user;
-func CURRENT_USER() field.StringExpr {
-	return field.NewStringExpr(clause.Expr{SQL: "CURRENT_USER()"})
+func CURRENT_USER() field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{SQL: "CURRENT_USER()"})
 }
 
 // VERSION 返回MySQL服务器的版本号
@@ -1191,8 +336,8 @@ func CURRENT_USER() field.StringExpr {
 // SELECT VERSION() as mysql_version;
 // INSERT INTO system_info (version) VALUES (VERSION());
 // SELECT IF(VERSION() LIKE '8.%', 'MySQL 8', 'Older') as version_check;
-func VERSION() field.StringExpr {
-	return field.NewStringExpr(clause.Expr{SQL: "VERSION()"})
+func VERSION() field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{SQL: "VERSION()"})
 }
 
 // UUID 生成一个符合RFC 4122标准的通用唯一标识符（36字符的字符串）
@@ -1200,30 +345,30 @@ func VERSION() field.StringExpr {
 // INSERT INTO records (id) VALUES (UUID());
 // SELECT UUID() as unique_id;
 // UPDATE sessions SET session_id = UUID() WHERE session_id IS NULL;
-func UUID() field.StringExpr {
-	return field.NewStringExpr(clause.Expr{SQL: "UUID()"})
+func UUID() field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{SQL: "UUID()"})
 }
 
-// INET_ATON 将点分十进制的IPv4地址转换为整数形式（网络字节序）
-// SELECT INET_ATON('192.168.1.1');
-// SELECT INET_ATON('10.0.0.1');
-// INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
-// SELECT * FROM ip_ranges WHERE INET_ATON('192.168.1.50') BETWEEN start_ip AND end_ip;
-func INET_ATON(expr string) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
-		SQL:  "INET_ATON(?)",
-		Vars: []any{expr},
-	})
-}
-
-// INET_NTOA 将整数形式的IP地址转换为点分十进制字符串
-// SELECT INET_NTOA(3232235777);
-// SELECT INET_NTOA(167772161);
-// SELECT INET_NTOA(ip_address) FROM access_logs;
-// SELECT user_id, INET_NTOA(last_ip) FROM users;
-func INET_NTOA(expr field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
-		SQL:  "INET_NTOA(?)",
-		Vars: []any{expr},
-	})
-}
+//// INET_ATON 将点分十进制的IPv4地址转换为整数形式（网络字节序）
+//// SELECT INET_ATON('192.168.1.1');
+//// SELECT INET_ATON('10.0.0.1');
+//// INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
+//// SELECT * FROM ip_ranges WHERE INET_ATON('192.168.1.50') BETWEEN start_ip AND end_ip;
+//func INET_ATON(expr string) field.IntExpr {
+//	return field.NewIntExpr(clause.Expr{
+//		SQL:  "INET_ATON(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// INET_NTOA 将整数形式的IP地址转换为点分十进制字符串
+//// SELECT INET_NTOA(3232235777);
+//// SELECT INET_NTOA(167772161);
+//// SELECT INET_NTOA(ip_address) FROM access_logs;
+//// SELECT user_id, INET_NTOA(last_ip) FROM users;
+//func INET_NTOA(expr field.Expression) field.StringExpr {
+//	return field.NewStringExpr(clause.Expr{
+//		SQL:  "INET_NTOA(?)",
+//		Vars: []any{expr},
+//	})
+//}

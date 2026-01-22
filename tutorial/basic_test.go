@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	gsql "github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
 )
 
@@ -461,7 +461,7 @@ func TestFunc_DateTime(t *testing.T) {
 		}
 		// MySQL: SELECT YEAR(employees.hire_date) AS hire_year FROM employees
 		//        WHERE employees.name = 'John' LIMIT 1
-		err := gsql.Select(gsql.YEAR(e.HireDate.ToExpr()).AsF("hire_year")).
+		err := gsql.Select(e.HireDate.Year().As("hire_year")).
 			From(&e).
 			Where(e.Name.Eq("John")).
 			First(db, &result)
@@ -480,7 +480,7 @@ func TestFunc_DateTime(t *testing.T) {
 		}
 		// MySQL: SELECT MONTH(employees.hire_date) AS hire_month FROM employees
 		//        WHERE employees.name = 'John' LIMIT 1
-		err := gsql.Select(gsql.MONTH(e.HireDate.ToExpr()).AsF("hire_month")).
+		err := gsql.Select(e.HireDate.Month().As("hire_month")).
 			From(&e).
 			Where(e.Name.Eq("John")).
 			First(db, &result)
@@ -499,7 +499,7 @@ func TestFunc_DateTime(t *testing.T) {
 		}
 		// MySQL: SELECT DAY(employees.hire_date) AS hire_day FROM employees
 		//        WHERE employees.name = 'John' LIMIT 1
-		err := gsql.Select(gsql.DAY(e.HireDate.ToExpr()).AsF("hire_day")).
+		err := gsql.Select(e.HireDate.Day().As("hire_day")).
 			From(&e).
 			Where(e.Name.Eq("John")).
 			First(db, &result)
@@ -516,7 +516,7 @@ func TestFunc_DateTime(t *testing.T) {
 		var result struct {
 			FormattedDate string `gorm:"column:formatted_date"`
 		}
-		err := gsql.Select(gsql.DATE_FORMAT(e.HireDate.ToExpr(), "%Y-%m-%d").AsF("formatted_date")).
+		err := gsql.Select(e.HireDate.Format("%Y-%m-%d").As("formatted_date")).
 			From(&e).
 			Where(e.Name.Eq("John")).
 			First(db, &result)
@@ -534,10 +534,9 @@ func TestFunc_DateTime(t *testing.T) {
 			DaysDiff int `gorm:"column:days_diff"`
 		}
 		// Calculate days between hire dates of John and Jane
-		err := gsql.Select(gsql.DATEDIFF(
-			gsql.Lit("2020-06-15"),
-			gsql.Lit("2019-01-10"),
-		).AsF("days_diff")).
+		date1 := field.NewDateTimeExpr[time.Time](gsql.Lit("2020-06-15"))
+		date2 := field.NewDateTimeExpr[time.Time](gsql.Lit("2019-01-10"))
+		err := gsql.Select(date1.DateDiff(date2).As("days_diff")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -555,7 +554,7 @@ func TestFunc_DateTime(t *testing.T) {
 		var result struct {
 			FutureDate time.Time `gorm:"column:future_date"`
 		}
-		err := gsql.Select(gsql.DATE_ADD(e.HireDate.ToExpr(), "30 DAY").AsF("future_date")).
+		err := gsql.Select(e.HireDate.AddInterval("30 DAY").As("future_date")).
 			From(&e).
 			Where(e.Name.Eq("John")).
 			First(db, &result)
@@ -861,7 +860,7 @@ func TestFunc_Aggregate(t *testing.T) {
 			Total int64 `gorm:"column:total"`
 		}
 		// MySQL: SELECT COUNT(*) AS total FROM products
-		err := gsql.Select(gsql.COUNT().AsF("total")).
+		err := gsql.Select(gsql.COUNT().As("total")).
 			From(&p).
 			First(db, &result)
 		if err != nil {
@@ -879,7 +878,7 @@ func TestFunc_Aggregate(t *testing.T) {
 		}
 		// MySQL: SELECT COUNT(products.id) AS count FROM products
 		//        WHERE products.category = 'Electronics'
-		err := gsql.Select(gsql.COUNT(p.ID).AsF("count")).
+		err := gsql.Select(gsql.COUNT(p.ID).As("count")).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
 			First(db, &result)
@@ -898,7 +897,7 @@ func TestFunc_Aggregate(t *testing.T) {
 		}
 		// MySQL: SELECT SUM(products.price) AS total_price FROM products
 		//        WHERE products.category = 'Electronics'
-		err := gsql.Select(gsql.SUM(p.Price.ToExpr()).AsF("total_price")).
+		err := gsql.Select(p.Price.Sum().As("total_price")).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
 			First(db, &result)
@@ -917,7 +916,7 @@ func TestFunc_Aggregate(t *testing.T) {
 		}
 		// MySQL: SELECT AVG(products.price) AS avg_price FROM products
 		//        WHERE products.category = 'Electronics'
-		err := gsql.Select(gsql.AVG(p.Price.ToExpr()).AsF("avg_price")).
+		err := gsql.Select(p.Price.Avg().As("avg_price")).
 			From(&p).
 			Where(p.Category.Eq("Electronics")).
 			First(db, &result)
@@ -934,7 +933,7 @@ func TestFunc_Aggregate(t *testing.T) {
 		var result struct {
 			MaxPrice float64 `gorm:"column:max_price"`
 		}
-		err := gsql.Select(gsql.MAX(p.Price.ToExpr()).AsF("max_price")).
+		err := gsql.Select(p.Price.Max().As("max_price")).
 			From(&p).
 			First(db, &result)
 		if err != nil {
@@ -950,7 +949,7 @@ func TestFunc_Aggregate(t *testing.T) {
 		var result struct {
 			MinPrice float64 `gorm:"column:min_price"`
 		}
-		err := gsql.Select(gsql.MIN(p.Price.ToExpr()).AsF("min_price")).
+		err := gsql.Select(p.Price.Min().As("min_price")).
 			From(&p).
 			First(db, &result)
 		if err != nil {
@@ -970,8 +969,8 @@ func TestFunc_Aggregate(t *testing.T) {
 		}
 		err := gsql.Select(
 			p.Category,
-			gsql.SUM(p.Stock.ToExpr()).AsF("total_stock"),
-			gsql.AVG(p.Price.ToExpr()).AsF("avg_price"),
+			p.Stock.Sum().As("total_stock"),
+			p.Price.Avg().As("avg_price"),
 		).
 			From(&p).
 			GroupBy(p.Category).
@@ -1109,7 +1108,8 @@ func TestFunc_TypeConvert(t *testing.T) {
 		var result struct {
 			IntPrice int64 `gorm:"column:int_price"`
 		}
-		err := gsql.Select(gsql.CAST(p.Price.ToExpr(), gsql.CastTypeSigned).AsF("int_price")).
+
+		err := gsql.Select(p.Price.CastUnsigned().As("int_price")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1126,7 +1126,7 @@ func TestFunc_TypeConvert(t *testing.T) {
 		var result struct {
 			StrStock string `gorm:"column:str_stock"`
 		}
-		err := gsql.Select(gsql.CAST(p.Stock.ToExpr(), gsql.CastTypeChar).AsF("str_stock")).
+		err := gsql.Select(p.Stock.CastChar().As("str_stock")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1160,7 +1160,7 @@ func TestFunc_TypeConvert(t *testing.T) {
 		var result struct {
 			DecPrice float64 `gorm:"column:dec_price"`
 		}
-		err := gsql.Select(gsql.CAST(p.Price.ToExpr(), "DECIMAL(10,2)").AsF("dec_price")).
+		err := gsql.Select(p.Price.CastDecimal(10, 2).As("dec_price")).
 			From(&p).
 			Limit(1).
 			First(db, &result)

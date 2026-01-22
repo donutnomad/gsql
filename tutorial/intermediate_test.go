@@ -6,6 +6,7 @@ import (
 	"time"
 
 	gsql "github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql/field"
 )
 
 // ==================== JOIN Tests ====================
@@ -327,7 +328,7 @@ func TestInter_SubqueryInWhere(t *testing.T) {
 	t.Run("Scalar subquery comparison", func(t *testing.T) {
 		// Find orders with total above average
 		// MySQL Subquery: SELECT AVG(orders.total_price) AS avg_price FROM orders
-		avgSubquery := gsql.Select(gsql.AVG(o.TotalPrice).AsF("avg_price")).
+		avgSubquery := gsql.Select(o.TotalPrice.Avg().As("avg_price")).
 			From(&o)
 
 		var results []Order
@@ -395,9 +396,9 @@ func TestInter_GroupBy(t *testing.T) {
 		//        ORDER BY orders.customer_id ASC
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
-			gsql.SUM(o.TotalPrice).AsF("total_spent"),
-			gsql.AVG(o.TotalPrice).AsF("average_order"),
+			gsql.COUNT().As("order_count"),
+			o.TotalPrice.Sum().As("total_spent"),
+			o.TotalPrice.Avg().As("average_order"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -438,8 +439,8 @@ func TestInter_GroupBy(t *testing.T) {
 		err := gsql.Select(
 			o.CustomerID,
 			o.Status,
-			gsql.COUNT().AsF("count"),
-			gsql.SUM(o.TotalPrice).AsF("total"),
+			gsql.COUNT().As("count"),
+			o.TotalPrice.Sum().As("total"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID, o.Status).
@@ -503,7 +504,7 @@ func TestInter_Having(t *testing.T) {
 		//        HAVING COUNT(*) > 3
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
+			gsql.COUNT().As("order_count"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -532,7 +533,7 @@ func TestInter_Having(t *testing.T) {
 		//        HAVING SUM(total_price) > 500
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.SUM(o.TotalPrice).AsF("total"),
+			o.TotalPrice.Sum().As("total"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -562,8 +563,8 @@ func TestInter_Having(t *testing.T) {
 		//        HAVING COUNT(*) >= 3 AND AVG(total_price) > 50
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
-			gsql.AVG(o.TotalPrice).AsF("avg_order"),
+			gsql.COUNT().As("order_count"),
+			o.TotalPrice.Avg().As("avg_order"),
 		).
 			From(&o).
 			GroupBy(o.CustomerID).
@@ -828,20 +829,21 @@ func TestInter_CaseWhen(t *testing.T) {
 	t.Run("CASE WHEN with SUM aggregate", func(t *testing.T) {
 		// Count orders by tier
 		// MySQL: SUM(CASE WHEN orders.total_price < 100 THEN 1 ELSE 0 END) AS small_count
-		smallOrderSum := gsql.SUM(
+
+		smallOrderSum := field.NewIntExprT[int64](
 			gsql.Case().
 				When(o.TotalPrice.Lt(100), gsql.Lit(1)).
 				Else(gsql.Lit(0)).
 				End(),
-		).AsF("small_count")
+		).Sum().As("small_count")
 
 		// MySQL: SUM(CASE WHEN orders.total_price >= 100 AND orders.total_price < 500 THEN 1 ELSE 0 END) AS medium_count
-		mediumOrderSum := gsql.SUM(
+		mediumOrderSum := field.NewIntExprT[int64](
 			gsql.Case().
 				When(gsql.And(o.TotalPrice.Gte(100), o.TotalPrice.Lt(500)), gsql.Lit(1)).
 				Else(gsql.Lit(0)).
 				End(),
-		).AsF("medium_count")
+		).Sum().As("medium_count")
 
 		var result struct {
 			SmallCount  int64 `gorm:"column:small_count"`
@@ -1035,7 +1037,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
+			gsql.COUNT().As("order_count"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Gt(1)).
@@ -1051,7 +1053,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Also verify ToSQL output
 		sql := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
+			gsql.COUNT().As("order_count"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Gt(1)).
@@ -1078,10 +1080,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.SUM(o.TotalPrice).AsF("total"),
+			o.TotalPrice.Sum().As("total"),
 		).From(&o).
 			GroupBy(o.CustomerID).
-			Having(gsql.SUM(o.TotalPrice).Gte(300.0)).
+			Having(o.TotalPrice.Sum().Gte(300.0)).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -1094,10 +1096,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Verify ToSQL output
 		sql := gsql.Select(
 			o.CustomerID,
-			gsql.SUM(o.TotalPrice).AsF("total"),
+			o.TotalPrice.Sum().As("total"),
 		).From(&o).
 			GroupBy(o.CustomerID).
-			Having(gsql.SUM(o.TotalPrice).Gte(300.0)).
+			Having(o.TotalPrice.Sum().Gte(300.0)).
 			ToSQL()
 
 		t.Logf("SUM().Gte SQL: %s", sql)
@@ -1121,10 +1123,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			p.Category,
-			gsql.AVG(p.Price).AsF("avg_price"),
+			p.Price.Avg().As("avg_price"),
 		).From(&p).
 			GroupBy(p.Category).
-			Having(gsql.AVG(p.Price).Between(50.0, 2000.0)).
+			Having(p.Price.Avg().Between(50.0, 2000.0)).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -1137,10 +1139,10 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Verify ToSQL output
 		sql := gsql.Select(
 			p.Category,
-			gsql.AVG(p.Price).AsF("avg_price"),
+			p.Price.Avg().As("avg_price"),
 		).From(&p).
 			GroupBy(p.Category).
-			Having(gsql.AVG(p.Price).Between(50.0, 2000.0)).
+			Having(p.Price.Avg().Between(50.0, 2000.0)).
 			ToSQL()
 
 		t.Logf("AVG().Between SQL: %s", sql)
@@ -1167,7 +1169,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("cnt"),
+			gsql.COUNT().As("cnt"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Find(db, &results)
@@ -1181,7 +1183,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Verify ToSQL output
 		sql := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("cnt"),
+			gsql.COUNT().As("cnt"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			ToSQL()
@@ -1200,7 +1202,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Test Lt (less than)
 		sqlLt := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("cnt"),
+			gsql.COUNT().As("cnt"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Lt(3)).
@@ -1214,7 +1216,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// Test Lte (less than or equal)
 		sqlLte := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("cnt"),
+			gsql.COUNT().As("cnt"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Lte(2)).
@@ -1232,7 +1234,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 		err := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("cnt"),
+			gsql.COUNT().As("cnt"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Eq(2)).
@@ -1247,7 +1249,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 
 		sqlEq := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("cnt"),
+			gsql.COUNT().As("cnt"),
 		).From(&o).
 			GroupBy(o.CustomerID).
 			Having(gsql.COUNT().Eq(2)).

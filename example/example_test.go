@@ -15,7 +15,7 @@ func Test_BasicUsage_GroupBy_Having_For_IndexHint_Partition(t *testing.T) {
 	o := OrderSchema.As("o")
 
 	// 基础查询：GroupBy/Having + 锁子句 + 分区 + 索引提示
-	sql := gsql.Select(u.OrgID, gsql.COUNT(u.ID).AsF("cnt")).
+	sql := gsql.Select(u.OrgID, gsql.COUNT(u.ID).As("cnt")).
 		From(u).
 		Partition("p2025_10").
 		UseIndex("idx_users_status").

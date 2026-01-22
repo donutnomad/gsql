@@ -259,3 +259,131 @@ func (f TextExprField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+// ==================== DateTimeExprField 定义 ====================
+
+// DateTimeExprField 日期时间类型字段，同时实现 IField 接口和 DateTimeExpr 的所有方法
+// 使用场景：
+//   - 替代 Comparable[time.Time] 等日期时间类型字段
+//   - 支持字段操作的同时支持类型安全的日期时间操作（Year、Month、Day 等）
+type DateTimeExprField[T any] struct {
+	Base
+	DateTimeExpr[T]
+}
+
+// NewDateTimeExprField 创建一个新的 DateTimeExprField 实例
+func NewDateTimeExprField[T any](tableName, name string, flags ...FieldFlag) DateTimeExprField[T] {
+	b := NewBase(tableName, name, flags...)
+	return NewDateTimeExprFieldFrom[T](b)
+}
+
+// NewDateTimeExprFieldFrom 从 IField 创建 DateTimeExprField
+func NewDateTimeExprFieldFrom[T any](field IField) DateTimeExprField[T] {
+	base := ifieldToBase(field)
+	expr := base.ToExpr()
+	return DateTimeExprField[T]{
+		Base:         base,
+		DateTimeExpr: NewDateTimeExpr[T](expr),
+	}
+}
+
+// Build 实现 clause.Expression 接口
+func (f DateTimeExprField[T]) Build(builder clause.Builder) {
+	f.Base.ToExpr().Build(builder)
+}
+
+// ToExpr 转换为 Expression
+func (f DateTimeExprField[T]) ToExpr() Expression {
+	return f.Base.ToExpr()
+}
+
+// As 创建一个别名字段
+func (f DateTimeExprField[T]) As(alias string) IField {
+	return f.Base.As(alias)
+}
+
+// WithTable 创建带新表名的字段
+func (f DateTimeExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateTimeExprField[T] {
+	name := f.Base.columnName
+	if len(fieldNames) > 0 {
+		name = fieldNames[0]
+	}
+	return NewDateTimeExprField[T](tableName.TableName(), name)
+}
+
+// WithAlias 创建带别名的字段
+func (f DateTimeExprField[T]) WithAlias(alias string) DateTimeExprField[T] {
+	b := f.Base
+	b.alias = alias
+	return NewDateTimeExprFieldFrom[T](b)
+}
+
+// FieldType 返回字段类型的零值
+func (f DateTimeExprField[T]) FieldType() T {
+	var def T
+	return def
+}
+
+// ==================== DateExprField 定义 ====================
+
+// DateExprField 日期类型字段，同时实现 IField 接口和 DateExpr 的所有方法
+// 使用场景：
+//   - 替代 Comparable[time.Time] 等日期类型字段
+//   - 支持字段操作的同时支持类型安全的日期操作（Year、Month、Day 等）
+type DateExprField[T any] struct {
+	Base
+	DateExpr[T]
+}
+
+// NewDateExprField 创建一个新的 DateExprField 实例
+func NewDateExprField[T any](tableName, name string, flags ...FieldFlag) DateExprField[T] {
+	b := NewBase(tableName, name, flags...)
+	return NewDateExprFieldFrom[T](b)
+}
+
+// NewDateExprFieldFrom 从 IField 创建 DateExprField
+func NewDateExprFieldFrom[T any](field IField) DateExprField[T] {
+	base := ifieldToBase(field)
+	expr := base.ToExpr()
+	return DateExprField[T]{
+		Base:     base,
+		DateExpr: NewDateExpr[T](expr),
+	}
+}
+
+// Build 实现 clause.Expression 接口
+func (f DateExprField[T]) Build(builder clause.Builder) {
+	f.Base.ToExpr().Build(builder)
+}
+
+// ToExpr 转换为 Expression
+func (f DateExprField[T]) ToExpr() Expression {
+	return f.Base.ToExpr()
+}
+
+// As 创建一个别名字段
+func (f DateExprField[T]) As(alias string) IField {
+	return f.Base.As(alias)
+}
+
+// WithTable 创建带新表名的字段
+func (f DateExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateExprField[T] {
+	name := f.Base.columnName
+	if len(fieldNames) > 0 {
+		name = fieldNames[0]
+	}
+	return NewDateExprField[T](tableName.TableName(), name)
+}
+
+// WithAlias 创建带别名的字段
+func (f DateExprField[T]) WithAlias(alias string) DateExprField[T] {
+	b := f.Base
+	b.alias = alias
+	return NewDateExprFieldFrom[T](b)
+}
+
+// FieldType 返回字段类型的零值
+func (f DateExprField[T]) FieldType() T {
+	var def T
+	return def
+}

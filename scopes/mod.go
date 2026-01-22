@@ -71,7 +71,7 @@ func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange
 			return clause.Expr{}
 		}
 		var left = fieldComparable.ToExpr()
-		var right = gsql.Primitive(*value)
+		var right = gsql.Lit(*value)
 		if fieldIsTimeStruct {
 			right = gsql.FROM_UNIXTIME(right)
 		}

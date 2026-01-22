@@ -3,13 +3,14 @@ package gsql
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/donutnomad/gsql/field"
 )
 
-// TestDateAddSQLInjectionPrevention 测试 DATE_ADD 函数的 SQL 注入防护
+// TestDateAddSQLInjectionPrevention 测试 DateTimeExpr.AddInterval 方法的 SQL 注入防护
 func TestDateAddSQLInjectionPrevention(t *testing.T) {
-	dateField := field.NewComparable[string]("users", "created_at")
+	dateField := field.NewDateTimeExpr[time.Time](field.NewComparable[time.Time]("users", "created_at").ToExpr())
 
 	tests := []struct {
 		name        string
@@ -84,7 +85,7 @@ func TestDateAddSQLInjectionPrevention(t *testing.T) {
 					}
 				}()
 			}
-			result := DATE_ADD(dateField.ToExpr(), tt.interval)
+			result := dateField.AddInterval(tt.interval)
 			if !tt.shouldPanic {
 				// 验证函数执行成功
 				_ = result
@@ -93,9 +94,9 @@ func TestDateAddSQLInjectionPrevention(t *testing.T) {
 	}
 }
 
-// TestDateSubSQLInjectionPrevention 测试 DATE_SUB 函数的 SQL 注入防护
+// TestDateSubSQLInjectionPrevention 测试 DateTimeExpr.SubInterval 方法的 SQL 注入防护
 func TestDateSubSQLInjectionPrevention(t *testing.T) {
-	dateField := field.NewComparable[string]("users", "created_at")
+	dateField := field.NewDateTimeExpr[time.Time](field.NewComparable[time.Time]("users", "created_at").ToExpr())
 
 	tests := []struct {
 		name        string
@@ -136,15 +137,15 @@ func TestDateSubSQLInjectionPrevention(t *testing.T) {
 					}
 				}()
 			}
-			_ = DATE_SUB(dateField.ToExpr(), tt.interval)
+			_ = dateField.SubInterval(tt.interval)
 		})
 	}
 }
 
-// TestTimestampDiffSQLInjectionPrevention 测试 TIMESTAMPDIFF 函数的 SQL 注入防护
+// TestTimestampDiffSQLInjectionPrevention 测试 DateTimeExpr.TimestampDiff 方法的 SQL 注入防护
 func TestTimestampDiffSQLInjectionPrevention(t *testing.T) {
-	expr1 := field.NewComparable[string]("users", "created_at")
-	expr2 := field.NewComparable[string]("users", "updated_at")
+	expr1 := field.NewDateTimeExpr[time.Time](field.NewComparable[time.Time]("users", "created_at").ToExpr())
+	expr2 := field.NewDateTimeExpr[time.Time](field.NewComparable[time.Time]("users", "updated_at").ToExpr())
 
 	tests := []struct {
 		name        string
@@ -195,7 +196,7 @@ func TestTimestampDiffSQLInjectionPrevention(t *testing.T) {
 					}
 				}()
 			}
-			_ = TIMESTAMPDIFF(tt.unit, expr1.ToExpr(), expr2.ToExpr())
+			_ = expr1.TimestampDiff(tt.unit, expr2)
 		})
 	}
 }

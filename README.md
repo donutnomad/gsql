@@ -80,28 +80,28 @@ func BuildComplexQuery() string {
                 userLevel.Eq("VIP"),
                 amount.Gt(10000),
             ),
-            gsql.Primitive(0.7), // 30% off for VIP orders > 10000
+            gsql.Lit(0.7), // 30% off for VIP orders > 10000
         ).
         When(
             gsql.And(
                 userLevel.Eq("Premium"),
                 amount.Gt(5000),
             ),
-            gsql.Primitive(0.85), // 15% off for Premium orders > 5000
+            gsql.Lit(0.85), // 15% off for Premium orders > 5000
         ).
         When(
             gsql.Expr("first_order = ?", true),
-            gsql.Primitive(0.9), // 10% off for first orders
+            gsql.Lit(0.9), // 10% off for first orders
         ).
-        Else(gsql.Primitive(1.0)). // No discount
+        Else(gsql.Lit(1.0)). // No discount
         End().AsF("discount_rate")
 
     // Build custom priority for sorting
     priority := gsql.Case().
-        When(status.Eq("urgent"), gsql.Primitive(1)).
-        When(status.Eq("high"), gsql.Primitive(2)).
-        When(status.Eq("normal"), gsql.Primitive(3)).
-        Else(gsql.Primitive(4)).
+        When(status.Eq("urgent"), gsql.Lit(1)).
+        When(status.Eq("high"), gsql.Lit(2)).
+        When(status.Eq("normal"), gsql.Lit(3)).
+        Else(gsql.Lit(4)).
         End().AsF("priority")
 
     // Build complex query
@@ -160,10 +160,10 @@ func GroupByWithAggregation() string {
 
     // Create amount range buckets
     amountRange := gsql.Case().
-        When(amount.Lt(100), gsql.Primitive("0-100")).
-        When(amount.Lt(500), gsql.Primitive("100-500")).
-        When(amount.Lt(1000), gsql.Primitive("500-1000")).
-        Else(gsql.Primitive("1000+")).
+        When(amount.Lt(100), gsql.Lit("0-100")).
+        When(amount.Lt(500), gsql.Lit("100-500")).
+        When(amount.Lt(1000), gsql.Lit("500-1000")).
+        Else(gsql.Lit("1000+")).
         End().AsF("amount_range")
 
     sql := gsql.Select(
@@ -339,7 +339,7 @@ func StringFunctions() string {
     email := field.NewPattern[string]("users", "email")
 
     sql := gsql.Select(
-        gsql.CONCAT(firstName.ToExpr(), gsql.Primitive(" "), lastName.ToExpr()).AsF("full_name"),
+        gsql.CONCAT(firstName.ToExpr(), gsql.Lit(" "), lastName.ToExpr()).AsF("full_name"),
         gsql.UPPER(email.ToExpr()).AsF("email_upper"),
         gsql.SUBSTRING(email.ToExpr(), 1, 5).AsF("email_prefix"),
         gsql.LENGTH(firstName.ToExpr()).AsF("name_length"),
@@ -401,14 +401,14 @@ func ConditionalAggregation() string {
             gsql.IF(
                 status.Eq("completed"),
                 amount.ToExpr(),
-                gsql.Primitive(0),
+                gsql.Lit(0),
             ),
         ).AsF("completed_amount"),
         gsql.SUM(
             gsql.IF(
                 status.Eq("pending"),
                 amount.ToExpr(),
-                gsql.Primitive(0),
+                gsql.Lit(0),
             ),
         ).AsF("pending_amount"),
     ).From(gsql.TableName("orders").Ptr()).
@@ -558,9 +558,9 @@ See [functions.go](functions.go) for complete list.
 
 ## Documentation
 
-- [CASE_WHEN_USAGE.md](CASE_WHEN_USAGE.md) - CASE expression detailed usage
-- [CTE_README.md](CTE_README.md) - CTE feature documentation
-- [BATCH_IN_README.md](BATCH_IN_README.md) - BatchIn optimizer guide
+- [CASE_WHEN_USAGE.md](docs/CASE_WHEN_USAGE.md) - CASE expression detailed usage
+- [CTE_README.md](docs/CTE_README.md) - CTE feature documentation
+- [BATCH_IN_README.md](docs/BATCH_IN_README.md) - BatchIn optimizer guide
 
 ## Requirements
 

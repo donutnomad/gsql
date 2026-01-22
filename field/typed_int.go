@@ -287,3 +287,57 @@ func (e IntExprT[T]) Greatest(values ...any) IntExprT[T] {
 func (e IntExprT[T]) Least(values ...any) IntExprT[T] {
 	return NewIntExprT[T](e.leastExpr(values...))
 }
+
+// ==================== 聚合函数 ====================
+
+// Sum 计算数值的总和 (SUM)
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (e IntExprT[T]) Sum() IntExprT[T] {
+	return NewIntExprT[T](clause.Expr{
+		SQL:  "SUM(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Avg 计算数值的平均值 (AVG)
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (e IntExprT[T]) Avg() FloatExprT[float64] {
+	return NewFloatExprT[float64](clause.Expr{
+		SQL:  "AVG(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Max 返回最大值 (MAX)
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (e IntExprT[T]) Max() IntExprT[T] {
+	return NewIntExprT[T](clause.Expr{
+		SQL:  "MAX(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Min 返回最小值 (MIN)
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (e IntExprT[T]) Min() IntExprT[T] {
+	return NewIntExprT[T](clause.Expr{
+		SQL:  "MIN(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// ==================== 网络函数 ====================
+
+// InetNtoa 将整数形式的IP地址转换为点分十进制字符串 (INET_NTOA)
+// SELECT INET_NTOA(3232235777); -- 结果为 '192.168.1.1'
+// SELECT INET_NTOA(ip_address) FROM access_logs;
+func (e IntExprT[T]) InetNtoa() TextExpr[string] {
+	return NewTextExpr[string](clause.Expr{
+		SQL:  "INET_NTOA(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}

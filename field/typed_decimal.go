@@ -225,3 +225,45 @@ func (e DecimalExprT[T]) Least(values ...any) DecimalExprT[T] {
 func (e DecimalExprT[T]) Format(decimals int) TextExpr[string] {
 	return NewTextExpr[string](e.formatExpr(decimals))
 }
+
+// ==================== 聚合函数 ====================
+
+// Sum 计算数值的总和 (SUM)
+// SELECT SUM(amount) FROM transactions;
+// SELECT category, SUM(price) FROM products GROUP BY category;
+func (e DecimalExprT[T]) Sum() DecimalExprT[T] {
+	return NewDecimalExprT[T](clause.Expr{
+		SQL:  "SUM(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Avg 计算数值的平均值 (AVG)
+// SELECT AVG(price) FROM products;
+// SELECT category, AVG(amount) FROM transactions GROUP BY category;
+func (e DecimalExprT[T]) Avg() DecimalExprT[T] {
+	return NewDecimalExprT[T](clause.Expr{
+		SQL:  "AVG(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Max 返回最大值 (MAX)
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(amount) FROM transactions GROUP BY category;
+func (e DecimalExprT[T]) Max() DecimalExprT[T] {
+	return NewDecimalExprT[T](clause.Expr{
+		SQL:  "MAX(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// Min 返回最小值 (MIN)
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(amount) FROM transactions GROUP BY category;
+func (e DecimalExprT[T]) Min() DecimalExprT[T] {
+	return NewDecimalExprT[T](clause.Expr{
+		SQL:  "MIN(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}

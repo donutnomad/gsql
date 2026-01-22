@@ -9,9 +9,9 @@ CASE WHEN 构建器提供了类型安全的方式来构建 SQL CASE 表达式，
 ### 1. 使用 `Primitive()` 表示字面量
 ```go
 // ✅ 推荐：使用 Primitive 表示字面量值
-gsql.Primitive("VIP")
-gsql.Primitive(100)
-gsql.Primitive(0.7)
+gsql.Lit("VIP")
+gsql.Lit(100)
+gsql.Lit(0.7)
 
 // ❌ 不推荐：使用 Expr("?", value)
 gsql.Expr("?", "VIP")
@@ -24,8 +24,8 @@ amount := field.NewComparable[int64]("", "amount")
 userLevel := field.NewPattern[string]("", "user_level")
 
 gsql.Case().
-    When(amount.Gt(1000), gsql.Primitive("High")).
-    When(userLevel.Eq("VIP"), gsql.Primitive("Premium"))
+    When(amount.Gt(1000), gsql.Lit("High")).
+    When(userLevel.Eq("VIP"), gsql.Lit("Premium"))
 
 // ❌ 不推荐：使用字符串拼接
 gsql.Case().
@@ -41,10 +41,10 @@ gsql.Case().
 amount := field.NewComparable[int64]("", "amount")
 
 amountLevel := gsql.Case().
-    When(amount.Gt(10000), gsql.Primitive("VIP")).
-    When(amount.Gt(5000), gsql.Primitive("Premium")).
-    When(amount.Gt(1000), gsql.Primitive("Standard")).
-    Else(gsql.Primitive("Basic")).
+    When(amount.Gt(10000), gsql.Lit("VIP")).
+    When(amount.Gt(5000), gsql.Lit("Premium")).
+    When(amount.Gt(1000), gsql.Lit("Standard")).
+    Else(gsql.Lit("Basic")).
     End().AsF("customer_level")
 ```
 
@@ -64,10 +64,10 @@ END AS customer_level
 status := field.NewComparable[int]("", "status")
 
 statusDesc := gsql.CaseValue(status.ToExpr()).
-    When(gsql.Primitive(0), gsql.Primitive("待处理")).
-    When(gsql.Primitive(1), gsql.Primitive("处理中")).
-    When(gsql.Primitive(2), gsql.Primitive("已完成")).
-    Else(gsql.Primitive("未知状态")).
+    When(gsql.Lit(0), gsql.Lit("待处理")).
+    When(gsql.Lit(1), gsql.Lit("处理中")).
+    When(gsql.Lit(2), gsql.Lit("已完成")).
+    Else(gsql.Lit("未知状态")).
     End().AsF("status_desc")
 ```
 
@@ -96,17 +96,17 @@ discount := gsql.Case().
             userLevel.Eq("VIP"),
             amount.Gt(10000),
         ),
-        gsql.Primitive(0.7), // 7折
+        gsql.Lit(0.7), // 7折
     ).
     When(
         gsql.And(
             userLevel.Eq("Premium"),
             amount.Gt(5000),
         ),
-        gsql.Primitive(0.85), // 85折
+        gsql.Lit(0.85), // 85折
     ).
-    When(firstOrder.Eq(true), gsql.Primitive(0.9)). // 首单9折
-    Else(gsql.Primitive(1.0)). // 原价
+    When(firstOrder.Eq(true), gsql.Lit(0.9)). // 首单9折
+    Else(gsql.Lit(1.0)). // 原价
     End().AsF("discount_rate")
 ```
 
@@ -116,10 +116,10 @@ discount := gsql.Case().
 amount := field.NewComparable[int64]("", "amount")
 
 amountRange := gsql.Case().
-    When(amount.Lt(100), gsql.Primitive("0-100")).
-    When(amount.Lt(500), gsql.Primitive("100-500")).
-    When(amount.Lt(1000), gsql.Primitive("500-1000")).
-    Else(gsql.Primitive("1000+")).
+    When(amount.Lt(100), gsql.Lit("0-100")).
+    When(amount.Lt(500), gsql.Lit("100-500")).
+    When(amount.Lt(1000), gsql.Lit("500-1000")).
+    Else(gsql.Lit("1000+")).
     End().AsF("amount_range")
 
 sql := gsql.Select(
@@ -137,10 +137,10 @@ sql := gsql.Select(
 status := field.NewPattern[string]("", "status")
 
 priority := gsql.Case().
-    When(status.Eq("urgent"), gsql.Primitive(1)).
-    When(status.Eq("high"), gsql.Primitive(2)).
-    When(status.Eq("normal"), gsql.Primitive(3)).
-    Else(gsql.Primitive(4)).
+    When(status.Eq("urgent"), gsql.Lit(1)).
+    When(status.Eq("high"), gsql.Lit(2)).
+    When(status.Eq("normal"), gsql.Lit(3)).
+    Else(gsql.Lit(4)).
     End().AsF("priority")
 
 sql := gsql.Select(
@@ -159,9 +159,9 @@ userType := field.NewPattern[string]("", "user_type")
 
 // 季节性折扣
 seasonDiscount := gsql.Case().
-    When(gsql.Expr("MONTH(created_at) IN (11,12)"), gsql.Primitive(0.8)).
-    When(gsql.Expr("MONTH(created_at) = ?", 6), gsql.Primitive(0.9)).
-    Else(gsql.Primitive(1.0)).
+    When(gsql.Expr("MONTH(created_at) IN (11,12)"), gsql.Lit(0.8)).
+    When(gsql.Expr("MONTH(created_at) = ?", 6), gsql.Lit(0.9)).
+    Else(gsql.Lit(1.0)).
     End()
 
 // VIP 在季节性折扣基础上再打 95 折
@@ -260,16 +260,16 @@ func main() {
                 userLevel.Eq("VIP"),
                 amount.Gt(10000),
             ),
-            gsql.Primitive(0.7),
+            gsql.Lit(0.7),
         ).
         When(
             gsql.And(
                 userLevel.Eq("Premium"),
                 amount.Gt(5000),
             ),
-            gsql.Primitive(0.85),
+            gsql.Lit(0.85),
         ).
-        Else(gsql.Primitive(1.0)).
+        Else(gsql.Lit(1.0)).
         End().AsF("discount_rate")
     
     // 构建查询

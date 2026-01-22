@@ -90,7 +90,7 @@ func TestCTERecursive(t *testing.T) {
 	// )
 	// SELECT * FROM numbers
 	sql := WithRecursive("numbers",
-		Select(Primitive(1).AsF("n")).
+		Select(Lit(1).AsF("n")).
 			From(TableName("dual").Ptr()),
 	).Select(Star).
 		From(TableName("numbers").Ptr()).

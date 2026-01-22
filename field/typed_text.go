@@ -1,6 +1,8 @@
 package field
 
 import (
+	"fmt"
+
 	"github.com/donutnomad/gsql/clause"
 )
 
@@ -75,8 +77,8 @@ func (e TextExpr[T]) CastUnsigned() IntExprT[uint64] {
 // precision: 总位数, scale: 小数位数
 func (e TextExpr[T]) CastDecimal(precision, scale int) DecimalExprT[float64] {
 	return NewDecimalExprT[float64](clause.Expr{
-		SQL:  "CAST(? AS DECIMAL(?, ?))",
-		Vars: []any{e.baseComparableImpl.Expression, precision, scale},
+		SQL:  fmt.Sprintf("CAST(? AS DECIMAL(%d, %d))", precision, scale),
+		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
 
@@ -84,8 +86,8 @@ func (e TextExpr[T]) CastDecimal(precision, scale int) DecimalExprT[float64] {
 func (e TextExpr[T]) CastChar(length ...int) TextExpr[string] {
 	if len(length) > 0 {
 		return NewTextExpr[string](clause.Expr{
-			SQL:  "CAST(? AS CHAR(?))",
-			Vars: []any{e.baseComparableImpl.Expression, length[0]},
+			SQL:  fmt.Sprintf("CAST(? AS CHAR(%d))", length[0]),
+			Vars: []any{e.baseComparableImpl.Expression},
 		})
 	}
 	return NewTextExpr[string](clause.Expr{
@@ -313,5 +315,17 @@ func (e TextExpr[T]) RPad(length int, padStr string) TextExpr[T] {
 	return NewTextExpr[T](clause.Expr{
 		SQL:  "RPAD(?, ?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, length, padStr},
+	})
+}
+
+// ==================== 网络函数 ====================
+
+// InetAton 将点分十进制的IPv4地址转换为整数形式 (INET_ATON)
+// SELECT INET_ATON('192.168.1.1'); -- 结果为 3232235777
+// INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
+func (e TextExpr[T]) InetAton() IntExprT[uint32] {
+	return NewIntExprT[uint32](clause.Expr{
+		SQL:  "INET_ATON(?)",
+		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }

@@ -87,11 +87,13 @@ func TestAdv_RecursiveCTE(t *testing.T) {
 
 	// Recursive CTE - get organization tree
 	// Use gsql.Expr for IS NULL check since field doesn't have IsNull method
-	sql := gsql.WithRecursive("org_tree",
-		gsql.Select(o.ID, o.Name, o.ParentID, o.Level).
-			From(&o).
-			Where(gsql.Expr("parent_id IS NULL")),
-	).Select(gsql.Star).
+	sql := gsql.
+		WithRecursive("org_tree",
+			gsql.Select(o.ID, o.Name, o.ParentID, o.Level).
+				From(&o).
+				Where(gsql.Expr("parent_id IS NULL")),
+		).
+		Select(gsql.Star).
 		From(gsql.TN("org_tree")).
 		ToSQL()
 
@@ -311,9 +313,9 @@ func TestAdv_JsonExtract(t *testing.T) {
 
 	// Use gsql.JSON_EXTRACT and JSON_UNQUOTE
 	// MySQL: JSON_EXTRACT(profile, '$.age') AS age
-	ageField := gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.age").AsF("age")
+	ageField := gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.age").As("age")
 	// MySQL: JSON_UNQUOTE(JSON_EXTRACT(profile, '$.city')) AS city
-	cityField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.city")).AsF("city")
+	cityField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.city")).As("city")
 
 	var results []Result
 	// MySQL: SELECT user_profiles.username,
@@ -370,8 +372,8 @@ func TestAdv_JsonModify(t *testing.T) {
 	}
 
 	// Verify update using gsql
-	countryField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.country")).AsF("country")
-	ageField := gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.age").AsF("age")
+	countryField := gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.country")).As("country")
+	ageField := gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.age").As("age")
 
 	type VerifyResult struct {
 		Country string `gorm:"column:country"`
@@ -445,7 +447,7 @@ func TestAdv_JsonArray(t *testing.T) {
 
 	// Use JSON_ARRAY with column data - demonstrates combining with other functions
 	// Get the length of the items array
-	itemsLen := gsql.JSON_LENGTH(gsql.AsJson(u.Profile), "$.items").AsF("items_count")
+	itemsLen := gsql.JSON_LENGTH(gsql.AsJson(u.Profile), "$.items").As("items_count")
 
 	type Result struct {
 		Username   string `gorm:"column:username"`
@@ -513,7 +515,7 @@ func TestAdv_JsonKeys(t *testing.T) {
 	}
 
 	// JSON_KEYS - get all keys from JSON object
-	keysField := gsql.JSON_KEYS(gsql.AsJson(u.Profile)).AsF("keys")
+	keysField := gsql.JSON_KEYS(gsql.AsJson(u.Profile)).As("keys")
 
 	var result string
 	err := gsql.Select(keysField).
@@ -540,7 +542,7 @@ func TestAdv_JsonLength(t *testing.T) {
 	}
 
 	// JSON_LENGTH - get length of skills array
-	skillsLen := gsql.JSON_LENGTH(gsql.AsJson(u.Profile), "$.skills").AsF("skills_count")
+	skillsLen := gsql.JSON_LENGTH(gsql.AsJson(u.Profile), "$.skills").As("skills_count")
 
 	type Result struct {
 		SkillsCount int `gorm:"column:skills_count"`
@@ -811,7 +813,7 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 		// 2. Build subquery
 		subquery := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
+			gsql.COUNT().As("order_count"),
 		).From(&o).
 			GroupBy(o.CustomerID)
 
@@ -856,7 +858,7 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 
 		subquery := gsql.Select(
 			o.CustomerID,
-			gsql.COUNT().AsF("order_count"),
+			gsql.COUNT().As("order_count"),
 		).From(&o).
 			GroupBy(o.CustomerID)
 

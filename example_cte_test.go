@@ -8,14 +8,16 @@ import (
 // TestCTEExample_Basic 演示基本的 CTE 用法
 func TestCTEExample_Basic(t *testing.T) {
 	// 创建一个 CTE，然后在主查询中使用它
-	sql := With("user_summary",
-		Select(Field("id"), Field("name"), Field("age")).
-			From(TableName("users").Ptr()).
-			Where(Expr("age > ?", 18)),
-	).Select(Star).
-		From(TableName("user_summary").Ptr()).
-		Where(Expr("age < ?", 30)).
-		ToSQL()
+	sql :=
+		With("user_summary",
+			Select(Field("id"), Field("name"), Field("age")).
+				From(TN("users")).
+				Where(Expr("age > ?", 18)),
+		).
+			Select(Star).
+			From(TN("user_summary")).
+			Where(Expr("age < ?", 30)).
+			ToSQL()
 
 	fmt.Printf("基本 CTE 用法:\n%s\n\n", sql)
 }
@@ -25,14 +27,16 @@ func TestCTEExample_Multiple(t *testing.T) {
 	// 使用多个 CTE，分别统计年轻用户和老用户
 	sql := With("young_users",
 		Select(Star).
-			From(TableName("users").Ptr()).
+			From(TN("users")).
 			Where(Expr("age < ?", 30)),
-	).And("old_users",
+	).
+		And("old_users",
+			Select(Star).
+				From(TN("users")).
+				Where(Expr("age >= ?", 30)),
+		).
 		Select(Star).
-			From(TableName("users").Ptr()).
-			Where(Expr("age >= ?", 30)),
-	).Select(Star).
-		From(TableName("young_users").Ptr()).
+		From(TN("young_users")).
 		ToSQL()
 
 	fmt.Printf("多个 CTE:\n%s\n\n", sql)
@@ -43,10 +47,11 @@ func TestCTEExample_WithColumns(t *testing.T) {
 	// 显式指定 CTE 的列名
 	sql := With("user_info",
 		Select(Field("id"), Field("name"), Field("email")).
-			From(TableName("users").Ptr()),
+			From(TN("users")),
 		"user_id", "user_name", "user_email", // 指定列名
-	).Select(Field("user_id"), Field("user_name")).
-		From(TableName("user_info").Ptr()).
+	).
+		Select(Field("user_id"), Field("user_name")).
+		From(TN("user_info")).
 		ToSQL()
 
 	fmt.Printf("带列名的 CTE:\n%s\n\n", sql)
@@ -57,10 +62,11 @@ func TestCTEExample_Recursive(t *testing.T) {
 	// 递归 CTE 示例：生成数字序列
 	sql := WithRecursive("numbers",
 		Select(Field("n")).
-			From(TableName("dual").Ptr()).
+			From(TN("dual")).
 			Where(Expr("n = ?", 1)),
-	).Select(Star).
-		From(TableName("numbers").Ptr()).
+	).
+		Select(Star).
+		From(TN("numbers")).
 		Where(Expr("n <= ?", 10)).
 		ToSQL()
 
@@ -77,10 +83,11 @@ func TestCTEExample_RecursiveTree(t *testing.T) {
 			Field("parent_id"),
 			Field("level"),
 		).
-			From(TableName("departments").Ptr()).
+			From(TN("departments")).
 			Where(Expr("parent_id IS NULL")),
-	).Select(Star).
-		From(TableName("org_tree").Ptr()).
+	).
+		Select(Star).
+		From(TN("org_tree")).
 		Order(Field("level"), true).
 		ToSQL()
 
@@ -91,15 +98,15 @@ func TestCTEExample_RecursiveTree(t *testing.T) {
 func TestCTEExample_WithJoin(t *testing.T) {
 	sql := With("active_users",
 		Select(Field("id"), Field("name")).
-			From(TableName("users").Ptr()).
+			From(TN("users")).
 			Where(Expr("status = ?", "active")),
 	).Select(
 		Field("orders.id"),
 		Field("orders.total"),
 		Field("active_users.name"),
 	).
-		From(TableName("orders").Ptr()).
-		Join(InnerJoin(TableName("active_users").Ptr()).
+		From(TN("orders")).
+		Join(InnerJoin(TN("active_users")).
 			On(Expr("orders.user_id = active_users.id"))).
 		ToSQL()
 
@@ -113,13 +120,14 @@ func TestCTEExample_Aggregation(t *testing.T) {
 			Field("month"),
 			Field("total"),
 		).
-			From(TableName("orders").Ptr()).
+			From(TN("orders")).
 			GroupBy(Field("month")),
-	).Select(
-		Field("month"),
-		Field("total"),
 	).
-		From(TableName("monthly_sales").Ptr()).
+		Select(
+			Field("month"),
+			Field("total"),
+		).
+		From(TN("monthly_sales")).
 		Order(Field("month"), true).
 		ToSQL()
 

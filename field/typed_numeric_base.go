@@ -1,6 +1,8 @@
 package field
 
 import (
+	"fmt"
+
 	"github.com/donutnomad/gsql/clause"
 	"github.com/samber/mo"
 )
@@ -347,18 +349,30 @@ func (c castSql) castUnsignedExpr() clause.Expr {
 }
 
 func (c castSql) castDecimalExpr(precision, scale int) clause.Expr {
-	return clause.Expr{SQL: "CAST(? AS DECIMAL(?, ?))", Vars: []any{c.Expression, precision, scale}}
+	return clause.Expr{SQL: fmt.Sprintf("CAST(? AS DECIMAL(%d, %d))", precision, scale), Vars: []any{c.Expression}}
 }
 
 func (c castSql) castCharExpr(length ...int) clause.Expr {
 	if len(length) > 0 {
-		return clause.Expr{SQL: "CAST(? AS CHAR(?))", Vars: []any{c.Expression, length[0]}}
+		return clause.Expr{SQL: fmt.Sprintf("CAST(? AS CHAR(%d))", length[0]), Vars: []any{c.Expression}}
 	}
 	return clause.Expr{SQL: "CAST(? AS CHAR)", Vars: []any{c.Expression}}
 }
 
 func (c castSql) castDoubleExpr() clause.Expr {
 	return clause.Expr{SQL: "CAST(? AS DOUBLE)", Vars: []any{c.Expression}}
+}
+
+func (c castSql) castDateExpr() clause.Expr {
+	return clause.Expr{SQL: "CAST(? AS DATE)", Vars: []any{c.Expression}}
+}
+
+func (c castSql) castDatetimeExpr() clause.Expr {
+	return clause.Expr{SQL: "CAST(? AS DATETIME)", Vars: []any{c.Expression}}
+}
+
+func (c castSql) castTimeExpr() clause.Expr {
+	return clause.Expr{SQL: "CAST(? AS TIME)", Vars: []any{c.Expression}}
 }
 
 // ==================== 格式化的 SQL 生成 ====================

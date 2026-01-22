@@ -221,8 +221,8 @@ func TestD1(t *testing.T) {
 	//	//gsql.NULL().AsF(),
 	//	//u.Name.As("token_"+u.Name.Name()),
 	//	//gsql.NOW().AsF(u.Name.Name()),
-	//	//gsql.Primitive(0).AsF("id"),
-	//	//gsql.Primitive("").AsF("company_name"),
+	//	//gsql.Lit(0).AsF("id"),
+	//	//gsql.Lit("").AsF("company_name"),
 	//	//gsql.JSON_OBJECT().
 	//	//	Add("name", u.Name).
 	//	//	AsF("gg"),
@@ -237,7 +237,7 @@ func TestD1(t *testing.T) {
 	//	//).
 	//	//Where(
 	//	//	gsql.Exists(
-	//	//		gsql.Select(gsql.Primitive(1).AsF()).From(u),
+	//	//		gsql.Select(gsql.Lit(1).AsF()).From(u),
 	//	//	),
 	//	//).
 	//	//Order(field.NewBase("", "company_name"), true).
@@ -387,12 +387,12 @@ func TestD(t *testing.T) {
 		}
 
 		spew.Dump(gsql.SelectG[TmpRet2](
-			gsql.IF(u.Name.Eq("bb"), gsql.Primitive("Big"), u.Name).AsF("name"),
-			gsql.UUID().AsF("uuid"),
+			gsql.IF(u.Name.Eq("bb"), gsql.Lit("Big"), u.Name).AsF("name"),
+			gsql.UUID().As("uuid"),
 			gsql.NOW().AsF("now"),
-			gsql.UNIX_TIMESTAMP().AsF("now2"),
+			gsql.UNIX_TIMESTAMP().As("now2"),
 			//gsql.FROM_UNIXTIME(gsql.Expr("? + 3600", u.Age)).AsF("now3"),
-			gsql.FROM_UNIXTIME(gsql.Primitive(1222222)).AsF("now3"),
+			gsql.FROM_UNIXTIME(gsql.Lit(1222222)).AsF("now3"),
 		).From(u).Find(db),
 		)
 
@@ -483,7 +483,7 @@ func TestD(t *testing.T) {
 	}
 
 	{
-		ror := RORRequestSchema.As("rrr")
+		//ror := RORRequestSchema.As("rrr")
 		//r2 := gsql.DefineTable("r2", ror, gsql.Select(
 		//	ror.ID,
 		//	ror.CreatedAt,
@@ -513,50 +513,50 @@ func TestD(t *testing.T) {
 		//	ror.UpdateAtBlockTimestamp,
 		//).From(ror))
 
-		tmp2 := gsql.DefineTempTableAny(
-			struct {
-				RORRequestSchemaType
-				Rn field.Comparable[uint64]
-			}{
-				RORRequestSchemaType: RORRequestSchema,
-				Rn:                   field.NewComparable[uint64]("", "rn"),
-			},
-			gsql.
-				Select(gsql.Star, gsql.Field("ROW_NUMBER() OVER (PARTITION BY nft_id ORDER BY created_at) as rn")).
-				From(ror),
-		)
-
-		tmp1 := gsql.DefineTempTableAny(
-			RORRequestSchema,
-			gsql.Select().From(tmp2).Where(tmp2.Fields.Rn.Eq(1)),
-		)
-
-		//fmt.Println("打印tmp1:", lo.ToPtr(tmp1.Expr()).ToSQL())
-
-		nt := RORTransferBalanceSchema.As("rt")
-
-		//var ret []RORTransferBalance
-		ret, err := gsql.
-			SelectG[RORTransferBalance](
-			nt.CreatedAt,
-			nt.UpdatedAt,
-			nt.Balance,
-			nt.Account,
-		).
-			From(nt).
-			Join(gsql.InnerJoin(tmp1).
-				On(nt.NFTID.EqF(tmp1.Fields.NFTID)).
-				And(nt.NFTContract.EqF(tmp1.Fields.NFTContract)),
-			).
-			//Order(nt.CreatedAt, false).
-			Offset(1).
-			Limit(20).
-			First(db)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		spew.Dump(ret)
+		//tmp2 := gsql.DefineTempTableAny(
+		//	struct {
+		//		RORRequestSchemaType
+		//		Rn field.Comparable[uint64]
+		//	}{
+		//		RORRequestSchemaType: RORRequestSchema,
+		//		Rn:                   field.NewComparable[uint64]("", "rn"),
+		//	},
+		//	gsql.
+		//		Select(gsql.Star, gsql.Field("ROW_NUMBER() OVER (PARTITION BY nft_id ORDER BY created_at) as rn")).
+		//		From(ror),
+		//)
+		//
+		//tmp1 := gsql.DefineTempTableAny(
+		//	RORRequestSchema,
+		//	gsql.Select().From(tmp2).Where(tmp2.Fields.Rn.Eq(1)),
+		//)
+		//
+		////fmt.Println("打印tmp1:", lo.ToPtr(tmp1.Expr()).ToSQL())
+		//
+		//nt := RORTransferBalanceSchema.As("rt")
+		//
+		////var ret []RORTransferBalance
+		//ret, err := gsql.
+		//	SelectG[RORTransferBalance](
+		//	nt.CreatedAt,
+		//	nt.UpdatedAt,
+		//	nt.Balance,
+		//	nt.Account,
+		//).
+		//	From(nt).
+		//	Join(gsql.InnerJoin(tmp1).
+		//		On(nt.NFTID.EqF(tmp1.Fields.NFTID)).
+		//		And(nt.NFTContract.EqF(tmp1.Fields.NFTContract)),
+		//	).
+		//	//Order(nt.CreatedAt, false).
+		//	Offset(1).
+		//	Limit(20).
+		//	First(db)
+		//if err != nil {
+		//	t.Fatal(err)
+		//}
+		//
+		//spew.Dump(ret)
 		// tmp2.nft_id = nt.nft_id AND tmp2.nft_contract = nt.nft_contract
 		//fmt.Println(sq1.ToSQL(db))
 		//fmt.Println("哇哈哈哈")

@@ -128,7 +128,11 @@ func (j *jsonObjectBuilder) Build(builder clause.Builder) {
 }
 
 func (j *jsonObjectBuilder) AsF(name ...string) field.IField {
-	return j.toExpr().AsF(name...)
+	var alias = ""
+	if len(name) > 0 {
+		alias = name[0]
+	}
+	return field.NewBaseFromSql(j.toExpr(), alias)
 }
 
 func (j *jsonObjectBuilder) ToExpr() field.Expression {
@@ -180,7 +184,11 @@ func (b *jsonArrayBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonArrayBuilder) AsF(name ...string) field.IField {
-	return b.toExpr().AsF(name...)
+	var alias = ""
+	if len(name) > 0 {
+		alias = name[0]
+	}
+	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
 func (b *jsonArrayBuilder) ToExpr() field.Expression {
@@ -203,8 +211,8 @@ func (b *jsonArrayBuilder) ToJson() field.JsonExpr {
 //	gsql.AsJson(u.Profile).Extract("$.name").Unquote()
 //
 //goland:noinspection ALL
-func JSON_UNQUOTE(json field.JsonInput) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
+func JSON_UNQUOTE(json field.JsonInput) field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_UNQUOTE(?)",
 		Vars: []any{json},
 	})
@@ -215,8 +223,8 @@ func JSON_UNQUOTE(json field.JsonInput) field.StringExpr {
 // SELECT JSON_QUOTE(users.name) FROM users;
 //
 //goland:noinspection ALL
-func JSON_QUOTE(str field.Expression) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
+func JSON_QUOTE(str field.Expression) field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_QUOTE(?)",
 		Vars: []any{str},
 	})
@@ -233,14 +241,14 @@ func JSON_QUOTE(str field.Expression) field.StringExpr {
 //	gsql.AsJson(u.Profile).Contains(gsql.JsonLit(`"go"`), "$.skills")
 //
 //goland:noinspection ALL
-func JSON_CONTAINS(target, candidate field.JsonInput, path ...string) field.IntExpr {
+func JSON_CONTAINS(target, candidate field.JsonInput, path ...string) field.IntExprT[int64] {
 	if len(path) > 0 {
-		return field.NewIntExpr(clause.Expr{
+		return field.NewIntExprT[int64](clause.Expr{
 			SQL:  "JSON_CONTAINS(?, ?, ?)",
 			Vars: []any{target, candidate, path[0]},
 		})
 	}
-	return field.NewIntExpr(clause.Expr{
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_CONTAINS(?, ?)",
 		Vars: []any{target, candidate},
 	})
@@ -255,7 +263,7 @@ func JSON_CONTAINS(target, candidate field.JsonInput, path ...string) field.IntE
 //	gsql.AsJson(u.Profile).ContainsPath("one", "$.name", "$.age")
 //
 //goland:noinspection ALL
-func JSON_CONTAINS_PATH(json field.JsonInput, mode string, paths ...string) field.IntExpr {
+func JSON_CONTAINS_PATH(json field.JsonInput, mode string, paths ...string) field.IntExprT[int64] {
 	placeholders := make([]string, 0, len(paths)+2)
 	vars := make([]any, 0, len(paths)+2)
 	placeholders = append(placeholders, "?", "?")
@@ -264,7 +272,7 @@ func JSON_CONTAINS_PATH(json field.JsonInput, mode string, paths ...string) fiel
 		placeholders = append(placeholders, "?")
 		vars = append(vars, path)
 	}
-	return field.NewIntExpr(clause.Expr{
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  fmt.Sprintf("JSON_CONTAINS_PATH(%s)", strings.Join(placeholders, ", ")),
 		Vars: vars,
 	})
@@ -303,14 +311,14 @@ func JSON_KEYS(json field.JsonInput, path ...string) field.JsonExpr {
 //	gsql.AsJson(u.Profile).Length("$.skills")
 //
 //goland:noinspection ALL
-func JSON_LENGTH(json field.JsonInput, path ...string) field.IntExpr {
+func JSON_LENGTH(json field.JsonInput, path ...string) field.IntExprT[int64] {
 	if len(path) > 0 {
-		return field.NewIntExpr(clause.Expr{
+		return field.NewIntExprT[int64](clause.Expr{
 			SQL:  "JSON_LENGTH(?, ?)",
 			Vars: []any{json, path[0]},
 		})
 	}
-	return field.NewIntExpr(clause.Expr{
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_LENGTH(?)",
 		Vars: []any{json},
 	})
@@ -367,7 +375,11 @@ func (b *jsonSetBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonSetBuilder) AsF(name ...string) field.IField {
-	return b.toExpr().AsF(name...)
+	var alias = ""
+	if len(name) > 0 {
+		alias = name[0]
+	}
+	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
 func (b *jsonSetBuilder) ToExpr() field.Expression {
@@ -468,7 +480,11 @@ func (b *jsonRemoveBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonRemoveBuilder) AsF(name ...string) field.IField {
-	return b.toExpr().AsF(name...)
+	var alias = ""
+	if len(name) > 0 {
+		alias = name[0]
+	}
+	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
 func (b *jsonRemoveBuilder) ToExpr() field.Expression {
@@ -537,7 +553,11 @@ func (b *jsonArrayModifyBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonArrayModifyBuilder) AsF(name ...string) field.IField {
-	return b.toExpr().AsF(name...)
+	var alias = ""
+	if len(name) > 0 {
+		alias = name[0]
+	}
+	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
 func (b *jsonArrayModifyBuilder) ToExpr() field.Expression {
@@ -631,7 +651,11 @@ func (b *jsonMergeBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonMergeBuilder) AsF(name ...string) field.IField {
-	return b.toExpr().AsF(name...)
+	var alias = ""
+	if len(name) > 0 {
+		alias = name[0]
+	}
+	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
 func (b *jsonMergeBuilder) ToExpr() field.Expression {
@@ -653,8 +677,8 @@ func (b *jsonMergeBuilder) ToJson() field.JsonExpr {
 //	gsql.AsJson(u.Profile).Valid()
 //
 //goland:noinspection ALL
-func JSON_VALID(json field.JsonInput) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
+func JSON_VALID(json field.JsonInput) field.IntExprT[int64] {
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_VALID(?)",
 		Vars: []any{json},
 	})
@@ -668,8 +692,8 @@ func JSON_VALID(json field.JsonInput) field.IntExpr {
 //	gsql.AsJson(u.Profile).Type()
 //
 //goland:noinspection ALL
-func JSON_TYPE(json field.JsonInput) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
+func JSON_TYPE(json field.JsonInput) field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_TYPE(?)",
 		Vars: []any{json},
 	})
@@ -683,8 +707,8 @@ func JSON_TYPE(json field.JsonInput) field.StringExpr {
 //	gsql.AsJson(u.Profile).Depth()
 //
 //goland:noinspection ALL
-func JSON_DEPTH(json field.JsonInput) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
+func JSON_DEPTH(json field.JsonInput) field.IntExprT[int64] {
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_DEPTH(?)",
 		Vars: []any{json},
 	})
@@ -697,8 +721,8 @@ func JSON_DEPTH(json field.JsonInput) field.IntExpr {
 // SELECT JSON_PRETTY(data) FROM users LIMIT 1;
 //
 //goland:noinspection ALL
-func JSON_PRETTY(json field.JsonInput) field.StringExpr {
-	return field.NewStringExpr(clause.Expr{
+func JSON_PRETTY(json field.JsonInput) field.TextExpr[string] {
+	return field.NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_PRETTY(?)",
 		Vars: []any{json},
 	})
@@ -710,14 +734,14 @@ func JSON_PRETTY(json field.JsonInput) field.StringExpr {
 // SELECT JSON_SEARCH('["abc","def","abc"]', 'all', 'abc');
 //
 //goland:noinspection ALL
-func JSON_SEARCH(json field.JsonInput, mode string, searchStr any, escapePath ...any) field.StringExpr {
+func JSON_SEARCH(json field.JsonInput, mode string, searchStr any, escapePath ...any) field.TextExpr[string] {
 	placeholders := []string{"?", "?", "?"}
 	vars := []any{json, mode, searchStr}
 	for _, ep := range escapePath {
 		placeholders = append(placeholders, "?")
 		vars = append(vars, ep)
 	}
-	return field.NewStringExpr(clause.Expr{
+	return field.NewTextExpr[string](clause.Expr{
 		SQL:  fmt.Sprintf("JSON_SEARCH(%s)", strings.Join(placeholders, ", ")),
 		Vars: vars,
 	})
@@ -730,8 +754,8 @@ func JSON_SEARCH(json field.JsonInput, mode string, searchStr any, escapePath ..
 // SELECT JSON_STORAGE_SIZE('[1,2,3,4,5]');
 //
 //goland:noinspection ALL
-func JSON_STORAGE_SIZE(json field.JsonInput) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
+func JSON_STORAGE_SIZE(json field.JsonInput) field.IntExprT[int64] {
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_STORAGE_SIZE(?)",
 		Vars: []any{json},
 	})
@@ -742,8 +766,8 @@ func JSON_STORAGE_SIZE(json field.JsonInput) field.IntExpr {
 // SELECT id, JSON_STORAGE_FREE(metadata) as free_space FROM products;
 //
 //goland:noinspection ALL
-func JSON_STORAGE_FREE(json field.JsonInput) field.IntExpr {
-	return field.NewIntExpr(clause.Expr{
+func JSON_STORAGE_FREE(json field.JsonInput) field.IntExprT[int64] {
+	return field.NewIntExprT[int64](clause.Expr{
 		SQL:  "JSON_STORAGE_FREE(?)",
 		Vars: []any{json},
 	})
