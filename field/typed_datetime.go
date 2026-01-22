@@ -41,6 +41,8 @@ func parseInterval(interval string, funcName string) string {
 	return fmt.Sprintf("%d %s", num, unit)
 }
 
+var _ clause.Expression = (*DateExpr[string])(nil)
+
 // ==================== DateExpr 定义 ====================
 
 // DateExpr 日期类型表达式，用于 DATE 类型字段 (YYYY-MM-DD)
@@ -280,6 +282,8 @@ func (e DateExpr[T]) Min() DateExpr[T] {
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
+
+var _ clause.Expression = (*DateTimeExpr[string])(nil)
 
 // ==================== DateTimeExpr 定义 ====================
 
@@ -589,6 +593,8 @@ func (e DateTimeExpr[T]) Min() DateTimeExpr[T] {
 	})
 }
 
+var _ clause.Expression = (*TimeExpr[string])(nil)
+
 // ==================== TimeExpr 定义 ====================
 
 // TimeExpr 时间类型表达式，用于 TIME 类型字段 (HH:MM:SS)
@@ -597,6 +603,7 @@ func (e DateTimeExpr[T]) Min() DateTimeExpr[T] {
 //   - TIME 类型字段
 //   - CURTIME(), CURRENT_TIME() 等函数的返回值
 //   - TIME() 函数提取时间部分的结果
+
 type TimeExpr[T any] struct {
 	baseComparableImpl[T]
 	pointerExprImpl
@@ -766,6 +773,8 @@ func (e TimeExpr[T]) Min() TimeExpr[T] {
 		Vars: []any{e.baseComparableImpl.Expression},
 	})
 }
+
+var _ clause.Expression = (*TimestampExpr[int64])(nil)
 
 // ==================== TimestampExpr 定义 ====================
 
@@ -1073,6 +1082,8 @@ func (e TimestampExpr[T]) Min() TimestampExpr[T] {
 	})
 }
 
+var _ clause.Expression = (*YearExpr[int64])(nil)
+
 // ==================== YearExpr 定义 ====================
 
 // YearExpr 年份类型表达式，用于 YEAR 类型字段
@@ -1089,7 +1100,7 @@ type YearExpr[T any] struct {
 // NewYearExpr 创建一个新的 YearExpr 实例
 func NewYearExpr[T any](expr clause.Expression) YearExpr[T] {
 	return YearExpr[T]{
-		numericComparableImpl: numericComparableImpl[T]{Expression: expr},
+		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		castSql:               castSql{Expression: expr},
 	}

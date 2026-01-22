@@ -4,6 +4,8 @@ import (
 	"github.com/donutnomad/gsql/clause"
 )
 
+var _ clause.Expression = (*IntExprT[int64])(nil)
+
 // ==================== IntExprT 定义 ====================
 
 // IntExprT 整数类型表达式，用于 COUNT 等返回整数的聚合函数
@@ -23,10 +25,9 @@ type IntExprT[T any] struct {
 	bitOpSql
 }
 
-// NewIntExprT 创建一个新的 IntExprT 实例
 func NewIntExprT[T any](expr clause.Expression) IntExprT[T] {
 	return IntExprT[T]{
-		numericComparableImpl: numericComparableImpl[T]{Expression: expr},
+		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
 		mathFuncSql:           mathFuncSql{Expression: expr},

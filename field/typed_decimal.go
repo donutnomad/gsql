@@ -4,6 +4,8 @@ import (
 	"github.com/donutnomad/gsql/clause"
 )
 
+var _ clause.Expression = (*DecimalExprT[float64])(nil)
+
 // ==================== DecimalExprT 定义 ====================
 
 // DecimalExprT 定点数类型表达式，用于精确的十进制数计算
@@ -25,7 +27,7 @@ type DecimalExprT[T any] struct {
 // NewDecimalExprT 创建一个新的 DecimalExprT 实例
 func NewDecimalExprT[T any](expr clause.Expression) DecimalExprT[T] {
 	return DecimalExprT[T]{
-		numericComparableImpl: numericComparableImpl[T]{Expression: expr},
+		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
 		mathFuncSql:           mathFuncSql{Expression: expr},

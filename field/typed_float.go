@@ -4,6 +4,8 @@ import (
 	"github.com/donutnomad/gsql/clause"
 )
 
+var _ clause.Expression = (*FloatExprT[float64])(nil)
+
 // ==================== FloatExprT 定义 ====================
 
 // FloatExprT 浮点类型表达式，用于 AVG, SUM 等返回浮点数的聚合函数
@@ -26,7 +28,7 @@ type FloatExprT[T any] struct {
 // NewFloatExprT 创建一个新的 FloatExprT 实例
 func NewFloatExprT[T any](expr clause.Expression) FloatExprT[T] {
 	return FloatExprT[T]{
-		numericComparableImpl: numericComparableImpl[T]{Expression: expr},
+		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
 		mathFuncSql:           mathFuncSql{Expression: expr},

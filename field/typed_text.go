@@ -6,6 +6,8 @@ import (
 	"github.com/donutnomad/gsql/clause"
 )
 
+var _ clause.Expression = (*TextExpr[string])(nil)
+
 // ==================== TextExpr 定义 ====================
 
 // TextExpr 文本类型表达式，用于 VARCHAR 和 TEXT 类型字段
@@ -20,7 +22,6 @@ type TextExpr[T any] struct {
 	pointerExprImpl
 }
 
-// NewTextExpr 创建一个新的 TextExpr 实例
 func NewTextExpr[T any](expr clause.Expression) TextExpr[T] {
 	return TextExpr[T]{
 		baseComparableImpl: baseComparableImpl[T]{Expression: expr},
@@ -34,7 +35,6 @@ func (e TextExpr[T]) Build(builder clause.Builder) {
 	e.baseComparableImpl.Expression.Build(builder)
 }
 
-// ToExpr 转换为 Expression
 func (e TextExpr[T]) ToExpr() Expression {
 	return e.baseComparableImpl.Expression
 }

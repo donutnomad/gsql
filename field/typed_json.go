@@ -22,7 +22,6 @@ type JsonExpr struct {
 	baseComparableImpl[string] // 复用比较操作（JSON 值也可以比较）
 }
 
-// NewJsonExpr 创建一个新的 JsonExpr 实例
 func NewJsonExpr(expr clause.Expression) JsonExpr {
 	return JsonExpr{baseComparableImpl[string]{Expression: expr}}
 }

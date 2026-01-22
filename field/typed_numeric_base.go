@@ -34,6 +34,10 @@ func (f baseComparableImpl[T]) Eq(value T) Expression {
 	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, value}}
 }
 
+func (f baseComparableImpl[T]) EqF(other Expression) Expression {
+	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, other}}
+}
+
 func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) Expression {
 	if value.IsAbsent() {
 		return emptyExpression
@@ -45,19 +49,15 @@ func (f baseComparableImpl[T]) Not(value T) Expression {
 	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, value}}
 }
 
+func (f baseComparableImpl[T]) NotF(other Expression) Expression {
+	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, other}}
+}
+
 func (f baseComparableImpl[T]) NotOpt(value mo.Option[T]) Expression {
 	if value.IsAbsent() {
 		return emptyExpression
 	}
 	return f.Not(value.MustGet())
-}
-
-func (f baseComparableImpl[T]) EqF(other IField) Expression {
-	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, other.ToExpr()}}
-}
-
-func (f baseComparableImpl[T]) NotF(other IField) Expression {
-	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, other.ToExpr()}}
 }
 
 func (f baseComparableImpl[T]) In(values ...T) Expression {
@@ -78,39 +78,9 @@ func (f baseComparableImpl[T]) NotIn(values ...T) Expression {
 
 // numericComparableImpl 数值类型的比较操作通用实现
 // 适用于 IntExprT, FloatExprT, DecimalExprT
-// 在 baseComparableImpl 基础上添加大于、小于、Between 等操作
+// 嵌入 baseComparableImpl 获得基础比较操作，额外添加大于、小于、Between 等操作
 type numericComparableImpl[T any] struct {
-	clause.Expression
-}
-
-func (f numericComparableImpl[T]) Eq(value T) Expression {
-	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, value}}
-}
-
-func (f numericComparableImpl[T]) EqOpt(value mo.Option[T]) Expression {
-	if value.IsAbsent() {
-		return emptyExpression
-	}
-	return f.Eq(value.MustGet())
-}
-
-func (f numericComparableImpl[T]) Not(value T) Expression {
-	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, value}}
-}
-
-func (f numericComparableImpl[T]) NotOpt(value mo.Option[T]) Expression {
-	if value.IsAbsent() {
-		return emptyExpression
-	}
-	return f.Not(value.MustGet())
-}
-
-func (f numericComparableImpl[T]) EqF(other IField) Expression {
-	return clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, other.ToExpr()}}
-}
-
-func (f numericComparableImpl[T]) NotF(other IField) Expression {
-	return clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, other.ToExpr()}}
+	baseComparableImpl[T]
 }
 
 func (f numericComparableImpl[T]) Gt(value T) Expression {
@@ -124,8 +94,8 @@ func (f numericComparableImpl[T]) GtOpt(value mo.Option[T]) Expression {
 	return f.Gt(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) GtF(other IField) Expression {
-	return clause.Expr{SQL: "? > ?", Vars: []any{f.Expression, other.ToExpr()}}
+func (f numericComparableImpl[T]) GtF(other Expression) Expression {
+	return clause.Expr{SQL: "? > ?", Vars: []any{f.Expression, other}}
 }
 
 func (f numericComparableImpl[T]) Gte(value T) Expression {
@@ -139,8 +109,8 @@ func (f numericComparableImpl[T]) GteOpt(value mo.Option[T]) Expression {
 	return f.Gte(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) GteF(other IField) Expression {
-	return clause.Expr{SQL: "? >= ?", Vars: []any{f.Expression, other.ToExpr()}}
+func (f numericComparableImpl[T]) GteF(other Expression) Expression {
+	return clause.Expr{SQL: "? >= ?", Vars: []any{f.Expression, other}}
 }
 
 func (f numericComparableImpl[T]) Lt(value T) Expression {
@@ -154,8 +124,8 @@ func (f numericComparableImpl[T]) LtOpt(value mo.Option[T]) Expression {
 	return f.Lt(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) LtF(other IField) Expression {
-	return clause.Expr{SQL: "? < ?", Vars: []any{f.Expression, other.ToExpr()}}
+func (f numericComparableImpl[T]) LtF(other Expression) Expression {
+	return clause.Expr{SQL: "? < ?", Vars: []any{f.Expression, other}}
 }
 
 func (f numericComparableImpl[T]) Lte(value T) Expression {
@@ -169,22 +139,8 @@ func (f numericComparableImpl[T]) LteOpt(value mo.Option[T]) Expression {
 	return f.Lte(value.MustGet())
 }
 
-func (f numericComparableImpl[T]) LteF(other IField) Expression {
-	return clause.Expr{SQL: "? <= ?", Vars: []any{f.Expression, other.ToExpr()}}
-}
-
-func (f numericComparableImpl[T]) In(values ...T) Expression {
-	if len(values) == 0 {
-		return emptyExpression
-	}
-	return clause.Expr{SQL: "? IN ?", Vars: []any{f.Expression, values}}
-}
-
-func (f numericComparableImpl[T]) NotIn(values ...T) Expression {
-	if len(values) == 0 {
-		return emptyExpression
-	}
-	return clause.Expr{SQL: "? NOT IN ?", Vars: []any{f.Expression, values}}
+func (f numericComparableImpl[T]) LteF(other Expression) Expression {
+	return clause.Expr{SQL: "? <= ?", Vars: []any{f.Expression, other}}
 }
 
 func (f numericComparableImpl[T]) Between(from, to T) Expression {
