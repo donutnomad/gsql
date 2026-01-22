@@ -9,16 +9,6 @@ import (
 	"github.com/donutnomad/gsql/internal/fields"
 )
 
-// 白名单：允许的时间间隔单位
-var allowedIntervalUnits = map[string]bool{
-	"MICROSECOND": true, "SECOND": true, "MINUTE": true, "HOUR": true,
-	"DAY": true, "WEEK": true, "MONTH": true, "QUARTER": true, "YEAR": true,
-	"SECOND_MICROSECOND": true, "MINUTE_MICROSECOND": true, "MINUTE_SECOND": true,
-	"HOUR_MICROSECOND": true, "HOUR_SECOND": true, "HOUR_MINUTE": true,
-	"DAY_MICROSECOND": true, "DAY_SECOND": true, "DAY_MINUTE": true, "DAY_HOUR": true,
-	"YEAR_MONTH": true,
-}
-
 // 白名单：允许的字符集
 var allowedCharsets = map[string]bool{
 	"utf8": true, "utf8mb4": true, "latin1": true,
@@ -32,8 +22,6 @@ var Star field.IField = field.NewBase("", "*")
 type CastType string
 
 const (
-	// 二进制类型
-	//CastTypeChar CastType = "CHAR" // 字符串
 	// 数值类型
 	CastTypeSigned CastType = "SIGNED" // 有符号整数
 )

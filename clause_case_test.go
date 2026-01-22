@@ -98,11 +98,11 @@ func TestCaseExample_InGroupBy(t *testing.T) {
 		When(amount.Lt(500), gsql.Lit("100-500")).
 		When(amount.Lt(1000), gsql.Lit("500-1000")).
 		Else(gsql.Lit("1000+")).
-		End().AsF("amount_range")
+		End()
 
 	sql := gsql.
 		Select(
-			amountRange,
+			amountRange.AsF("amount_range"),
 			gsql.COUNT().As("order_count"),
 			amount.Sum().As("total_amount"),
 		).

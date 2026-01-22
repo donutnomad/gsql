@@ -260,23 +260,6 @@ func TestConvertCharsetSQLInjectionPrevention(t *testing.T) {
 	}
 }
 
-// TestAllowedIntervalUnits 测试时间间隔单位白名单的完整性
-func TestAllowedIntervalUnits(t *testing.T) {
-	expectedUnits := []string{
-		"MICROSECOND", "SECOND", "MINUTE", "HOUR", "DAY", "WEEK", "MONTH", "QUARTER", "YEAR",
-		"SECOND_MICROSECOND", "MINUTE_MICROSECOND", "MINUTE_SECOND",
-		"HOUR_MICROSECOND", "HOUR_SECOND", "HOUR_MINUTE",
-		"DAY_MICROSECOND", "DAY_SECOND", "DAY_MINUTE", "DAY_HOUR",
-		"YEAR_MONTH",
-	}
-
-	for _, unit := range expectedUnits {
-		if !allowedIntervalUnits[unit] {
-			t.Errorf("预期的时间单位 %q 不在白名单中", unit)
-		}
-	}
-}
-
 // TestAllowedCharsets 测试字符集白名单的完整性
 func TestAllowedCharsets(t *testing.T) {
 	expectedCharsets := []string{

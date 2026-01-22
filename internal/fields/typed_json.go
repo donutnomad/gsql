@@ -36,7 +36,6 @@ func (e JsonExpr) jsonInput() {}
 // SELECT JSON_EXTRACT('{"name":"John","age":30}', '$.name');
 // SELECT JSON_EXTRACT(data, '$.user.email') FROM profiles;
 // 示例: gsql.AsJson(u.Profile).Extract("$.name", "$.age")
-// 独立函数: gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.name", "$.age")
 func (e JsonExpr) Extract(paths ...string) JsonExpr {
 	vars := make([]any, 0, len(paths)+1)
 	placeholders := make([]string, 0, len(paths)+1)
@@ -56,7 +55,6 @@ func (e JsonExpr) Extract(paths ...string) JsonExpr {
 // SELECT JSON_UNQUOTE('"Hello World"');
 // SELECT JSON_UNQUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
 // 示例: gsql.AsJson(u.Profile).Extract("$.name").Unquote()
-// 独立函数: gsql.JSON_UNQUOTE(gsql.JSON_EXTRACT(gsql.AsJson(u.Profile), "$.name"))
 func (e JsonExpr) Unquote() TextExpr[string] {
 	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_UNQUOTE(?)",
@@ -145,6 +143,7 @@ func (e JsonExpr) ContainsPath(mode string, paths ...string) IntExpr[int64] {
 // 返回: OBJECT, ARRAY, INTEGER, DOUBLE, STRING, BOOLEAN, NULL
 // 示例: gsql.AsJson(u.Profile).Type()
 // 独立函数: gsql.JSON_TYPE(gsql.AsJson(u.Profile))
+// TODO: 内部的Field也需要这个方法
 func (e JsonExpr) Type() TextExpr[string] {
 	return NewTextExpr[string](clause.Expr{
 		SQL:  "JSON_TYPE(?)",
@@ -156,7 +155,6 @@ func (e JsonExpr) Type() TextExpr[string] {
 // SELECT JSON_DEPTH('{"a":{"b":{"c":1}}}');
 // SELECT JSON_DEPTH('[1,[2,[3]]]');
 // 示例: gsql.AsJson(u.Profile).Depth()
-// 独立函数: gsql.JSON_DEPTH(gsql.AsJson(u.Profile))
 func (e JsonExpr) Depth() IntExpr[int64] {
 	return NewIntExpr[int64](clause.Expr{
 		SQL:  "JSON_DEPTH(?)",
@@ -168,7 +166,7 @@ func (e JsonExpr) Depth() IntExpr[int64] {
 // SELECT JSON_VALID('{"a":1}');
 // SELECT JSON_VALID('invalid json');
 // 示例: gsql.AsJson(u.Profile).Valid()
-// 独立函数: gsql.JSON_VALID(gsql.AsJson(u.Profile))
+// TODO: 内部的Field也需要这个方法
 func (e JsonExpr) Valid() IntExpr[int64] {
 	return NewIntExpr[int64](clause.Expr{
 		SQL:  "JSON_VALID(?)",
@@ -202,7 +200,6 @@ func (e JsonExpr) StorageSize() IntExpr[int64] {
 // StorageFree 返回部分更新后释放的空间 (JSON_STORAGE_FREE)
 // SELECT JSON_STORAGE_FREE(data) FROM users;
 // 示例: gsql.AsJson(u.Profile).StorageFree()
-// 独立函数: gsql.JSON_STORAGE_FREE(gsql.AsJson(u.Profile))
 func (e JsonExpr) StorageFree() IntExpr[int64] {
 	return NewIntExpr[int64](clause.Expr{
 		SQL:  "JSON_STORAGE_FREE(?)",
@@ -215,7 +212,6 @@ func (e JsonExpr) StorageFree() IntExpr[int64] {
 // SELECT JSON_SEARCH('["abc","def","abc"]', 'all', 'abc');
 // mode: 'one' 或 'all'
 // 示例: gsql.AsJson(u.Profile).Search("one", "abc")
-// 独立函数: gsql.JSON_SEARCH(gsql.AsJson(u.Profile), "one", "abc")
 func (e JsonExpr) Search(mode string, searchStr any, escapePath ...any) TextExpr[string] {
 	vars := []any{e.Expression, mode, searchStr}
 	placeholders := []string{"?", "?", "?"}
@@ -232,7 +228,6 @@ func (e JsonExpr) Search(mode string, searchStr any, escapePath ...any) TextExpr
 // Set 设置 JSON 值 (JSON_SET) - 返回 JsonExpr，支持链式设置
 // SELECT JSON_SET('{"a":1}', '$.b', 2);
 // 示例: gsql.AsJson(u.Profile).Set("$.name", "John").Set("$.age", 18)
-// 独立函数: gsql.JSON_SET(gsql.AsJson(u.Profile), "$.name", "John").Set("$.age", 18)
 func (e JsonExpr) Set(path string, value any) JsonExpr {
 	return NewJsonExpr(clause.Expr{
 		SQL:  "JSON_SET(?, ?, ?)",
@@ -265,7 +260,6 @@ func (e JsonExpr) Replace(path string, value any) JsonExpr {
 // Remove 移除 JSON 元素 (JSON_REMOVE)
 // SELECT JSON_REMOVE('{"a":1,"b":2}', '$.a');
 // 示例: gsql.AsJson(u.Profile).Remove("$.temp", "$.old")
-// 独立函数: gsql.JSON_REMOVE(gsql.AsJson(u.Profile), "$.temp").Remove("$.old")
 func (e JsonExpr) Remove(paths ...string) JsonExpr {
 	vars := make([]any, 0, len(paths)+1)
 	placeholders := make([]string, 0, len(paths)+1)

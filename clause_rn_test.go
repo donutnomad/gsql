@@ -7,6 +7,7 @@ import (
 
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/donutnomad/gsql/internal/utils"
 )
 
@@ -88,19 +89,19 @@ func TestDD(t *testing.T) {
 	b := utils.NewMemoryBuilder()
 	bookF := gsql.AsJson(gsql.Expr("book"))
 
-	gsql.JSON_EXTRACT(bookF, "$.name").Build(b)
+	bookF.Extract("$.name").Build(b)
 	fmt.Println(b.SQL.String())
 	fmt.Println(b.Vars)
 	f := field.NewComparableFrom[string](
-		gsql.JSON_EXTRACT(bookF, "$.name").As(""),
+		gsql.AsJson(bookF).Extract("$.name").As(""),
 	)
 	_ = f
 	f1 := field.NewComparableFrom[string](
-		gsql.Field("JSON_EXTRACT(book, '$.name')"),
+		gsql.Field("JSON_EXTRACT(book, '$.name')").As(""),
 	)
 	_ = f1
 	s := gsql.Select().From(gsql.TN("books")).Where(
-		gsql.JSON_EXTRACT(bookF, "$.name").Eq("2"),
+		gsql.AsJson(bookF).Extract("$.name").Eq("2"),
 	).ToSQL()
 	fmt.Println(s)
 
@@ -123,15 +124,15 @@ func TestDD(t *testing.T) {
 // 演示 ROW_NUMBER() OVER() 窗口函数的使用
 func ExampleRowNumber() {
 	// 创建字段
-	category := field.NewComparable[string]("products", "category")
-	price := field.NewComparable[float64]("products", "price")
-	name := field.NewPattern[string]("products", "name")
+	category := fields.NewTextExprField[string]("products", "category")
+	price := fields.NewFloatExprField[float64]("products", "price")
+	name := fields.NewTextExprField[string]("products", "name")
 
 	products := &gsql.Table{Name: "products"}
 
 	// 示例 1: 简单的 ROW_NUMBER，按价格降序排列
 	rn1 := gsql.RowNumber().
-		OrderBy(price, true). // 按价格降序
+		OrderBy(price.Desc()). // 按价格降序
 		AsF("row_num")
 
 	query1 := gsql.Select(name, price, rn1).
@@ -143,7 +144,7 @@ func ExampleRowNumber() {
 	// 示例 2: 带 PARTITION BY 的 ROW_NUMBER，在每个分类内按价格排序
 	rn2 := gsql.RowNumber().
 		PartitionBy(category). // 按类别分组
-		OrderBy(price, true).  // 每组内按价格降序
+		OrderBy(price.Desc()). // 每组内按价格降序
 		AsF("row_num")
 
 	query2 := gsql.Select(category, name, price, rn2).
@@ -156,7 +157,7 @@ func ExampleRowNumber() {
 	createdAt := field.NewComparable[string]("products", "created_at")
 	rn3 := gsql.RowNumber().
 		PartitionBy(category, createdAt). // 按多个字段分组
-		OrderBy(price, false).            // 升序排序
+		OrderBy(price.Asc()).             // 升序排序
 		AsF("row_num")
 
 	query3 := gsql.Select(category, createdAt, name, price, rn3).
@@ -179,16 +180,16 @@ func ExampleRowNumber() {
 // 演示 RANK() 窗口函数的使用
 func ExampleRank() {
 	// 创建字段
-	category := field.NewComparable[string]("products", "category")
-	price := field.NewComparable[float64]("products", "price")
-	name := field.NewPattern[string]("products", "name")
+	category := fields.NewTextExprField[string]("products", "category")
+	price := fields.NewFloatExprField[float64]("products", "price")
+	name := fields.NewTextExprField[string]("products", "name")
 
 	products := &gsql.Table{Name: "products"}
 
 	// RANK() 会为相同的值分配相同的排名，下一个排名会跳过
 	rank := gsql.Rank().
 		PartitionBy(category).
-		OrderBy(price, true).
+		OrderBy(price.Desc()).
 		AsF("price_rank")
 
 	query := gsql.Select(category, name, price, rank).
@@ -205,14 +206,14 @@ func ExampleRank() {
 // 演示 DENSE_RANK() 窗口函数的使用
 func ExampleDenseRank() {
 	// 创建字段
-	score := field.NewComparable[int]("students", "score")
-	name := field.NewPattern[string]("students", "name")
+	score := fields.NewIntExprField[int]("students", "score")
+	name := fields.NewTextExprField[string]("students", "name")
 
 	students := &gsql.Table{Name: "students"}
 
 	// DENSE_RANK() 会为相同的值分配相同的排名，下一个排名连续
 	denseRank := gsql.DenseRank().
-		OrderBy(score, true).
+		OrderBy(score.Desc()).
 		AsF("score_rank")
 
 	query := gsql.Select(name, score, denseRank).

@@ -121,7 +121,7 @@ func TestCTEExample_Aggregation(t *testing.T) {
 			Field("total"),
 		).
 			From(TN("orders")).
-			GroupBy(Field("month")),
+			GroupBy(Expr("month")),
 	).
 		Select(
 			Field("month"),
