@@ -7,20 +7,20 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// ==================== TextExpr 生成的方法 ====================
+// ==================== String 生成的方法 ====================
 
 // buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e TextExpr[T]) Build(builder clause.Builder) {
+func (e String[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
 }
 
 // toExprExpr 返回内部的 Expression
-func (e TextExpr[T]) ToExpr() clause.Expression {
+func (e String[T]) ToExpr() clause.Expression {
 	return e.toExprExpr()
 }
 
 // asExpr 创建一个别名字段
-func (e TextExpr[T]) As(alias string) field.IField {
+func (e String[T]) As(alias string) field.IField {
 	return e.asExpr(alias)
 }
 
@@ -28,21 +28,21 @@ func (e TextExpr[T]) As(alias string) field.IField {
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
-func (e TextExpr[T]) IfNull(defaultValue any) TextExpr[T] {
-	return NewTextExpr[T](e.ifNullExpr(defaultValue))
+func (e String[T]) IfNull(defaultValue any) String[T] {
+	return NewString[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (e TextExpr[T]) Coalesce(values ...any) TextExpr[T] {
-	return NewTextExpr[T](e.coalesceExpr(values...))
+func (e String[T]) Coalesce(values ...any) String[T] {
+	return NewString[T](e.coalesceExpr(values...))
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (e TextExpr[T]) NullIf(value any) TextExpr[T] {
-	return NewTextExpr[T](e.nullifExpr(value))
+func (e String[T]) NullIf(value any) String[T] {
+	return NewString[T](e.nullifExpr(value))
 }
 

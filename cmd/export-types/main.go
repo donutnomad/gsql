@@ -105,6 +105,10 @@ func run(cfg Config) error {
 	imports := make(map[string]string) // path -> alias
 
 	for pkgName, pkg := range pkgs {
+		// 跳过 main 包（通常是代码生成器）
+		if pkgName == "main" {
+			continue
+		}
 		srcPkgName = pkgName
 		for _, file := range pkg.Files {
 			collectImports(file, imports)

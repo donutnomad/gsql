@@ -7,20 +7,20 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// ==================== YearExpr 生成的方法 ====================
+// ==================== Year 生成的方法 ====================
 
 // buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e YearExpr[T]) Build(builder clause.Builder) {
+func (e Year[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
 }
 
 // toExprExpr 返回内部的 Expression
-func (e YearExpr[T]) ToExpr() clause.Expression {
+func (e Year[T]) ToExpr() clause.Expression {
 	return e.toExprExpr()
 }
 
 // asExpr 创建一个别名字段
-func (e YearExpr[T]) As(alias string) field.IField {
+func (e Year[T]) As(alias string) field.IField {
 	return e.asExpr(alias)
 }
 
@@ -28,45 +28,45 @@ func (e YearExpr[T]) As(alias string) field.IField {
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
-func (e YearExpr[T]) IfNull(defaultValue any) YearExpr[T] {
-	return NewYearExpr[T](e.ifNullExpr(defaultValue))
+func (e Year[T]) IfNull(defaultValue any) Year[T] {
+	return NewYear[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (e YearExpr[T]) Coalesce(values ...any) YearExpr[T] {
-	return NewYearExpr[T](e.coalesceExpr(values...))
+func (e Year[T]) Coalesce(values ...any) Year[T] {
+	return NewYear[T](e.coalesceExpr(values...))
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (e YearExpr[T]) NullIf(value any) YearExpr[T] {
-	return NewYearExpr[T](e.nullifExpr(value))
+func (e Year[T]) NullIf(value any) Year[T] {
+	return NewYear[T](e.nullifExpr(value))
 }
 
 // Avg 计算数值的平均值 (AVG)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT AVG(score) FROM students;
 // SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
-func (e YearExpr[T]) Avg() FloatExpr[float64] {
-	return NewFloatExpr[float64](e.avgExpr())
+func (e Year[T]) Avg() Float[float64] {
+	return NewFloat[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MAX(price) FROM products;
 // SELECT category, MAX(stock) FROM inventory GROUP BY category;
-func (e YearExpr[T]) Max() YearExpr[T] {
-	return NewYearExpr[T](e.maxExpr())
+func (e Year[T]) Max() Year[T] {
+	return NewYear[T](e.maxExpr())
 }
 
 // Min 返回最小值 (MIN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MIN(price) FROM products;
 // SELECT category, MIN(stock) FROM inventory GROUP BY category;
-func (e YearExpr[T]) Min() YearExpr[T] {
-	return NewYearExpr[T](e.minExpr())
+func (e Year[T]) Min() Year[T] {
+	return NewYear[T](e.minExpr())
 }
 

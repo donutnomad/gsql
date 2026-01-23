@@ -12,8 +12,8 @@ type IntColumnBuilder struct {
 	name string
 }
 
-func (b IntColumnBuilder) From(source interface{ TableName() string }) IntExprField[int64] {
-	return NewIntExprField[int64](source.TableName(), b.name)
+func (b IntColumnBuilder) From(source interface{ TableName() string }) IntField[int64] {
+	return NewIntField[int64](source.TableName(), b.name)
 }
 
 func FloatColumn(name string) FloatColumnBuilder {
@@ -24,8 +24,8 @@ type FloatColumnBuilder struct {
 	name string
 }
 
-func (b FloatColumnBuilder) From(source interface{ TableName() string }) FloatExprField[float64] {
-	return NewFloatExprField[float64](source.TableName(), b.name)
+func (b FloatColumnBuilder) From(source interface{ TableName() string }) FloatField[float64] {
+	return NewFloatField[float64](source.TableName(), b.name)
 }
 
 func StringColumn(name string) StringColumnBuilder {
@@ -36,8 +36,8 @@ type StringColumnBuilder struct {
 	name string
 }
 
-func (b StringColumnBuilder) From(source interface{ TableName() string }) TextExprField[string] {
-	return NewTextExprField[string](source.TableName(), b.name)
+func (b StringColumnBuilder) From(source interface{ TableName() string }) TextField[string] {
+	return NewTextField[string](source.TableName(), b.name)
 }
 
 func BoolColumn(name string) BoolColumnBuilder {
@@ -60,8 +60,8 @@ type DateTimeColumnBuilder struct {
 	name string
 }
 
-func (b DateTimeColumnBuilder) From(source interface{ TableName() string }) DateTimeExprField[string] {
-	return NewDateTimeExprField[string](source.TableName(), b.name)
+func (b DateTimeColumnBuilder) From(source interface{ TableName() string }) DateTimeField[string] {
+	return NewDateTimeField[string](source.TableName(), b.name)
 }
 
 func DateColumn(name string) DateColumnBuilder {
@@ -72,8 +72,8 @@ type DateColumnBuilder struct {
 	name string
 }
 
-func (b DateColumnBuilder) From(source interface{ TableName() string }) DateExprField[string] {
-	return NewDateExprField[string](source.TableName(), b.name)
+func (b DateColumnBuilder) From(source interface{ TableName() string }) DateField[string] {
+	return NewDateField[string](source.TableName(), b.name)
 }
 
 func TimeColumn(name string) TimeColumnBuilder {
@@ -84,8 +84,8 @@ type TimeColumnBuilder struct {
 	name string
 }
 
-func (b TimeColumnBuilder) From(source interface{ TableName() string }) TimeExprField[string] {
-	return NewTimeExprField[string](source.TableName(), b.name)
+func (b TimeColumnBuilder) From(source interface{ TableName() string }) TimeField[string] {
+	return NewTimeField[string](source.TableName(), b.name)
 }
 
 func DecimalColumn(name string) DecimalColumnBuilder {
@@ -96,8 +96,8 @@ type DecimalColumnBuilder struct {
 	name string
 }
 
-func (b DecimalColumnBuilder) From(source interface{ TableName() string }) DecimalExprField[float64] {
-	return NewDecimalExprField[float64](source.TableName(), b.name)
+func (b DecimalColumnBuilder) From(source interface{ TableName() string }) DecimalField[float64] {
+	return NewDecimalField[float64](source.TableName(), b.name)
 }
 
 func Column[T any](name string) ColumnBuilder[T] {

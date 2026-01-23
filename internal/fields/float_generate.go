@@ -7,20 +7,20 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// ==================== FloatExpr 生成的方法 ====================
+// ==================== Float 生成的方法 ====================
 
 // buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e FloatExpr[T]) Build(builder clause.Builder) {
+func (e Float[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
 }
 
 // toExprExpr 返回内部的 Expression
-func (e FloatExpr[T]) ToExpr() clause.Expression {
+func (e Float[T]) ToExpr() clause.Expression {
 	return e.toExprExpr()
 }
 
 // asExpr 创建一个别名字段
-func (e FloatExpr[T]) As(alias string) field.IField {
+func (e Float[T]) As(alias string) field.IField {
 	return e.asExpr(alias)
 }
 
@@ -28,39 +28,39 @@ func (e FloatExpr[T]) As(alias string) field.IField {
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT price + 100 FROM products;
 // SELECT users.age + 1 FROM users;
-func (e FloatExpr[T]) Add(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.addExpr(value))
+func (e Float[T]) Add(value any) Float[T] {
+	return NewFloat[T](e.addExpr(value))
 }
 
 // Sub 减法 (-)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT price - discount FROM products;
 // SELECT stock - sold FROM inventory;
-func (e FloatExpr[T]) Sub(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.subExpr(value))
+func (e Float[T]) Sub(value any) Float[T] {
+	return NewFloat[T](e.subExpr(value))
 }
 
 // Mul 乘法 (*)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT price * quantity FROM order_items;
 // SELECT users.level * 10 as points FROM users;
-func (e FloatExpr[T]) Mul(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.mulExpr(value))
+func (e Float[T]) Mul(value any) Float[T] {
+	return NewFloat[T](e.mulExpr(value))
 }
 
 // Div 除法 (/)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT total / count FROM stats;
 // SELECT points / 100 as level FROM users;
-func (e FloatExpr[T]) Div(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.divExpr(value))
+func (e Float[T]) Div(value any) Float[T] {
+	return NewFloat[T](e.divExpr(value))
 }
 
 // Neg 取负 (-)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT -price FROM products;
-func (e FloatExpr[T]) Neg() FloatExpr[T] {
-	return NewFloatExpr[T](e.negExpr())
+func (e Float[T]) Neg() Float[T] {
+	return NewFloat[T](e.negExpr())
 }
 
 // Mod 取模 (MOD)
@@ -68,16 +68,16 @@ func (e FloatExpr[T]) Neg() FloatExpr[T] {
 // SELECT MOD(10, 3); -- 结果为 1
 // SELECT MOD(234, 10); -- 结果为 4
 // SELECT * FROM users WHERE MOD(id, 2) = 0; -- 偶数ID
-func (e FloatExpr[T]) Mod(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.modExpr(value))
+func (e Float[T]) Mod(value any) Float[T] {
+	return NewFloat[T](e.modExpr(value))
 }
 
 // Abs 返回绝对值 (ABS)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT ABS(-10); -- 结果为 10
 // SELECT ABS(price - cost) FROM products;
-func (e FloatExpr[T]) Abs() FloatExpr[T] {
-	return NewFloatExpr[T](e.absExpr())
+func (e Float[T]) Abs() Float[T] {
+	return NewFloat[T](e.absExpr())
 }
 
 // Sign 返回符号 (SIGN)
@@ -85,217 +85,217 @@ func (e FloatExpr[T]) Abs() FloatExpr[T] {
 // SELECT SIGN(-10); -- 结果为 -1
 // SELECT SIGN(0); -- 结果为 0
 // SELECT SIGN(10); -- 结果为 1
-func (e FloatExpr[T]) Sign() IntExpr[int8] {
-	return NewIntExpr[int8](e.signExpr())
+func (e Float[T]) Sign() Int[int8] {
+	return NewInt[int8](e.signExpr())
 }
 
 // Ceil 向上取整 (CEIL)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT CEIL(1.5); -- 结果为 2
 // SELECT CEIL(-1.5); -- 结果为 -1
-func (e FloatExpr[T]) Ceil() IntExpr[int64] {
-	return NewIntExpr[int64](e.ceilExpr())
+func (e Float[T]) Ceil() Int[int64] {
+	return NewInt[int64](e.ceilExpr())
 }
 
 // Floor 向下取整 (FLOOR)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT FLOOR(1.5); -- 结果为 1
 // SELECT FLOOR(-1.5); -- 结果为 -2
-func (e FloatExpr[T]) Floor() IntExpr[int64] {
-	return NewIntExpr[int64](e.floorExpr())
+func (e Float[T]) Floor() Int[int64] {
+	return NewInt[int64](e.floorExpr())
 }
 
 // Round 四舍五入 (ROUND)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT ROUND(1.567); -- 结果为 2
 // SELECT ROUND(1.567, 2); -- 结果为 1.57
-func (e FloatExpr[T]) Round(decimals ...int) FloatExpr[T] {
-	return NewFloatExpr[T](e.roundExpr(decimals...))
+func (e Float[T]) Round(decimals ...int) Float[T] {
+	return NewFloat[T](e.roundExpr(decimals...))
 }
 
 // Truncate 截断小数 (TRUNCATE)
 // 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
 // SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
 // SELECT TRUNCATE(1.567, 0); -- 结果为 1
-func (e FloatExpr[T]) Truncate(decimals int) FloatExpr[T] {
-	return NewFloatExpr[T](e.truncateExpr(decimals))
+func (e Float[T]) Truncate(decimals int) Float[T] {
+	return NewFloat[T](e.truncateExpr(decimals))
 }
 
 // Pow 幂运算 (POW)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT POW(2, 3); -- 结果为 8
 // SELECT POW(price, 2) FROM products;
-func (e FloatExpr[T]) Pow(exponent float64) FloatExpr[T] {
-	return NewFloatExpr[T](e.powExpr(exponent))
+func (e Float[T]) Pow(exponent float64) Float[T] {
+	return NewFloat[T](e.powExpr(exponent))
 }
 
 // Sqrt 平方根 (SQRT)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT SQRT(16); -- 结果为 4
 // SELECT SQRT(variance) FROM stats;
-func (e FloatExpr[T]) Sqrt() FloatExpr[T] {
-	return NewFloatExpr[T](e.sqrtExpr())
+func (e Float[T]) Sqrt() Float[T] {
+	return NewFloat[T](e.sqrtExpr())
 }
 
 // Log 自然对数 (LOG)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT LOG(10); -- 结果为 2.302585...
-func (e FloatExpr[T]) Log() FloatExpr[T] {
-	return NewFloatExpr[T](e.logExpr())
+func (e Float[T]) Log() Float[T] {
+	return NewFloat[T](e.logExpr())
 }
 
 // Log10 以10为底的对数 (LOG10)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT LOG10(100); -- 结果为 2
-func (e FloatExpr[T]) Log10() FloatExpr[T] {
-	return NewFloatExpr[T](e.log10Expr())
+func (e Float[T]) Log10() Float[T] {
+	return NewFloat[T](e.log10Expr())
 }
 
 // Log2 以2为底的对数 (LOG2)
 // 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
 // SELECT LOG2(8); -- 结果为 3
-func (e FloatExpr[T]) Log2() FloatExpr[T] {
-	return NewFloatExpr[T](e.log2Expr())
+func (e Float[T]) Log2() Float[T] {
+	return NewFloat[T](e.log2Expr())
 }
 
 // Exp 指数函数 (EXP)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT EXP(1); -- 结果为 2.718281828...
-func (e FloatExpr[T]) Exp() FloatExpr[T] {
-	return NewFloatExpr[T](e.expExpr())
+func (e Float[T]) Exp() Float[T] {
+	return NewFloat[T](e.expExpr())
 }
 
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
-func (e FloatExpr[T]) IfNull(defaultValue any) FloatExpr[T] {
-	return NewFloatExpr[T](e.ifNullExpr(defaultValue))
+func (e Float[T]) IfNull(defaultValue any) Float[T] {
+	return NewFloat[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (e FloatExpr[T]) Coalesce(values ...any) FloatExpr[T] {
-	return NewFloatExpr[T](e.coalesceExpr(values...))
+func (e Float[T]) Coalesce(values ...any) Float[T] {
+	return NewFloat[T](e.coalesceExpr(values...))
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (e FloatExpr[T]) NullIf(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.nullifExpr(value))
+func (e Float[T]) NullIf(value any) Float[T] {
+	return NewFloat[T](e.nullifExpr(value))
 }
 
 // Greatest 返回参数列表中的最大值 (GREATEST)
 // 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
 // SELECT GREATEST(10, 20, 30); -- 返回 30
 // SELECT GREATEST(price, min_price) FROM products;
-func (e FloatExpr[T]) Greatest(values ...any) FloatExpr[T] {
-	return NewFloatExpr[T](e.greatestExpr(values...))
+func (e Float[T]) Greatest(values ...any) Float[T] {
+	return NewFloat[T](e.greatestExpr(values...))
 }
 
 // Least 返回参数列表中的最小值 (LEAST)
 // 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
 // SELECT LEAST(10, 20, 30); -- 返回 10
 // SELECT LEAST(price, max_price) FROM products;
-func (e FloatExpr[T]) Least(values ...any) FloatExpr[T] {
-	return NewFloatExpr[T](e.leastExpr(values...))
+func (e Float[T]) Least(values ...any) Float[T] {
+	return NewFloat[T](e.leastExpr(values...))
 }
 
 // Sin 正弦 (SIN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT SIN(0); -- 结果为 0
 // SELECT SIN(PI()/2); -- 结果为 1
-func (e FloatExpr[T]) Sin() FloatExpr[T] {
-	return NewFloatExpr[T](e.sinExpr())
+func (e Float[T]) Sin() Float[T] {
+	return NewFloat[T](e.sinExpr())
 }
 
 // Cos 余弦 (COS)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT COS(0); -- 结果为 1
 // SELECT COS(PI()); -- 结果为 -1
-func (e FloatExpr[T]) Cos() FloatExpr[T] {
-	return NewFloatExpr[T](e.cosExpr())
+func (e Float[T]) Cos() Float[T] {
+	return NewFloat[T](e.cosExpr())
 }
 
 // Tan 正切 (TAN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT TAN(0); -- 结果为 0
 // SELECT TAN(PI()/4); -- 结果约为 1
-func (e FloatExpr[T]) Tan() FloatExpr[T] {
-	return NewFloatExpr[T](e.tanExpr())
+func (e Float[T]) Tan() Float[T] {
+	return NewFloat[T](e.tanExpr())
 }
 
 // Asin 反正弦 (ASIN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT ASIN(0); -- 结果为 0
 // SELECT ASIN(1); -- 结果为 PI()/2
-func (e FloatExpr[T]) Asin() FloatExpr[T] {
-	return NewFloatExpr[T](e.asinExpr())
+func (e Float[T]) Asin() Float[T] {
+	return NewFloat[T](e.asinExpr())
 }
 
 // Acos 反余弦 (ACOS)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT ACOS(1); -- 结果为 0
 // SELECT ACOS(0); -- 结果为 PI()/2
-func (e FloatExpr[T]) Acos() FloatExpr[T] {
-	return NewFloatExpr[T](e.acosExpr())
+func (e Float[T]) Acos() Float[T] {
+	return NewFloat[T](e.acosExpr())
 }
 
 // Atan 反正切 (ATAN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT ATAN(0); -- 结果为 0
 // SELECT ATAN(1); -- 结果为 PI()/4
-func (e FloatExpr[T]) Atan() FloatExpr[T] {
-	return NewFloatExpr[T](e.atanExpr())
+func (e Float[T]) Atan() Float[T] {
+	return NewFloat[T](e.atanExpr())
 }
 
 // Radians 角度转弧度 (RADIANS)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT RADIANS(180); -- 结果为 PI()
 // SELECT RADIANS(90); -- 结果为 PI()/2
-func (e FloatExpr[T]) Radians() FloatExpr[T] {
-	return NewFloatExpr[T](e.radiansExpr())
+func (e Float[T]) Radians() Float[T] {
+	return NewFloat[T](e.radiansExpr())
 }
 
 // Degrees 弧度转角度 (DEGREES)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT DEGREES(PI()); -- 结果为 180
 // SELECT DEGREES(PI()/2); -- 结果为 90
-func (e FloatExpr[T]) Degrees() FloatExpr[T] {
-	return NewFloatExpr[T](e.degreesExpr())
+func (e Float[T]) Degrees() Float[T] {
+	return NewFloat[T](e.degreesExpr())
 }
 
 // Sum 计算数值的总和 (SUM)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT SUM(quantity) FROM orders;
 // SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-func (e FloatExpr[T]) Sum() FloatExpr[T] {
-	return NewFloatExpr[T](e.sumExpr())
+func (e Float[T]) Sum() Float[T] {
+	return NewFloat[T](e.sumExpr())
 }
 
 // Avg 计算数值的平均值 (AVG)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT AVG(score) FROM students;
 // SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
-func (e FloatExpr[T]) Avg() FloatExpr[float64] {
-	return NewFloatExpr[float64](e.avgExpr())
+func (e Float[T]) Avg() Float[float64] {
+	return NewFloat[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MAX(price) FROM products;
 // SELECT category, MAX(stock) FROM inventory GROUP BY category;
-func (e FloatExpr[T]) Max() FloatExpr[T] {
-	return NewFloatExpr[T](e.maxExpr())
+func (e Float[T]) Max() Float[T] {
+	return NewFloat[T](e.maxExpr())
 }
 
 // Min 返回最小值 (MIN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MIN(price) FROM products;
 // SELECT category, MIN(stock) FROM inventory GROUP BY category;
-func (e FloatExpr[T]) Min() FloatExpr[T] {
-	return NewFloatExpr[T](e.minExpr())
+func (e Float[T]) Min() Float[T] {
+	return NewFloat[T](e.minExpr())
 }
 

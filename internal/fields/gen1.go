@@ -28,7 +28,7 @@ type GenDirective struct {
 	Exclude     []string // 排除的表达式类型
 	Direct      bool     // 直接返回，不用构造函数包装
 	Void        bool     // 无返回值
-	Param       string   // 覆盖参数类型 (如 "int64", "IntExpr[T]")
+	Param       string   // 覆盖参数类型 (如 "int64", "Int[T]")
 	ParamName   string   // 参数名 (默认使用原始参数名)
 }
 
@@ -44,12 +44,12 @@ type MethodInfo struct {
 
 // TypeInfo 表达式类型信息
 type TypeInfo struct {
-	Name         string // 类型名 (如 IntExpr)
-	TypeParam    string // 泛型参数 (如 [T])
-	Constructor  string // 构造函数名 (如 NewIntExpr)
-	FileName     string // 源文件名 (不含 .go)
+	Name         string   // 类型名 (如 Int)
+	TypeParam    string   // 泛型参数 (如 [T])
+	Constructor  string   // 构造函数名 (如 NewIntExpr)
+	FileName     string   // 源文件名 (不含 .go)
 	Embeddings   []string // 嵌入的类型列表
-	DefaultParam string // 默认泛型参数 (如 [int], [string])
+	DefaultParam string   // 默认泛型参数 (如 [int], [string])
 }
 
 // GeneratedMethod 要生成的方法
@@ -58,8 +58,8 @@ type GeneratedMethod struct {
 	TypeParam       string
 	MethodName      string
 	InnerName       string
-	Params          string   // 生成的参数列表 (如 "value int64")
-	Args            string   // 调用内部方法的参数 (如 "value")
+	Params          string // 生成的参数列表 (如 "value int64")
+	Args            string // 调用内部方法的参数 (如 "value")
 	ReturnType      string
 	Constructor     string
 	Comments        []string
@@ -339,7 +339,7 @@ func parseGenDirective(text string) *GenDirective {
 		case "constructor":
 			d.Constructor = value
 		case "for":
-			// 去掉方括号后按逗号分隔，如 [IntExpr,FloatExpr] -> ["IntExpr", "FloatExpr"]
+			// 去掉方括号后按逗号分隔，如 [Int,Float] -> ["Int", "Float"]
 			d.For = strings.Split(strings.Trim(value, "[]"), ",")
 		case "exclude":
 			d.Exclude = strings.Split(strings.Trim(value, "[]"), ",")
@@ -553,7 +553,7 @@ func normalizeReturnType(ret string, callerTypeParam string, defaultTypeParams m
 
 func deriveConstructor(returnType string) string {
 	// 从返回类型推导构造函数
-	// IntExpr[int8] -> NewIntExpr[int8]
+	// Int[int8] -> NewIntExpr[int8]
 	if idx := strings.Index(returnType, "["); idx > 0 {
 		baseName := returnType[:idx]
 		typeParam := returnType[idx:]

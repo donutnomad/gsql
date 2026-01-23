@@ -91,7 +91,7 @@ func TestCaseExample_ComplexScenario(t *testing.T) {
 
 func TestCaseExample_InGroupBy(t *testing.T) {
 	// 场景：按金额分段统计订单数
-	amount := fields.NewIntExprField[int64]("", "amount")
+	amount := fields.NewIntField[int64]("", "amount")
 
 	amountRange := gsql.Case().
 		When(amount.Lt(100), gsql.Lit("0-100")).
@@ -141,7 +141,7 @@ func TestCaseExample_InOrderBy(t *testing.T) {
 func TestCaseExample_NestedCase(t *testing.T) {
 	// 场景：嵌套 CASE 表达式
 	userType := field.NewPattern[string]("", "user_type")
-	createdAt := fields.NewDateTimeExprField[time.Time]("", "created_at")
+	createdAt := fields.NewDateTimeField[time.Time]("", "created_at")
 	monthCreatedAt := createdAt.Month()
 
 	// 季节性折扣
@@ -151,7 +151,7 @@ func TestCaseExample_NestedCase(t *testing.T) {
 		Else(gsql.Lit(1.0)).
 		End()
 
-	seasonDiscount1 := fields.NewIntExpr[float64](seasonDiscount)
+	seasonDiscount1 := fields.NewInt[float64](seasonDiscount)
 
 	// VIP 在季节性折扣基础上再打 95 折
 	finalDiscount := gsql.Case().

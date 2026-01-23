@@ -833,7 +833,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		// Count orders by tier
 		// MySQL: SUM(CASE WHEN orders.total_price < 100 THEN 1 ELSE 0 END) AS small_count
 
-		smallOrderSum := fields.NewIntExpr[int64](
+		smallOrderSum := fields.NewInt[int64](
 			gsql.Case().
 				When(o.TotalPrice.Lt(100), gsql.Lit(1)).
 				Else(gsql.Lit(0)).
@@ -841,7 +841,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		).Sum().As("small_count")
 
 		// MySQL: SUM(CASE WHEN orders.total_price >= 100 AND orders.total_price < 500 THEN 1 ELSE 0 END) AS medium_count
-		mediumOrderSum := fields.NewIntExpr[int64](
+		mediumOrderSum := fields.NewInt[int64](
 			gsql.Case().
 				When(gsql.And(o.TotalPrice.Gte(100), o.TotalPrice.Lt(500)), gsql.Lit(1)).
 				Else(gsql.Lit(0)).
@@ -994,7 +994,7 @@ func TestInter_IndexHint(t *testing.T) {
 
 // ==================== Typed Expression Tests ====================
 
-// TestTypedExpr_Comparisons tests typed expressions (IntExpr, FloatExpr) with comparison methods
+// TestTypedExpr_Comparisons tests typed expressions (Int, Float) with comparison methods
 // These expressions are returned by aggregate functions like COUNT, SUM, AVG and can be used
 // directly in HAVING clauses with type-safe comparison methods.
 func TestTypedExpr_Comparisons(t *testing.T) {
@@ -1172,7 +1172,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		}
 	})
 
-	// Test: IntExpr.AsF() still works after return type change
+	// Test: Int.AsF() still works after return type change
 	t.Run("IntExpr_AsF_works", func(t *testing.T) {
 		// Verify .AsF() still works after return type change
 		// MySQL: SELECT orders.customer_id, COUNT(*) AS cnt
@@ -1205,7 +1205,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			GroupBy(o.CustomerID).
 			ToSQL()
 
-		t.Logf("IntExpr.AsF SQL: %s", sql)
+		t.Logf("Int.AsF SQL: %s", sql)
 		if !strings.Contains(sql, "COUNT(*)") {
 			t.Error("SQL should contain COUNT(*)")
 		}

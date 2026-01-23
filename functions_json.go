@@ -34,7 +34,7 @@ type PathValue struct {
 //	gsql.AsJson(u.Profile).StorageSize()
 //
 //goland:noinspection ALL
-func AsJson(expr field.Expression) fields.JsonExpr {
+func AsJson(expr field.Expression) fields.Json {
 	return fields.AsJson(expr)
 }
 
@@ -46,8 +46,8 @@ func AsJson(expr field.Expression) fields.JsonExpr {
 //	gsql.JsonLit(`[1, 2, 3]`)
 //
 //goland:noinspection ALL
-func JsonLit(jsonStr string) fields.JsonExpr {
-	return fields.NewJsonExpr(clause.Expr{
+func JsonLit(jsonStr string) fields.Json {
+	return fields.NewJson(clause.Expr{
 		SQL:  "?",
 		Vars: []any{jsonStr},
 	})
@@ -79,14 +79,14 @@ func (j *jsonObjectBuilder) Add(key string, value field.Expression) *jsonObjectB
 	return j
 }
 
-func (j *jsonObjectBuilder) toExpr() fields.JsonExpr {
+func (j *jsonObjectBuilder) toExpr() fields.Json {
 	placeholders := make([]string, 0, len(j.pairs)*2)
 	vars := make([]any, 0, len(j.pairs)*2)
 	for _, pair := range j.pairs {
 		placeholders = append(placeholders, "?", "?")
 		vars = append(vars, pair.Key, pair.Value)
 	}
-	return fields.NewJsonExpr(clause.Expr{
+	return fields.NewJson(clause.Expr{
 		SQL:  fmt.Sprintf("JSON_OBJECT(%s)", strings.Join(placeholders, ", ")),
 		Vars: vars,
 	})
@@ -109,7 +109,7 @@ func (j *jsonObjectBuilder) ToExpr() field.Expression {
 }
 
 // ToJson 返回 JsonExpr，用于类型安全的链式调用
-func (j *jsonObjectBuilder) ToJson() fields.JsonExpr {
+func (j *jsonObjectBuilder) ToJson() fields.Json {
 	return j.toExpr()
 }
 
@@ -137,12 +137,12 @@ func (b *jsonArrayBuilder) Add(value field.Expression) *jsonArrayBuilder {
 	return b
 }
 
-func (b *jsonArrayBuilder) toExpr() fields.JsonExpr {
+func (b *jsonArrayBuilder) toExpr() fields.Json {
 	placeholders := make([]string, len(b.values))
 	for i := range b.values {
 		placeholders[i] = "?"
 	}
-	return fields.NewJsonExpr(clause.Expr{
+	return fields.NewJson(clause.Expr{
 		SQL:  fmt.Sprintf("JSON_ARRAY(%s)", strings.Join(placeholders, ", ")),
 		Vars: lo.ToAnySlice(b.values),
 	})
@@ -165,7 +165,7 @@ func (b *jsonArrayBuilder) ToExpr() field.Expression {
 }
 
 // ToJson 返回 JsonExpr，用于类型安全的链式调用
-func (b *jsonArrayBuilder) ToJson() fields.JsonExpr {
+func (b *jsonArrayBuilder) ToJson() fields.Json {
 	return b.toExpr()
 }
 
@@ -176,8 +176,8 @@ func (b *jsonArrayBuilder) ToJson() fields.JsonExpr {
 // SELECT JSON_QUOTE(users.name) FROM users;
 //
 //goland:noinspection ALL
-func JSON_QUOTE(str field.Expression) fields.TextExpr[string] {
-	return fields.NewTextExpr[string](clause.Expr{
+func JSON_QUOTE(str field.Expression) fields.String[string] {
+	return fields.NewString[string](clause.Expr{
 		SQL:  "JSON_QUOTE(?)",
 		Vars: []any{str},
 	})
@@ -229,12 +229,12 @@ func (b *jsonMergeBuilder) Merge(json fields.JsonInput) *jsonMergeBuilder {
 	return b
 }
 
-func (b *jsonMergeBuilder) toExpr() fields.JsonExpr {
+func (b *jsonMergeBuilder) toExpr() fields.Json {
 	placeholders := make([]string, len(b.jsons))
 	for i := range b.jsons {
 		placeholders[i] = "?"
 	}
-	return fields.NewJsonExpr(clause.Expr{
+	return fields.NewJson(clause.Expr{
 		SQL:  fmt.Sprintf("%s(%s)", b.funcName, strings.Join(placeholders, ", ")),
 		Vars: lo.ToAnySlice(b.jsons),
 	})
@@ -257,6 +257,6 @@ func (b *jsonMergeBuilder) ToExpr() field.Expression {
 }
 
 // ToJson 返回 JsonExpr，用于类型安全的链式调用
-func (b *jsonMergeBuilder) ToJson() fields.JsonExpr {
+func (b *jsonMergeBuilder) ToJson() fields.Json {
 	return b.toExpr()
 }

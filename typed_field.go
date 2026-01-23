@@ -11,88 +11,96 @@ import (
 
 // ==================== Constructors ====================
 
-func NewDateExpr[T any](expr clause.Expression) fields.DateExpr[T] {
-	return fields.NewDateExpr[T](expr)
+func NewDate[T any](expr clause.Expression) fields.Date[T] {
+	return fields.NewDate[T](expr)
 }
 
-func NewDateExprField[T any](tableName, name string, flags ...field.FieldFlag) fields.DateExprField[T] {
-	return fields.NewDateExprField[T](tableName, name, flags...)
+func NewDateField[T any](tableName, name string, flags ...field.FieldFlag) fields.DateField[T] {
+	return fields.NewDateField[T](tableName, name, flags...)
 }
 
-func NewDateExprFieldFrom[T any](f field.IField) fields.DateExprField[T] {
-	return fields.NewDateExprFieldFrom[T](f)
+func NewDateFieldFrom[T any](f field.IField) fields.DateField[T] {
+	return fields.NewDateFieldFrom[T](f)
 }
 
-func NewDateTimeExpr[T any](expr clause.Expression) fields.DateTimeExpr[T] {
-	return fields.NewDateTimeExpr[T](expr)
+func NewDateTime[T any](expr clause.Expression) fields.DateTime[T] {
+	return fields.NewDateTime[T](expr)
 }
 
-func NewDateTimeExprField[T any](tableName, name string, flags ...field.FieldFlag) fields.DateTimeExprField[T] {
-	return fields.NewDateTimeExprField[T](tableName, name, flags...)
+func NewDateTimeField[T any](tableName, name string, flags ...field.FieldFlag) fields.DateTimeField[T] {
+	return fields.NewDateTimeField[T](tableName, name, flags...)
 }
 
-func NewDateTimeExprFieldFrom[T any](f field.IField) fields.DateTimeExprField[T] {
-	return fields.NewDateTimeExprFieldFrom[T](f)
+func NewDateTimeFieldFrom[T any](f field.IField) fields.DateTimeField[T] {
+	return fields.NewDateTimeFieldFrom[T](f)
 }
 
-func NewDecimalExpr[T any](expr clause.Expression) fields.DecimalExpr[T] {
-	return fields.NewDecimalExpr[T](expr)
+func NewDecimal[T any](expr clause.Expression) fields.Decimal[T] {
+	return fields.NewDecimal[T](expr)
 }
 
-func NewDecimalExprField[T any](tableName, name string, flags ...field.FieldFlag) fields.DecimalExprField[T] {
-	return fields.NewDecimalExprField[T](tableName, name, flags...)
+func NewDecimalField[T any](tableName, name string, flags ...field.FieldFlag) fields.DecimalField[T] {
+	return fields.NewDecimalField[T](tableName, name, flags...)
 }
 
-func NewDecimalExprFieldFrom[T any](f field.IField) fields.DecimalExprField[T] {
-	return fields.NewDecimalExprFieldFrom[T](f)
+func NewDecimalFieldFrom[T any](f field.IField) fields.DecimalField[T] {
+	return fields.NewDecimalFieldFrom[T](f)
 }
 
-func NewFloatExpr[T any](expr clause.Expression) fields.FloatExpr[T] {
-	return fields.NewFloatExpr[T](expr)
+func NewFloat[T any](expr clause.Expression) fields.Float[T] {
+	return fields.NewFloat[T](expr)
 }
 
-func NewFloatExprField[T any](tableName, name string, flags ...field.FieldFlag) fields.FloatExprField[T] {
-	return fields.NewFloatExprField[T](tableName, name, flags...)
+func NewFloatField[T any](tableName, name string, flags ...field.FieldFlag) fields.FloatField[T] {
+	return fields.NewFloatField[T](tableName, name, flags...)
 }
 
-func NewFloatExprFieldFrom[T any](f field.IField) fields.FloatExprField[T] {
-	return fields.NewFloatExprFieldFrom[T](f)
+func NewFloatFieldFrom[T any](f field.IField) fields.FloatField[T] {
+	return fields.NewFloatFieldFrom[T](f)
 }
 
-func NewIntExpr[T any](expr clause.Expression) fields.IntExpr[T] {
-	return fields.NewIntExpr[T](expr)
+func NewInt[T any](expr clause.Expression) fields.Int[T] {
+	return fields.NewInt[T](expr)
 }
 
-func NewIntExprField[T any](tableName, name string, flags ...field.FieldFlag) fields.IntExprField[T] {
-	return fields.NewIntExprField[T](tableName, name, flags...)
+func NewIntField[T any](tableName, name string, flags ...field.FieldFlag) fields.IntField[T] {
+	return fields.NewIntField[T](tableName, name, flags...)
 }
 
-func NewIntExprFieldFrom[T any](f field.IField) fields.IntExprField[T] {
-	return fields.NewIntExprFieldFrom[T](f)
+func NewIntFieldFrom[T any](f field.IField) fields.IntField[T] {
+	return fields.NewIntFieldFrom[T](f)
 }
 
-func NewJsonExpr(expr clause.Expression) fields.JsonExpr {
-	return fields.NewJsonExpr(expr)
+func NewJson(expr clause.Expression) fields.Json {
+	return fields.NewJson(expr)
 }
 
-func NewTextExpr[T any](expr clause.Expression) fields.TextExpr[T] {
-	return fields.NewTextExpr[T](expr)
+func NewString[T any](expr clause.Expression) fields.String[T] {
+	return fields.NewString[T](expr)
 }
 
-func NewTextExprField[T any](tableName, name string, flags ...field.FieldFlag) fields.TextExprField[T] {
-	return fields.NewTextExprField[T](tableName, name, flags...)
+func NewTextField[T any](tableName, name string, flags ...field.FieldFlag) fields.TextField[T] {
+	return fields.NewTextField[T](tableName, name, flags...)
 }
 
-func NewTextExprFieldFrom[T any](f field.IField) fields.TextExprField[T] {
-	return fields.NewTextExprFieldFrom[T](f)
+func NewTextFieldFrom[T any](f field.IField) fields.TextField[T] {
+	return fields.NewTextFieldFrom[T](f)
 }
 
-func NewTimeExpr[T any](expr clause.Expression) fields.TimeExpr[T] {
-	return fields.NewTimeExpr[T](expr)
+func NewTime[T any](expr clause.Expression) fields.Time[T] {
+	return fields.NewTime[T](expr)
 }
 
-func NewYearExpr[T any](expr clause.Expression) fields.YearExpr[T] {
-	return fields.NewYearExpr[T](expr)
+func NewTimeField[T any](tableName, name string, flags ...field.FieldFlag) fields.TimeField[T] {
+	return fields.NewTimeField[T](tableName, name, flags...)
+}
+
+func NewTimeFieldFrom[T any](f field.IField) fields.TimeField[T] {
+	return fields.NewTimeFieldFrom[T](f)
+}
+
+func NewYear[T any](expr clause.Expression) fields.Year[T] {
+	return fields.NewYear[T](expr)
 }
 
 func BoolColumn(name string) fields.BoolColumnBuilder {
@@ -122,26 +130,30 @@ func TimeColumn(name string) fields.TimeColumnBuilder {
 // ==================== Type Aliases ====================
 
 type (
-	BoolColumnBuilder        = fields.BoolColumnBuilder
-	ColumnBuilder[T any]     = fields.ColumnBuilder[T]
-	DateExpr[T any]          = fields.DateExpr[T]
-	DateExprField[T any]     = fields.DateExprField[T]
-	DateTimeExpr[T any]      = fields.DateTimeExpr[T]
-	DateTimeExprField[T any] = fields.DateTimeExprField[T]
-	DecimalExpr[T any]       = fields.DecimalExpr[T]
-	DecimalExprField[T any]  = fields.DecimalExprField[T]
-	FloatColumnBuilder       = fields.FloatColumnBuilder
-	FloatExpr[T any]         = fields.FloatExpr[T]
-	FloatExprField[T any]    = fields.FloatExprField[T]
-	IntColumnBuilder         = fields.IntColumnBuilder
-	IntExpr[T any]           = fields.IntExpr[T]
-	IntExprField[T any]      = fields.IntExprField[T]
-	JsonExpr                 = fields.JsonExpr
-	JsonInput                = fields.JsonInput
-	StringColumnBuilder      = fields.StringColumnBuilder
-	TextExpr[T any]          = fields.TextExpr[T]
-	TextExprField[T any]     = fields.TextExprField[T]
-	TimeColumnBuilder        = fields.TimeColumnBuilder
-	TimeExpr[T any]          = fields.TimeExpr[T]
-	YearExpr[T any]          = fields.YearExpr[T]
+	BoolColumnBuilder     = fields.BoolColumnBuilder
+	ColumnBuilder[T any]  = fields.ColumnBuilder[T]
+	Date[T any]           = fields.Date[T]
+	DateColumnBuilder     = fields.DateColumnBuilder
+	DateField[T any]      = fields.DateField[T]
+	DateTime[T any]       = fields.DateTime[T]
+	DateTimeColumnBuilder = fields.DateTimeColumnBuilder
+	DateTimeField[T any]  = fields.DateTimeField[T]
+	Decimal[T any]        = fields.Decimal[T]
+	DecimalColumnBuilder  = fields.DecimalColumnBuilder
+	DecimalField[T any]   = fields.DecimalField[T]
+	Float[T any]          = fields.Float[T]
+	FloatColumnBuilder    = fields.FloatColumnBuilder
+	FloatField[T any]     = fields.FloatField[T]
+	Int[T any]            = fields.Int[T]
+	IntColumnBuilder      = fields.IntColumnBuilder
+	IntField[T any]       = fields.IntField[T]
+	Json                  = fields.Json
+	JsonInput             = fields.JsonInput
+	String[T any]         = fields.String[T]
+	StringColumnBuilder   = fields.StringColumnBuilder
+	TextField[T any]      = fields.TextField[T]
+	Time[T any]           = fields.Time[T]
+	TimeColumnBuilder     = fields.TimeColumnBuilder
+	TimeField[T any]      = fields.TimeField[T]
+	Year[T any]           = fields.Year[T]
 )

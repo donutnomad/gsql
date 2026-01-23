@@ -8,415 +8,415 @@ import (
 	"github.com/donutnomad/gsql/internal/types"
 )
 
-// ==================== IntExprField ====================
+// ==================== IntField ====================
 
-type IntExprField[T any] struct {
+type IntField[T any] struct {
 	field.Base
-	IntExpr[T]
+	Int[T]
 }
 
-func NewIntExprField[T any](tableName, name string, flags ...field.FieldFlag) IntExprField[T] {
+func NewIntField[T any](tableName, name string, flags ...field.FieldFlag) IntField[T] {
 	b := field.NewBase(tableName, name, flags...)
-	return NewIntExprFieldFrom[T](b)
+	return NewIntFieldFrom[T](b)
 }
 
-func NewIntExprFieldFrom[T any](f field.IField) IntExprField[T] {
+func NewIntFieldFrom[T any](f field.IField) IntField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
-	return IntExprField[T]{
+	return IntField[T]{
+		Base: base,
+		Int:  NewInt[T](expr),
+	}
+}
+
+func (f IntField[T]) Build(builder clause.Builder) {
+	f.Base.ToExpr().Build(builder)
+}
+
+func (f IntField[T]) ToExpr() clause.Expression {
+	return f.Base.ToExpr()
+}
+
+func (f IntField[T]) As(alias string) field.IField {
+	return f.Base.As(alias)
+}
+
+func (f IntField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) IntField[T] {
+	name := f.Base.ColumnName()
+	if len(fieldNames) > 0 {
+		name = fieldNames[0]
+	}
+	return NewIntField[T](tableName.TableName(), name)
+}
+
+func (f IntField[T]) WithAlias(alias string) IntField[T] {
+	b := f.Base.SetAlias(alias)
+	return NewIntFieldFrom[T](b)
+}
+
+func (f IntField[T]) FieldType() T {
+	var def T
+	return def
+}
+
+func (f IntField[T]) Asc() types.OrderItem {
+	return types.NewOrder(f, true)
+}
+
+func (f IntField[T]) Desc() types.OrderItem {
+	return types.NewOrder(f, false)
+}
+
+// ==================== FloatField ====================
+
+type FloatField[T any] struct {
+	field.Base
+	Float[T]
+}
+
+func NewFloatField[T any](tableName, name string, flags ...field.FieldFlag) FloatField[T] {
+	b := field.NewBase(tableName, name, flags...)
+	return NewFloatFieldFrom[T](b)
+}
+
+func NewFloatFieldFrom[T any](f field.IField) FloatField[T] {
+	base := field.IFieldToBase(f)
+	expr := base.ToExpr()
+	return FloatField[T]{
+		Base:  base,
+		Float: NewFloat[T](expr),
+	}
+}
+
+func (f FloatField[T]) Build(builder clause.Builder) {
+	f.Base.ToExpr().Build(builder)
+}
+
+func (f FloatField[T]) ToExpr() clause.Expression {
+	return f.Base.ToExpr()
+}
+
+func (f FloatField[T]) As(alias string) field.IField {
+	return f.Base.As(alias)
+}
+
+func (f FloatField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) FloatField[T] {
+	name := f.Base.ColumnName()
+	if len(fieldNames) > 0 {
+		name = fieldNames[0]
+	}
+	return NewFloatField[T](tableName.TableName(), name)
+}
+
+func (f FloatField[T]) WithAlias(alias string) FloatField[T] {
+	b := f.Base.SetAlias(alias)
+	return NewFloatFieldFrom[T](b)
+}
+
+func (f FloatField[T]) FieldType() T {
+	var def T
+	return def
+}
+
+func (f FloatField[T]) Asc() types.OrderItem {
+	return types.NewOrder(f, true)
+}
+
+func (f FloatField[T]) Desc() types.OrderItem {
+	return types.NewOrder(f, false)
+}
+
+// ==================== DecimalField ====================
+
+type DecimalField[T any] struct {
+	field.Base
+	Decimal[T]
+}
+
+func NewDecimalField[T any](tableName, name string, flags ...field.FieldFlag) DecimalField[T] {
+	b := field.NewBase(tableName, name, flags...)
+	return NewDecimalFieldFrom[T](b)
+}
+
+func NewDecimalFieldFrom[T any](f field.IField) DecimalField[T] {
+	base := field.IFieldToBase(f)
+	expr := base.ToExpr()
+	return DecimalField[T]{
 		Base:    base,
-		IntExpr: NewIntExpr[T](expr),
+		Decimal: NewDecimal[T](expr),
 	}
 }
 
-func (f IntExprField[T]) Build(builder clause.Builder) {
+func (f DecimalField[T]) Build(builder clause.Builder) {
 	f.Base.ToExpr().Build(builder)
 }
 
-func (f IntExprField[T]) ToExpr() clause.Expression {
+func (f DecimalField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f IntExprField[T]) As(alias string) field.IField {
+func (f DecimalField[T]) As(alias string) field.IField {
 	return f.Base.As(alias)
 }
 
-func (f IntExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) IntExprField[T] {
+func (f DecimalField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DecimalField[T] {
 	name := f.Base.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
-	return NewIntExprField[T](tableName.TableName(), name)
+	return NewDecimalField[T](tableName.TableName(), name)
 }
 
-func (f IntExprField[T]) WithAlias(alias string) IntExprField[T] {
+func (f DecimalField[T]) WithAlias(alias string) DecimalField[T] {
 	b := f.Base.SetAlias(alias)
-	return NewIntExprFieldFrom[T](b)
+	return NewDecimalFieldFrom[T](b)
 }
 
-func (f IntExprField[T]) FieldType() T {
+func (f DecimalField[T]) FieldType() T {
 	var def T
 	return def
 }
 
-func (f IntExprField[T]) Asc() types.OrderItem {
+func (f DecimalField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
 }
 
-func (f IntExprField[T]) Desc() types.OrderItem {
+func (f DecimalField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-// ==================== FloatExprField ====================
+// ==================== TextField ====================
 
-type FloatExprField[T any] struct {
+type TextField[T any] struct {
 	field.Base
-	FloatExpr[T]
+	String[T]
 }
 
-func NewFloatExprField[T any](tableName, name string, flags ...field.FieldFlag) FloatExprField[T] {
+func NewTextField[T any](tableName, name string, flags ...field.FieldFlag) TextField[T] {
 	b := field.NewBase(tableName, name, flags...)
-	return NewFloatExprFieldFrom[T](b)
+	return NewTextFieldFrom[T](b)
 }
 
-func NewFloatExprFieldFrom[T any](f field.IField) FloatExprField[T] {
+func NewTextFieldFrom[T any](f field.IField) TextField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
-	return FloatExprField[T]{
-		Base:      base,
-		FloatExpr: NewFloatExpr[T](expr),
+	return TextField[T]{
+		Base:   base,
+		String: NewString[T](expr),
 	}
 }
 
-func (f FloatExprField[T]) Build(builder clause.Builder) {
+func (f TextField[T]) Build(builder clause.Builder) {
 	f.Base.ToExpr().Build(builder)
 }
 
-func (f FloatExprField[T]) ToExpr() clause.Expression {
+func (f TextField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f FloatExprField[T]) As(alias string) field.IField {
+func (f TextField[T]) As(alias string) field.IField {
 	return f.Base.As(alias)
 }
 
-func (f FloatExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) FloatExprField[T] {
+func (f TextField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TextField[T] {
 	name := f.Base.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
-	return NewFloatExprField[T](tableName.TableName(), name)
+	return NewTextField[T](tableName.TableName(), name)
 }
 
-func (f FloatExprField[T]) WithAlias(alias string) FloatExprField[T] {
+func (f TextField[T]) WithAlias(alias string) TextField[T] {
 	b := f.Base.SetAlias(alias)
-	return NewFloatExprFieldFrom[T](b)
+	return NewTextFieldFrom[T](b)
 }
 
-func (f FloatExprField[T]) FieldType() T {
+func (f TextField[T]) FieldType() T {
 	var def T
 	return def
 }
 
-func (f FloatExprField[T]) Asc() types.OrderItem {
+func (f TextField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
 }
 
-func (f FloatExprField[T]) Desc() types.OrderItem {
+func (f TextField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-// ==================== DecimalExprField ====================
+// ==================== DateTimeField ====================
 
-type DecimalExprField[T any] struct {
+type DateTimeField[T any] struct {
 	field.Base
-	DecimalExpr[T]
+	DateTime[T]
 }
 
-func NewDecimalExprField[T any](tableName, name string, flags ...field.FieldFlag) DecimalExprField[T] {
+func NewDateTimeField[T any](tableName, name string, flags ...field.FieldFlag) DateTimeField[T] {
 	b := field.NewBase(tableName, name, flags...)
-	return NewDecimalExprFieldFrom[T](b)
+	return NewDateTimeFieldFrom[T](b)
 }
 
-func NewDecimalExprFieldFrom[T any](f field.IField) DecimalExprField[T] {
+func NewDateTimeFieldFrom[T any](f field.IField) DateTimeField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
-	return DecimalExprField[T]{
-		Base:        base,
-		DecimalExpr: NewDecimalExpr[T](expr),
-	}
-}
-
-func (f DecimalExprField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
-}
-
-func (f DecimalExprField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
-}
-
-func (f DecimalExprField[T]) As(alias string) field.IField {
-	return f.Base.As(alias)
-}
-
-func (f DecimalExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DecimalExprField[T] {
-	name := f.Base.ColumnName()
-	if len(fieldNames) > 0 {
-		name = fieldNames[0]
-	}
-	return NewDecimalExprField[T](tableName.TableName(), name)
-}
-
-func (f DecimalExprField[T]) WithAlias(alias string) DecimalExprField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewDecimalExprFieldFrom[T](b)
-}
-
-func (f DecimalExprField[T]) FieldType() T {
-	var def T
-	return def
-}
-
-func (f DecimalExprField[T]) Asc() types.OrderItem {
-	return types.NewOrder(f, true)
-}
-
-func (f DecimalExprField[T]) Desc() types.OrderItem {
-	return types.NewOrder(f, false)
-}
-
-// ==================== TextExprField ====================
-
-type TextExprField[T any] struct {
-	field.Base
-	TextExpr[T]
-}
-
-func NewTextExprField[T any](tableName, name string, flags ...field.FieldFlag) TextExprField[T] {
-	b := field.NewBase(tableName, name, flags...)
-	return NewTextExprFieldFrom[T](b)
-}
-
-func NewTextExprFieldFrom[T any](f field.IField) TextExprField[T] {
-	base := field.IFieldToBase(f)
-	expr := base.ToExpr()
-	return TextExprField[T]{
+	return DateTimeField[T]{
 		Base:     base,
-		TextExpr: NewTextExpr[T](expr),
+		DateTime: NewDateTime[T](expr),
 	}
 }
 
-func (f TextExprField[T]) Build(builder clause.Builder) {
+func (f DateTimeField[T]) Build(builder clause.Builder) {
 	f.Base.ToExpr().Build(builder)
 }
 
-func (f TextExprField[T]) ToExpr() clause.Expression {
+func (f DateTimeField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f TextExprField[T]) As(alias string) field.IField {
+func (f DateTimeField[T]) As(alias string) field.IField {
 	return f.Base.As(alias)
 }
 
-func (f TextExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TextExprField[T] {
+func (f DateTimeField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateTimeField[T] {
 	name := f.Base.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
-	return NewTextExprField[T](tableName.TableName(), name)
+	return NewDateTimeField[T](tableName.TableName(), name)
 }
 
-func (f TextExprField[T]) WithAlias(alias string) TextExprField[T] {
+func (f DateTimeField[T]) WithAlias(alias string) DateTimeField[T] {
 	b := f.Base.SetAlias(alias)
-	return NewTextExprFieldFrom[T](b)
+	return NewDateTimeFieldFrom[T](b)
 }
 
-func (f TextExprField[T]) FieldType() T {
+func (f DateTimeField[T]) FieldType() T {
 	var def T
 	return def
 }
 
-func (f TextExprField[T]) Asc() types.OrderItem {
+func (f DateTimeField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
 }
 
-func (f TextExprField[T]) Desc() types.OrderItem {
+func (f DateTimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-// ==================== DateTimeExprField ====================
+// ==================== DateField ====================
 
-type DateTimeExprField[T any] struct {
+type DateField[T any] struct {
 	field.Base
-	DateTimeExpr[T]
+	Date[T]
 }
 
-func NewDateTimeExprField[T any](tableName, name string, flags ...field.FieldFlag) DateTimeExprField[T] {
+func NewDateField[T any](tableName, name string, flags ...field.FieldFlag) DateField[T] {
 	b := field.NewBase(tableName, name, flags...)
-	return NewDateTimeExprFieldFrom[T](b)
+	return NewDateFieldFrom[T](b)
 }
 
-func NewDateTimeExprFieldFrom[T any](f field.IField) DateTimeExprField[T] {
+func NewDateFieldFrom[T any](f field.IField) DateField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
-	return DateTimeExprField[T]{
-		Base:         base,
-		DateTimeExpr: NewDateTimeExpr[T](expr),
+	return DateField[T]{
+		Base: base,
+		Date: NewDate[T](expr),
 	}
 }
 
-func (f DateTimeExprField[T]) Build(builder clause.Builder) {
+func (f DateField[T]) Build(builder clause.Builder) {
 	f.Base.ToExpr().Build(builder)
 }
 
-func (f DateTimeExprField[T]) ToExpr() clause.Expression {
+func (f DateField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f DateTimeExprField[T]) As(alias string) field.IField {
+func (f DateField[T]) As(alias string) field.IField {
 	return f.Base.As(alias)
 }
 
-func (f DateTimeExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateTimeExprField[T] {
+func (f DateField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateField[T] {
 	name := f.Base.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
-	return NewDateTimeExprField[T](tableName.TableName(), name)
+	return NewDateField[T](tableName.TableName(), name)
 }
 
-func (f DateTimeExprField[T]) WithAlias(alias string) DateTimeExprField[T] {
+func (f DateField[T]) WithAlias(alias string) DateField[T] {
 	b := f.Base.SetAlias(alias)
-	return NewDateTimeExprFieldFrom[T](b)
+	return NewDateFieldFrom[T](b)
 }
 
-func (f DateTimeExprField[T]) FieldType() T {
+func (f DateField[T]) FieldType() T {
 	var def T
 	return def
 }
 
-func (f DateTimeExprField[T]) Asc() types.OrderItem {
+func (f DateField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
 }
 
-func (f DateTimeExprField[T]) Desc() types.OrderItem {
+func (f DateField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-// ==================== DateExprField ====================
+// ==================== TimeField ====================
 
-type DateExprField[T any] struct {
+type TimeField[T any] struct {
 	field.Base
-	DateExpr[T]
+	Time[T]
 }
 
-func NewDateExprField[T any](tableName, name string, flags ...field.FieldFlag) DateExprField[T] {
+func NewTimeField[T any](tableName, name string, flags ...field.FieldFlag) TimeField[T] {
 	b := field.NewBase(tableName, name, flags...)
-	return NewDateExprFieldFrom[T](b)
+	return NewTimeFieldFrom[T](b)
 }
 
-func NewDateExprFieldFrom[T any](f field.IField) DateExprField[T] {
+func NewTimeFieldFrom[T any](f field.IField) TimeField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
-	return DateExprField[T]{
-		Base:     base,
-		DateExpr: NewDateExpr[T](expr),
+	return TimeField[T]{
+		Base: base,
+		Time: NewTime[T](expr),
 	}
 }
 
-func (f DateExprField[T]) Build(builder clause.Builder) {
+func (f TimeField[T]) Build(builder clause.Builder) {
 	f.Base.ToExpr().Build(builder)
 }
 
-func (f DateExprField[T]) ToExpr() clause.Expression {
+func (f TimeField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f DateExprField[T]) As(alias string) field.IField {
+func (f TimeField[T]) As(alias string) field.IField {
 	return f.Base.As(alias)
 }
 
-func (f DateExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateExprField[T] {
+func (f TimeField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TimeField[T] {
 	name := f.Base.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
-	return NewDateExprField[T](tableName.TableName(), name)
+	return NewTimeField[T](tableName.TableName(), name)
 }
 
-func (f DateExprField[T]) WithAlias(alias string) DateExprField[T] {
+func (f TimeField[T]) WithAlias(alias string) TimeField[T] {
 	b := f.Base.SetAlias(alias)
-	return NewDateExprFieldFrom[T](b)
+	return NewTimeFieldFrom[T](b)
 }
 
-func (f DateExprField[T]) FieldType() T {
+func (f TimeField[T]) FieldType() T {
 	var def T
 	return def
 }
 
-func (f DateExprField[T]) Asc() types.OrderItem {
+func (f TimeField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
 }
 
-func (f DateExprField[T]) Desc() types.OrderItem {
-	return types.NewOrder(f, false)
-}
-
-// ==================== TimeExprField ====================
-
-type TimeExprField[T any] struct {
-	field.Base
-	TimeExpr[T]
-}
-
-func NewTimeExprField[T any](tableName, name string, flags ...field.FieldFlag) TimeExprField[T] {
-	b := field.NewBase(tableName, name, flags...)
-	return NewTimeExprFieldFrom[T](b)
-}
-
-func NewTimeExprFieldFrom[T any](f field.IField) TimeExprField[T] {
-	base := field.IFieldToBase(f)
-	expr := base.ToExpr()
-	return TimeExprField[T]{
-		Base:     base,
-		TimeExpr: NewTimeExpr[T](expr),
-	}
-}
-
-func (f TimeExprField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
-}
-
-func (f TimeExprField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
-}
-
-func (f TimeExprField[T]) As(alias string) field.IField {
-	return f.Base.As(alias)
-}
-
-func (f TimeExprField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TimeExprField[T] {
-	name := f.Base.ColumnName()
-	if len(fieldNames) > 0 {
-		name = fieldNames[0]
-	}
-	return NewTimeExprField[T](tableName.TableName(), name)
-}
-
-func (f TimeExprField[T]) WithAlias(alias string) TimeExprField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewTimeExprFieldFrom[T](b)
-}
-
-func (f TimeExprField[T]) FieldType() T {
-	var def T
-	return def
-}
-
-func (f TimeExprField[T]) Asc() types.OrderItem {
-	return types.NewOrder(f, true)
-}
-
-func (f TimeExprField[T]) Desc() types.OrderItem {
+func (f TimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
