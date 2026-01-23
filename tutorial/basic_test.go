@@ -1143,7 +1143,7 @@ func TestFunc_TypeConvert(t *testing.T) {
 		var result struct {
 			IntPrice int64 `gorm:"column:int_price"`
 		}
-		err := gsql.Select(gsql.CONVERT(p.Price.ToExpr(), gsql.CastTypeSigned).AsF("int_price")).
+		err := gsql.Select(p.Price.CastUnsigned().As("int_price")).
 			From(&p).
 			Limit(1).
 			First(db, &result)

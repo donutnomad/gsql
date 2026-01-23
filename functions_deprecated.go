@@ -734,3 +734,81 @@ package gsql
 //		Vars: []any{expr1, expr2},
 //	})
 //}
+
+//// INET_ATON 将点分十进制的IPv4地址转换为整数形式（网络字节序）
+//// SELECT INET_ATON('192.168.1.1');
+//// SELECT INET_ATON('10.0.0.1');
+//// INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
+//// SELECT * FROM ip_ranges WHERE INET_ATON('192.168.1.50') BETWEEN start_ip AND end_ip;
+//func INET_ATON(expr string) field.IntExpr {
+//	return field.NewIntExpr(clause.Expr{
+//		SQL:  "INET_ATON(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// INET_NTOA 将整数形式的IP地址转换为点分十进制字符串
+//// SELECT INET_NTOA(3232235777);
+//// SELECT INET_NTOA(167772161);
+//// SELECT INET_NTOA(ip_address) FROM access_logs;
+//// SELECT user_id, INET_NTOA(last_ip) FROM users;
+//func INET_NTOA(expr field.Expression) field.StringExpr {
+//	return field.NewStringExpr(clause.Expr{
+//		SQL:  "INET_NTOA(?)",
+//		Vars: []any{expr},
+//	})
+//}
+
+//// SUM 计算数值列的总和，忽略NULL值
+//// 返回 FloatExpr，支持比较操作
+//// 示例: SUM(amount).Gt(1000)
+//// SELECT SUM(amount) FROM orders;
+//// SELECT SUM(price * quantity) FROM order_items;
+//// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+//// SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
+//func SUM(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "SUM(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// AVG 计算数值列的平均值，忽略NULL值
+//// 返回 FloatExpr，支持比较操作
+//// 示例: AVG(price).Between(10, 100)
+//// SELECT AVG(price) FROM products;
+//// SELECT AVG(age) FROM users;
+//// SELECT category, AVG(price) FROM products GROUP BY category;
+//// SELECT AVG(TIMESTAMPDIFF(YEAR, birthday, NOW())) FROM users;
+//func AVG(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "AVG(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// MAX 返回列的最大值，可用于数值、字符串、日期等类型
+//// 返回 FloatExpr，支持比较操作
+//// SELECT MAX(price) FROM products;
+//// SELECT MAX(created_at) FROM orders;
+//// SELECT MAX(LENGTH(description)) FROM articles;
+//// SELECT category, MAX(price) FROM products GROUP BY category;
+//func MAX(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "MAX(?)",
+//		Vars: []any{expr},
+//	})
+//}
+//
+//// MIN 返回列的最小值，可用于数值、字符串、日期等类型
+//// 返回 FloatExpr，支持比较操作
+//// SELECT MIN(price) FROM products;
+//// SELECT MIN(created_at) FROM users;
+//// SELECT MIN(stock) FROM inventory;
+//// SELECT category, MIN(price) FROM products GROUP BY category;
+//func MIN(expr field.Expression) field.FloatExpr {
+//	return field.NewFloatExpr(clause.Expr{
+//		SQL:  "MIN(?)",
+//		Vars: []any{expr},
+//	})
+//}

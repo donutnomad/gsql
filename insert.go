@@ -4,13 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"slices"
 	"time"
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
 	"gorm.io/gorm/callbacks"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -29,17 +30,43 @@ import (
 // * 会触发 DELETE 和 INSERT 相关的触发器
 // * 通常性能较低，特别是索引多或有复杂触发器时
 
+// Assignment 表示 ON DUPLICATE KEY UPDATE 中的赋值表达式
+// 用于支持自定义更新逻辑，如 column = IF(RowValue(version) > version, RowValue(column), column)
+type Assignment struct {
+	Column field.IField
+	Value  field.Expression
+}
+
+// Set 创建一个赋值表达式，用于 ON DUPLICATE KEY UPDATE
+// 示例:
+//
+//	// 简单更新：使用插入行的值更新
+//	gsql.Set(t.Count, gsql.RowValue(t.Count))
+//
+//	// 条件更新：只有当新版本号更大时才更新
+//	gsql.Set(t.Value, gsql.IF(
+//	    gsql.Expr("? > ?", gsql.RowValue(t.Version), t.Version),
+//	    gsql.RowValue(t.Value),
+//	    t.Value,
+//	))
+func Set(column field.IField, value field.Expression) Assignment {
+	return Assignment{
+		Column: column,
+		Value:  value,
+	}
+}
+
 type InsertBuilder[T any] struct {
 	ignore        bool
 	selectColumns []field.IField
 }
 
 type insertBuilderWithValues[T any] struct {
-	selectColumns            []field.IField
-	onDuplicateUpdateColumns []field.IField
-	values                   *[]T
-	onDuplicateUpdate        bool
-	ignore                   bool
+	selectColumns     []field.IField
+	duplicateUpdates  []Assignment
+	values            *[]T
+	onDuplicateUpdate bool
+	ignore            bool
 }
 
 func InsertInto[T any, TableTypes interface {
@@ -77,8 +104,52 @@ func (b *InsertBuilder[T]) Values(values *[]T) *insertBuilderWithValues[T] {
 
 func (b *insertBuilderWithValues[T]) DuplicateUpdate(columns ...field.IField) *insertBuilderWithValues[T] {
 	b.onDuplicateUpdate = true
-	b.onDuplicateUpdateColumns = columns
+	// 将列转换为 Assignment，使用 RowValue 引用插入行的值
+	for _, col := range columns {
+		b.duplicateUpdates = append(b.duplicateUpdates, Assignment{
+			Column: col,
+			Value:  RowValue(col),
+		})
+	}
 	return b
+}
+
+// DuplicateUpdateExpr 设置 ON DUPLICATE KEY UPDATE 使用自定义表达式
+// 支持带条件的更新，如:
+//
+//	InsertInto(table).
+//	    Value(row).
+//	    DuplicateUpdateExpr(
+//	        gsql.Set(t.LastConsumedMessageId,
+//	            gsql.IF(
+//	                gsql.Expr("? >= ?", gsql.RowValue(t.GenerationId), t.GenerationId),
+//	                gsql.RowValue(t.LastConsumedMessageId),
+//	                t.LastConsumedMessageId,
+//	            ),
+//	        ),
+//	        gsql.Set(t.GenerationId,
+//	            gsql.IF(
+//	                gsql.Expr("? >= ?", gsql.RowValue(t.GenerationId), t.GenerationId),
+//	                gsql.RowValue(t.GenerationId),
+//	                t.GenerationId,
+//	            ),
+//	        ),
+//	    )
+func (b *insertBuilderWithValues[T]) DuplicateUpdateExpr(assignments ...Assignment) *insertBuilderWithValues[T] {
+	b.onDuplicateUpdate = true
+	b.duplicateUpdates = append(b.duplicateUpdates, assignments...)
+	return b
+}
+
+// ToSQL 生成 ON DUPLICATE KEY UPDATE 部分的 SQL 字符串（用于调试和测试）
+func (b *insertBuilderWithValues[T]) ToSQL() string {
+	if len(b.duplicateUpdates) == 0 {
+		return ""
+	}
+	builder := utils.NewMemoryBuilder()
+	onConflict := onConflictWithExprs{assignments: b.duplicateUpdates}
+	onConflict.Build(builder)
+	return builder.SQL.String()
 }
 
 func (b *insertBuilderWithValues[T]) Exec(db IGormDB) error {
@@ -99,10 +170,14 @@ func (b *insertBuilderWithValues[T]) ExecWithResult(db IGormDB) (int64, error) {
 		})
 	}
 
-	var allowColumns = lo.Map(b.onDuplicateUpdateColumns, func(item field.IField, index int) string {
-		return item.Name()
-	})
-	if len(allowColumns) > 0 {
+	// 处理 ON DUPLICATE KEY UPDATE
+	if len(b.duplicateUpdates) > 0 {
+		// 使用 Recorder 捕获开始时间
+		config := *tx.Config
+		currentLogger, newLogger := config.Logger, logger.Recorder.New()
+		config.Logger = newLogger
+		tx.Config = &config
+
 		tx.Statement.Dest = b.values
 		tx.Statement.SQL.Reset()
 		tx.Statement.Vars = nil
@@ -115,28 +190,104 @@ func (b *insertBuilderWithValues[T]) ExecWithResult(db IGormDB) (int64, error) {
 
 		stmt.SQL.Grow(180)
 		stmt.AddClauseIfNotExists(clause.Insert{})
-		stmt.AddClause(callbacks.ConvertToCreateValues(stmt))
+
+		// 添加 VALUES 子句，根据 MySQL 版本可能需要添加行别名
+		valuesClause := callbacks.ConvertToCreateValues(stmt)
+		if GetMySQLVersion() >= MySQLVersion8020 {
+			stmt.AddClause(valuesWithAlias{valuesClause})
+		} else {
+			stmt.AddClause(valuesClause)
+		}
+
+		// 替换 OnConflict 子句，使用自定义表达式
 		if v, ok := stmt.Clauses[clause.OnConflict{}.Name()]; ok {
-			if v1, ok := v.Expression.(clause.OnConflict); ok {
-				var doUpdates clause.Set
-				for _, item := range v1.DoUpdates {
-					if _, ok := item.Value.(time.Time); ok {
-						doUpdates = append(doUpdates, item)
-					} else if slices.Contains(allowColumns, item.Column.Name) {
-						doUpdates = append(doUpdates, item)
-					}
+			if _, ok := v.Expression.(clause.OnConflict); ok {
+				customOnConflict := onConflictWithExprs{
+					assignments: b.duplicateUpdates,
 				}
-				v1.DoUpdates = doUpdates
-				v1.MergeClause(&v)
+				v.Name = "" // 清空名称，避免输出 "ON CONFLICT" 前缀
+				v.Expression = customOnConflict
 				stmt.Clauses[clause.OnConflict{}.Name()] = v
 			}
 		}
 
 		stmt.Build(createClauses...)
+
+		// 设置 newLogger.SQL，用于日志输出
+		newLogger.SQL = tx.Dialector.Explain(tx.Statement.SQL.String(), tx.Statement.Vars...)
+
+		// 直接执行已构建的 SQL
+		result, err := tx.Statement.ConnPool.ExecContext(
+			tx.Statement.Context,
+			tx.Statement.SQL.String(),
+			tx.Statement.Vars...,
+		)
+		rowsAffected := int64(0)
+		if result != nil {
+			rowsAffected, _ = result.RowsAffected()
+		}
+
+		// 输出 SQL 日志
+		currentLogger.Trace(tx.Statement.Context, newLogger.BeginAt, func() (string, int64) {
+			return newLogger.SQL, rowsAffected
+		}, err)
+		tx.Logger = currentLogger
+
+		if err != nil {
+			return 0, err
+		}
+		return rowsAffected, nil
 	}
 
 	ret := tx.Create(b.values)
 	return ret.RowsAffected, ret.Error
+}
+
+// onConflictWithExprs 自定义的 OnConflict 表达式，支持复杂的更新逻辑
+type onConflictWithExprs struct {
+	assignments []Assignment
+}
+
+func (o onConflictWithExprs) Name() string {
+	return "ON CONFLICT"
+}
+
+func (o onConflictWithExprs) Build(builder clause.Builder) {
+	builder.WriteString("ON DUPLICATE KEY UPDATE ")
+	for idx, assignment := range o.assignments {
+		if idx > 0 {
+			builder.WriteByte(',')
+		}
+		builder.WriteQuoted(assignment.Column.Name())
+		builder.WriteByte('=')
+		assignment.Value.Build(builder)
+	}
+}
+
+func (o onConflictWithExprs) MergeClause(c *clause.Clause) {
+	c.Name = "" // 清空名称，避免输出 "ON CONFLICT" 前缀
+	c.Expression = o
+}
+
+// valuesWithAlias 包装 VALUES 子句，在 MySQL 8.0.20+ 模式下添加行别名
+type valuesWithAlias struct {
+	clause.Expression
+}
+
+func (v valuesWithAlias) Name() string {
+	return "VALUES"
+}
+
+func (v valuesWithAlias) Build(builder clause.Builder) {
+	v.Expression.Build(builder)
+	// MySQL 8.0.20+ 需要添加行别名 AS _new
+	builder.WriteString(" AS ")
+	builder.WriteQuoted(insertRowAlias)
+}
+
+func (v valuesWithAlias) MergeClause(c *clause.Clause) {
+	c.Name = "" // 清空名称，避免输出 "VALUES" 前缀
+	c.Expression = v
 }
 
 func processerExec(pClauses []string, db *GormDB) *GormDB {
@@ -232,16 +383,29 @@ func (b *InsertBuilder[T]) Select(q interface{ ToExpr() clause.Expr }) *insertBu
 }
 
 type insertBuilderWithSelect[T any] struct {
-	ignore                   bool
-	onDuplicateUpdate        bool
-	onDuplicateUpdateColumns []field.IField
-	query                    clause.Expr
-	selectColumns            []field.IField
+	ignore            bool
+	onDuplicateUpdate bool
+	duplicateUpdates  []Assignment
+	query             clause.Expr
+	selectColumns     []field.IField
 }
 
 func (b *insertBuilderWithSelect[T]) DuplicateUpdate(columns ...field.IField) *insertBuilderWithSelect[T] {
 	b.onDuplicateUpdate = true
-	b.onDuplicateUpdateColumns = columns
+	// 将列转换为 Assignment，使用 RowValue 引用插入行的值
+	for _, col := range columns {
+		b.duplicateUpdates = append(b.duplicateUpdates, Assignment{
+			Column: col,
+			Value:  RowValue(col),
+		})
+	}
+	return b
+}
+
+// DuplicateUpdateExpr 设置 ON DUPLICATE KEY UPDATE 使用自定义表达式
+func (b *insertBuilderWithSelect[T]) DuplicateUpdateExpr(assignments ...Assignment) *insertBuilderWithSelect[T] {
+	b.onDuplicateUpdate = true
+	b.duplicateUpdates = append(b.duplicateUpdates, assignments...)
 	return b
 }
 
@@ -289,35 +453,27 @@ func (b *insertBuilderWithSelect[T]) ExecWithResult(db IGormDB) (int64, error) {
 			values.Columns = append(values.Columns, clause.Column{Name: field.DBName})
 		}
 	}
-	for _, db := range stmt.Schema.DBNames {
-		if field := stmt.Schema.FieldsByDBName[db]; !field.HasDefaultValue || field.DefaultValueInterface != nil {
-			if v, ok := selectColumns[db]; (ok && v) || (!ok && (!restricted || field.AutoCreateTime > 0 || field.AutoUpdateTime > 0)) {
-				values.Columns = append(values.Columns, clause.Column{Name: db})
+	for _, dbName := range stmt.Schema.DBNames {
+		if field := stmt.Schema.FieldsByDBName[dbName]; !field.HasDefaultValue || field.DefaultValueInterface != nil {
+			if v, ok := selectColumns[dbName]; (ok && v) || (!ok && (!restricted || field.AutoCreateTime > 0 || field.AutoUpdateTime > 0)) {
+				values.Columns = append(values.Columns, clause.Column{Name: dbName})
 			}
 		}
 	}
 	values.query = b.query
 	stmt.AddClause(values)
 
-	var allowColumns = lo.Map(b.onDuplicateUpdateColumns, func(item field.IField, index int) string {
-		return item.Name()
-	})
-	if len(allowColumns) > 0 {
-		//if v, ok := stmt.Clauses[clause.OnConflict{}.Name()]; ok {
-		//	if v1, ok := v.Expression.(clause.OnConflict); ok {
-		//		var doUpdates clause.Set
-		//		for _, item := range v1.DoUpdates {
-		//			if _, ok := item.Value.(time.Time); ok {
-		//				doUpdates = append(doUpdates, item)
-		//			} else if slices.Contains(allowColumns, item.Column.Name) {
-		//				doUpdates = append(doUpdates, item)
-		//			}
-		//		}
-		//		v1.DoUpdates = doUpdates
-		//		v1.MergeClause(&v)
-		//		stmt.Clauses[clause.OnConflict{}.Name()] = v
-		//	}
-		//}
+	// 处理 ON DUPLICATE KEY UPDATE
+	if len(b.duplicateUpdates) > 0 {
+		if v, ok := stmt.Clauses[clause.OnConflict{}.Name()]; ok {
+			if _, ok := v.Expression.(clause.OnConflict); ok {
+				customOnConflict := onConflictWithExprs{
+					assignments: b.duplicateUpdates,
+				}
+				v.Expression = customOnConflict
+				stmt.Clauses[clause.OnConflict{}.Name()] = v
+			}
+		}
 	}
 
 	stmt.Build(createClauses...)

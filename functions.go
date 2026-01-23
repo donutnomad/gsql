@@ -18,14 +18,6 @@ var allowedCharsets = map[string]bool{
 
 var Star field.IField = field.NewBase("", "*")
 
-// CastType 定义CAST和CONVERT支持的MySQL数据类型
-type CastType string
-
-const (
-	// 数值类型
-	CastTypeSigned CastType = "SIGNED" // 有符号整数
-)
-
 // Deprecated: 使用 Lit 替代。
 // Primitive 已被弃用，请使用更简洁的 Lit 函数。
 func Primitive[T primitive](value T) field.ExpressionTo {
@@ -123,60 +115,6 @@ func COUNT_DISTINCT(expr field.IField) fields.IntExpr[int64] {
 	})
 }
 
-//// SUM 计算数值列的总和，忽略NULL值
-//// 返回 FloatExpr，支持比较操作
-//// 示例: SUM(amount).Gt(1000)
-//// SELECT SUM(amount) FROM orders;
-//// SELECT SUM(price * quantity) FROM order_items;
-//// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-//// SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
-//func SUM(expr field.Expression) field.FloatExpr {
-//	return field.NewFloatExpr(clause.Expr{
-//		SQL:  "SUM(?)",
-//		Vars: []any{expr},
-//	})
-//}
-//
-//// AVG 计算数值列的平均值，忽略NULL值
-//// 返回 FloatExpr，支持比较操作
-//// 示例: AVG(price).Between(10, 100)
-//// SELECT AVG(price) FROM products;
-//// SELECT AVG(age) FROM users;
-//// SELECT category, AVG(price) FROM products GROUP BY category;
-//// SELECT AVG(TIMESTAMPDIFF(YEAR, birthday, NOW())) FROM users;
-//func AVG(expr field.Expression) field.FloatExpr {
-//	return field.NewFloatExpr(clause.Expr{
-//		SQL:  "AVG(?)",
-//		Vars: []any{expr},
-//	})
-//}
-//
-//// MAX 返回列的最大值，可用于数值、字符串、日期等类型
-//// 返回 FloatExpr，支持比较操作
-//// SELECT MAX(price) FROM products;
-//// SELECT MAX(created_at) FROM orders;
-//// SELECT MAX(LENGTH(description)) FROM articles;
-//// SELECT category, MAX(price) FROM products GROUP BY category;
-//func MAX(expr field.Expression) field.FloatExpr {
-//	return field.NewFloatExpr(clause.Expr{
-//		SQL:  "MAX(?)",
-//		Vars: []any{expr},
-//	})
-//}
-//
-//// MIN 返回列的最小值，可用于数值、字符串、日期等类型
-//// 返回 FloatExpr，支持比较操作
-//// SELECT MIN(price) FROM products;
-//// SELECT MIN(created_at) FROM users;
-//// SELECT MIN(stock) FROM inventory;
-//// SELECT category, MIN(price) FROM products GROUP BY category;
-//func MIN(expr field.Expression) field.FloatExpr {
-//	return field.NewFloatExpr(clause.Expr{
-//		SQL:  "MIN(?)",
-//		Vars: []any{expr},
-//	})
-//}
-
 // GROUP_CONCAT 将分组内的字符串连接起来，默认用逗号分隔，可指定分隔符
 // SELECT GROUP_CONCAT(name) FROM users;
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
@@ -246,7 +184,7 @@ func NULLIF(expr1, expr2 any) field.ExpressionTo {
 //	CAST(field, CastTypeSigned)
 //	CAST(field, CastTypeDate)
 //	CAST(field, "DECIMAL(10,2)") // 对于需要指定精度的类型，可以直接传字符串
-func CAST(expr field.Expression, dataType CastType) field.ExpressionTo {
+func CAST(expr field.Expression, dataType string) field.ExpressionTo {
 	return ExprTo{clause.Expr{
 		SQL:  fmt.Sprintf("CAST(? AS %s)", dataType),
 		Vars: []any{expr},
@@ -265,7 +203,7 @@ func CAST(expr field.Expression, dataType CastType) field.ExpressionTo {
 //	CONVERT(field, CastTypeSigned)
 //	CONVERT(field, CastTypeDate)
 //	CONVERT(field, "DECIMAL(10,2)") // 对于需要指定精度的类型，可以直接传字符串
-func CONVERT(expr field.Expression, dataType CastType) field.ExpressionTo {
+func CONVERT(expr field.Expression, dataType string) field.ExpressionTo {
 	return ExprTo{clause.Expr{
 		SQL:  fmt.Sprintf("CONVERT(?, %s)", dataType),
 		Vars: []any{expr},
@@ -337,27 +275,3 @@ func VERSION() fields.TextExpr[string] {
 func UUID() fields.TextExpr[string] {
 	return fields.NewTextExpr[string](clause.Expr{SQL: "UUID()"})
 }
-
-//// INET_ATON 将点分十进制的IPv4地址转换为整数形式（网络字节序）
-//// SELECT INET_ATON('192.168.1.1');
-//// SELECT INET_ATON('10.0.0.1');
-//// INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
-//// SELECT * FROM ip_ranges WHERE INET_ATON('192.168.1.50') BETWEEN start_ip AND end_ip;
-//func INET_ATON(expr string) field.IntExpr {
-//	return field.NewIntExpr(clause.Expr{
-//		SQL:  "INET_ATON(?)",
-//		Vars: []any{expr},
-//	})
-//}
-//
-//// INET_NTOA 将整数形式的IP地址转换为点分十进制字符串
-//// SELECT INET_NTOA(3232235777);
-//// SELECT INET_NTOA(167772161);
-//// SELECT INET_NTOA(ip_address) FROM access_logs;
-//// SELECT user_id, INET_NTOA(last_ip) FROM users;
-//func INET_NTOA(expr field.Expression) field.StringExpr {
-//	return field.NewStringExpr(clause.Expr{
-//		SQL:  "INET_NTOA(?)",
-//		Vars: []any{expr},
-//	})
-//}
