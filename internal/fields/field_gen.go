@@ -185,62 +185,62 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-// ==================== TextField ====================
+// ==================== StringField ====================
 
-type TextField[T any] struct {
+type StringField[T any] struct {
 	field.Base
 	String[T]
 }
 
-func NewTextField[T any](tableName, name string, flags ...field.FieldFlag) TextField[T] {
+func NewStringField[T any](tableName, name string, flags ...field.FieldFlag) StringField[T] {
 	b := field.NewBase(tableName, name, flags...)
-	return NewTextFieldFrom[T](b)
+	return NewStringFieldFrom[T](b)
 }
 
-func NewTextFieldFrom[T any](f field.IField) TextField[T] {
+func NewStringFieldFrom[T any](f field.IField) StringField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
-	return TextField[T]{
+	return StringField[T]{
 		Base:   base,
 		String: NewString[T](expr),
 	}
 }
 
-func (f TextField[T]) Build(builder clause.Builder) {
+func (f StringField[T]) Build(builder clause.Builder) {
 	f.Base.ToExpr().Build(builder)
 }
 
-func (f TextField[T]) ToExpr() clause.Expression {
+func (f StringField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f TextField[T]) As(alias string) field.IField {
+func (f StringField[T]) As(alias string) field.IField {
 	return f.Base.As(alias)
 }
 
-func (f TextField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TextField[T] {
+func (f StringField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) StringField[T] {
 	name := f.Base.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
-	return NewTextField[T](tableName.TableName(), name)
+	return NewStringField[T](tableName.TableName(), name)
 }
 
-func (f TextField[T]) WithAlias(alias string) TextField[T] {
+func (f StringField[T]) WithAlias(alias string) StringField[T] {
 	b := f.Base.SetAlias(alias)
-	return NewTextFieldFrom[T](b)
+	return NewStringFieldFrom[T](b)
 }
 
-func (f TextField[T]) FieldType() T {
+func (f StringField[T]) FieldType() T {
 	var def T
 	return def
 }
 
-func (f TextField[T]) Asc() types.OrderItem {
+func (f StringField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
 }
 
-func (f TextField[T]) Desc() types.OrderItem {
+func (f StringField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 

@@ -220,8 +220,8 @@ type safeWriter struct {
 	builder clause.Builder
 }
 
-func (w *safeWriter) WriteByte(b byte) {
-	_ = w.builder.WriteByte(b)
+func (w *safeWriter) WriteByte(b byte) error {
+	return w.builder.WriteByte(b)
 }
 func (w *safeWriter) WriteString(b string) {
 	_, _ = w.builder.WriteString(b)

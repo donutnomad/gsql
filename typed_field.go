@@ -79,12 +79,12 @@ func NewString[T any](expr clause.Expression) fields.String[T] {
 	return fields.NewString[T](expr)
 }
 
-func NewTextField[T any](tableName, name string, flags ...field.FieldFlag) fields.TextField[T] {
-	return fields.NewTextField[T](tableName, name, flags...)
+func NewStringField[T any](tableName, name string, flags ...field.FieldFlag) fields.StringField[T] {
+	return fields.NewStringField[T](tableName, name, flags...)
 }
 
-func NewTextFieldFrom[T any](f field.IField) fields.TextField[T] {
-	return fields.NewTextFieldFrom[T](f)
+func NewStringFieldFrom[T any](f field.IField) fields.StringField[T] {
+	return fields.NewStringFieldFrom[T](f)
 }
 
 func NewTime[T any](expr clause.Expression) fields.Time[T] {
@@ -151,7 +151,7 @@ type (
 	JsonInput             = fields.JsonInput
 	String[T any]         = fields.String[T]
 	StringColumnBuilder   = fields.StringColumnBuilder
-	TextField[T any]      = fields.TextField[T]
+	StringField[T any]    = fields.StringField[T]
 	Time[T any]           = fields.Time[T]
 	TimeColumnBuilder     = fields.TimeColumnBuilder
 	TimeField[T any]      = fields.TimeField[T]

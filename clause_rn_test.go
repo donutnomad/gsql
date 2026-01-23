@@ -124,9 +124,9 @@ func TestDD(t *testing.T) {
 // 演示 ROW_NUMBER() OVER() 窗口函数的使用
 func ExampleRowNumber() {
 	// 创建字段
-	category := fields.NewTextField[string]("products", "category")
+	category := fields.NewStringField[string]("products", "category")
 	price := fields.NewFloatField[float64]("products", "price")
-	name := fields.NewTextField[string]("products", "name")
+	name := fields.NewStringField[string]("products", "name")
 
 	products := &gsql.Table{Name: "products"}
 
@@ -180,9 +180,9 @@ func ExampleRowNumber() {
 // 演示 RANK() 窗口函数的使用
 func ExampleRank() {
 	// 创建字段
-	category := fields.NewTextField[string]("products", "category")
+	category := fields.NewStringField[string]("products", "category")
 	price := fields.NewFloatField[float64]("products", "price")
-	name := fields.NewTextField[string]("products", "name")
+	name := fields.NewStringField[string]("products", "name")
 
 	products := &gsql.Table{Name: "products"}
 
@@ -207,7 +207,7 @@ func ExampleRank() {
 func ExampleDenseRank() {
 	// 创建字段
 	score := fields.NewIntField[int]("students", "score")
-	name := fields.NewTextField[string]("students", "name")
+	name := fields.NewStringField[string]("students", "name")
 
 	students := &gsql.Table{Name: "students"}
 

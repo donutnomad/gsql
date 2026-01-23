@@ -14,11 +14,11 @@ import (
 
 type ProductSchemaType struct {
 	ID          fields.IntField[uint64]
-	Name        fields.TextField[string]
-	Category    fields.TextField[string]
+	Name        fields.StringField[string]
+	Category    fields.StringField[string]
 	Price       fields.FloatField[float64]
 	Stock       fields.IntField[int]
-	Description fields.TextField[sql.NullString]
+	Description fields.StringField[sql.NullString]
 	CreatedAt   field.Comparable[time.Time]
 	UpdatedAt   field.Comparable[time.Time]
 	fieldType   Product
@@ -84,11 +84,11 @@ func (t ProductSchemaType) Star() field.IField {
 var ProductSchema = ProductSchemaType{
 	tableName:   "products",
 	ID:          fields.NewIntField[uint64]("products", "id", field.FlagPrimaryKey),
-	Name:        fields.NewTextField[string]("products", "name"),
-	Category:    fields.NewTextField[string]("products", "category"),
+	Name:        fields.NewStringField[string]("products", "name"),
+	Category:    fields.NewStringField[string]("products", "category"),
 	Price:       fields.NewFloatField[float64]("products", "price"),
 	Stock:       fields.NewIntField[int]("products", "stock"),
-	Description: fields.NewTextField[sql.NullString]("products", "description"),
+	Description: fields.NewStringField[sql.NullString]("products", "description"),
 	CreatedAt:   field.NewComparable[time.Time]("products", "created_at"),
 	UpdatedAt:   field.NewComparable[time.Time]("products", "updated_at"),
 	fieldType:   Product{},
@@ -98,9 +98,9 @@ var ProductSchema = ProductSchemaType{
 
 type EmployeeSchemaType struct {
 	ID         fields.IntField[uint64]
-	Name       fields.TextField[string]
-	Email      fields.TextField[string]
-	Department fields.TextField[string]
+	Name       fields.StringField[string]
+	Email      fields.StringField[string]
+	Department fields.StringField[string]
 	Salary     fields.FloatField[float64]
 	HireDate   fields.DateTimeField[time.Time]
 	BirthDate  fields.DateTimeField[time.Time]
@@ -168,9 +168,9 @@ func (t EmployeeSchemaType) Star() field.IField {
 var EmployeeSchema = EmployeeSchemaType{
 	tableName:  "employees",
 	ID:         fields.NewIntField[uint64]("employees", "id", field.FlagPrimaryKey),
-	Name:       fields.NewTextField[string]("employees", "name"),
-	Email:      fields.NewTextField[string]("employees", "email", field.FlagIndex),
-	Department: fields.NewTextField[string]("employees", "department"),
+	Name:       fields.NewStringField[string]("employees", "name"),
+	Email:      fields.NewStringField[string]("employees", "email", field.FlagIndex),
+	Department: fields.NewStringField[string]("employees", "department"),
 	Salary:     fields.NewFloatField[float64]("employees", "salary"),
 	HireDate:   fields.NewDateTimeField[time.Time]("employees", "hire_date"),
 	BirthDate:  fields.NewDateTimeField[time.Time]("employees", "birth_date"),
@@ -182,9 +182,9 @@ var EmployeeSchema = EmployeeSchemaType{
 
 type CustomerSchemaType struct {
 	ID        fields.IntField[uint64]
-	Name      fields.TextField[string]
-	Email     fields.TextField[string]
-	Phone     fields.TextField[string]
+	Name      fields.StringField[string]
+	Email     fields.StringField[string]
+	Phone     fields.StringField[string]
 	CreatedAt field.Comparable[time.Time]
 	fieldType Customer
 	alias     string
@@ -243,9 +243,9 @@ func (t CustomerSchemaType) Star() field.IField {
 var CustomerSchema = CustomerSchemaType{
 	tableName: "customers",
 	ID:        fields.NewIntField[uint64]("customers", "id", field.FlagPrimaryKey),
-	Name:      fields.NewTextField[string]("customers", "name"),
-	Email:     fields.NewTextField[string]("customers", "email"),
-	Phone:     fields.NewTextField[string]("customers", "phone"),
+	Name:      fields.NewStringField[string]("customers", "name"),
+	Email:     fields.NewStringField[string]("customers", "email"),
+	Phone:     fields.NewStringField[string]("customers", "phone"),
 	CreatedAt: field.NewComparable[time.Time]("customers", "created_at"),
 	fieldType: Customer{},
 }
@@ -257,7 +257,7 @@ type OrderSchemaType struct {
 	CustomerID fields.IntField[uint64]
 	OrderDate  field.Comparable[time.Time]
 	TotalPrice fields.FloatField[float64]
-	Status     fields.TextField[string]
+	Status     fields.StringField[string]
 	fieldType  Order
 	alias      string
 	tableName  string
@@ -318,7 +318,7 @@ var OrderSchema = OrderSchemaType{
 	CustomerID: fields.NewIntField[uint64]("orders", "customer_id", field.FlagIndex),
 	OrderDate:  field.NewComparable[time.Time]("orders", "order_date"),
 	TotalPrice: fields.NewFloatField[float64]("orders", "total_price"),
-	Status:     fields.NewTextField[string]("orders", "status"),
+	Status:     fields.NewStringField[string]("orders", "status"),
 	fieldType:  Order{},
 }
 
@@ -398,8 +398,8 @@ var OrderItemSchema = OrderItemSchemaType{
 
 type SalesRecordSchemaType struct {
 	ID          fields.IntField[uint64]
-	Region      fields.TextField[string]
-	Salesperson fields.TextField[string]
+	Region      fields.StringField[string]
+	Salesperson fields.StringField[string]
 	Amount      fields.FloatField[float64]
 	SaleDate    field.Comparable[time.Time]
 	fieldType   SalesRecord
@@ -459,8 +459,8 @@ func (t SalesRecordSchemaType) Star() field.IField {
 var SalesRecordSchema = SalesRecordSchemaType{
 	tableName:   "sales_records",
 	ID:          fields.NewIntField[uint64]("sales_records", "id", field.FlagPrimaryKey),
-	Region:      fields.NewTextField[string]("sales_records", "region", field.FlagIndex),
-	Salesperson: fields.NewTextField[string]("sales_records", "salesperson"),
+	Region:      fields.NewStringField[string]("sales_records", "region", field.FlagIndex),
+	Salesperson: fields.NewStringField[string]("sales_records", "salesperson"),
 	Amount:      fields.NewFloatField[float64]("sales_records", "amount"),
 	SaleDate:    field.NewComparable[time.Time]("sales_records", "sale_date", field.FlagIndex),
 	fieldType:   SalesRecord{},
@@ -470,7 +470,7 @@ var SalesRecordSchema = SalesRecordSchemaType{
 
 type OrgNodeSchemaType struct {
 	ID        fields.IntField[uint64]
-	Name      fields.TextField[string]
+	Name      fields.StringField[string]
 	ParentID  fields.IntField[*uint64]
 	Level     fields.IntField[int]
 	fieldType OrgNode
@@ -528,7 +528,7 @@ func (t OrgNodeSchemaType) Star() field.IField {
 var OrgNodeSchema = OrgNodeSchemaType{
 	tableName: "org_nodes",
 	ID:        fields.NewIntField[uint64]("org_nodes", "id", field.FlagPrimaryKey),
-	Name:      fields.NewTextField[string]("org_nodes", "name"),
+	Name:      fields.NewStringField[string]("org_nodes", "name"),
 	ParentID:  fields.NewIntField[*uint64]("org_nodes", "parent_id", field.FlagIndex),
 	Level:     fields.NewIntField[int]("org_nodes", "level"),
 	fieldType: OrgNode{},
@@ -538,8 +538,8 @@ var OrgNodeSchema = OrgNodeSchemaType{
 
 type UserProfileSchemaType struct {
 	ID        fields.IntField[uint64]
-	Username  fields.TextField[string]
-	Profile   fields.TextField[string]
+	Username  fields.StringField[string]
+	Profile   fields.StringField[string]
 	fieldType UserProfile
 	alias     string
 	tableName string
@@ -593,8 +593,8 @@ func (t UserProfileSchemaType) Star() field.IField {
 var UserProfileSchema = UserProfileSchemaType{
 	tableName: "user_profiles",
 	ID:        fields.NewIntField[uint64]("user_profiles", "id", field.FlagPrimaryKey),
-	Username:  fields.NewTextField[string]("user_profiles", "username"),
-	Profile:   fields.NewTextField[string]("user_profiles", "profile"),
+	Username:  fields.NewStringField[string]("user_profiles", "username"),
+	Profile:   fields.NewStringField[string]("user_profiles", "profile"),
 	fieldType: UserProfile{},
 }
 
@@ -604,7 +604,7 @@ type TransactionSchemaType struct {
 	ID        fields.IntField[uint64]
 	AccountID fields.IntField[uint64]
 	Amount    fields.FloatField[float64]
-	Type      fields.TextField[string]
+	Type      fields.StringField[string]
 	CreatedAt field.Comparable[time.Time]
 	fieldType Transaction
 	alias     string
@@ -665,7 +665,7 @@ var TransactionSchema = TransactionSchemaType{
 	ID:        fields.NewIntField[uint64]("transactions", "id", field.FlagPrimaryKey),
 	AccountID: fields.NewIntField[uint64]("transactions", "account_id", field.FlagIndex),
 	Amount:    fields.NewFloatField[float64]("transactions", "amount"),
-	Type:      fields.NewTextField[string]("transactions", "type"),
+	Type:      fields.NewStringField[string]("transactions", "type"),
 	CreatedAt: field.NewComparable[time.Time]("transactions", "created_at"),
 	fieldType: Transaction{},
 }

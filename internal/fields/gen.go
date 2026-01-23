@@ -21,7 +21,7 @@ var fieldTypes = []FieldType{
 	{"IntField", "Int", "Int"},
 	{"FloatField", "Float", "Float"},
 	{"DecimalField", "Decimal", "Decimal"},
-	{"TextField", "String", "String"},
+	{"StringField", "String", "String"},
 	{"DateTimeField", "DateTime", "DateTime"},
 	{"DateField", "Date", "Date"},
 	{"TimeField", "Time", "Time"},

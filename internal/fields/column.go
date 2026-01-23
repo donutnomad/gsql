@@ -36,8 +36,8 @@ type StringColumnBuilder struct {
 	name string
 }
 
-func (b StringColumnBuilder) From(source interface{ TableName() string }) TextField[string] {
-	return NewTextField[string](source.TableName(), b.name)
+func (b StringColumnBuilder) From(source interface{ TableName() string }) StringField[string] {
+	return NewStringField[string](source.TableName(), b.name)
 }
 
 func BoolColumn(name string) BoolColumnBuilder {
