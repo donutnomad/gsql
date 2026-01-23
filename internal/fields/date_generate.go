@@ -9,10 +9,24 @@ import (
 
 // ==================== DateExpr 生成的方法 ====================
 
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (e DateExpr[T]) Build(builder clause.Builder) {
+	e.buildExpr(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (e DateExpr[T]) ToExpr() clause.Expression {
+	return e.toExprExpr()
+}
+
+// asExpr 创建一个别名字段
+func (e DateExpr[T]) As(alias string) field.IField {
+	return e.asExpr(alias)
+}
+
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
-// 
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
 func (e DateExpr[T]) IfNull(defaultValue any) DateExpr[T] {
 	return NewDateExpr[T](e.ifNullExpr(defaultValue))
@@ -27,9 +41,25 @@ func (e DateExpr[T]) Coalesce(values ...any) DateExpr[T] {
 
 // Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, '') FROM users; -- 空字符串转为NULL
+// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
 func (e DateExpr[T]) Nullif(value any) DateExpr[T] {
 	return NewDateExpr[T](e.nullifExpr(value))
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (e DateExpr[T]) Sum() DateExpr[T] {
+	return NewDateExpr[T](e.sumExpr())
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (e DateExpr[T]) Avg() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
@@ -148,20 +178,5 @@ func (e DateExpr[T]) Format(format string) TextExpr[string] {
 // SELECT UNIX_TIMESTAMP(date_column) FROM table;
 func (e DateExpr[T]) UnixTimestamp() IntExpr[int64] {
 	return NewIntExpr[int64](e.unixTimestampExpr())
-}
-
-// buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e DateExpr[T]) Build(builder clause.Builder) {
-	e.buildExpr(builder)
-}
-
-// toExprExpr 返回内部的 Expression
-func (e DateExpr[T]) ToExpr() clause.Expression {
-	return e.toExprExpr()
-}
-
-// asExpr 创建一个别名字段
-func (e DateExpr[T]) As(alias string) field.IField {
-	return e.asExpr(alias)
 }
 

@@ -9,10 +9,24 @@ import (
 
 // ==================== DateTimeExpr 生成的方法 ====================
 
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (e DateTimeExpr[T]) Build(builder clause.Builder) {
+	e.buildExpr(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (e DateTimeExpr[T]) ToExpr() clause.Expression {
+	return e.toExprExpr()
+}
+
+// asExpr 创建一个别名字段
+func (e DateTimeExpr[T]) As(alias string) field.IField {
+	return e.asExpr(alias)
+}
+
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
-// 
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
 func (e DateTimeExpr[T]) IfNull(defaultValue any) DateTimeExpr[T] {
 	return NewDateTimeExpr[T](e.ifNullExpr(defaultValue))
@@ -27,9 +41,25 @@ func (e DateTimeExpr[T]) Coalesce(values ...any) DateTimeExpr[T] {
 
 // Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, '') FROM users; -- 空字符串转为NULL
+// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
 func (e DateTimeExpr[T]) Nullif(value any) DateTimeExpr[T] {
 	return NewDateTimeExpr[T](e.nullifExpr(value))
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (e DateTimeExpr[T]) Sum() DateTimeExpr[T] {
+	return NewDateTimeExpr[T](e.sumExpr())
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (e DateTimeExpr[T]) Avg() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
@@ -167,8 +197,8 @@ func (e DateTimeExpr[T]) DateDiff(other clause.Expression) IntExpr[int] {
 // TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
 // 数据库支持: MySQL
 // SELECT TIMEDIFF(end_time, start_time) FROM events;
-func (e DateTimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[string] {
-	return NewTimeExpr[string](e.timeDiffExpr(other))
+func (e DateTimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
+	return NewTimeExpr[T](e.timeDiffExpr(other))
 }
 
 // TimestampDiff 计算与另一个日期时间的差值（指定单位）(TIMESTAMPDIFF)
@@ -205,20 +235,5 @@ func (e DateTimeExpr[T]) Time() TimeExpr[string] {
 // SELECT UNIX_TIMESTAMP(date_column) FROM table;
 func (e DateTimeExpr[T]) UnixTimestamp() IntExpr[int64] {
 	return NewIntExpr[int64](e.unixTimestampExpr())
-}
-
-// buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e DateTimeExpr[T]) Build(builder clause.Builder) {
-	e.buildExpr(builder)
-}
-
-// toExprExpr 返回内部的 Expression
-func (e DateTimeExpr[T]) ToExpr() clause.Expression {
-	return e.toExprExpr()
-}
-
-// asExpr 创建一个别名字段
-func (e DateTimeExpr[T]) As(alias string) field.IField {
-	return e.asExpr(alias)
 }
 

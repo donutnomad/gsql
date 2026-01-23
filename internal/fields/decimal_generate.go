@@ -9,6 +9,21 @@ import (
 
 // ==================== DecimalExpr 生成的方法 ====================
 
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (e DecimalExpr[T]) Build(builder clause.Builder) {
+	e.buildExpr(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (e DecimalExpr[T]) ToExpr() clause.Expression {
+	return e.toExprExpr()
+}
+
+// asExpr 创建一个别名字段
+func (e DecimalExpr[T]) As(alias string) field.IField {
+	return e.asExpr(alias)
+}
+
 // Add 加法 (+)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT price + 100 FROM products;
@@ -65,6 +80,31 @@ func (e DecimalExpr[T]) Abs() DecimalExpr[T] {
 	return NewDecimalExpr[T](e.absExpr())
 }
 
+// Sign 返回符号 (SIGN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIGN(-10); -- 结果为 -1
+// SELECT SIGN(0); -- 结果为 0
+// SELECT SIGN(10); -- 结果为 1
+func (e DecimalExpr[T]) Sign() IntExpr[int8] {
+	return NewIntExpr[int8](e.signExpr())
+}
+
+// Ceil 向上取整 (CEIL)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT CEIL(1.5); -- 结果为 2
+// SELECT CEIL(-1.5); -- 结果为 -1
+func (e DecimalExpr[T]) Ceil() DecimalExpr[T] {
+	return NewDecimalExpr[T](e.ceilExpr())
+}
+
+// Floor 向下取整 (FLOOR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT FLOOR(1.5); -- 结果为 1
+// SELECT FLOOR(-1.5); -- 结果为 -2
+func (e DecimalExpr[T]) Floor() DecimalExpr[T] {
+	return NewDecimalExpr[T](e.floorExpr())
+}
+
 // Round 四舍五入 (ROUND)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT ROUND(1.567); -- 结果为 2
@@ -81,79 +121,53 @@ func (e DecimalExpr[T]) Truncate(decimals int) DecimalExpr[T] {
 	return NewDecimalExpr[T](e.truncateExpr(decimals))
 }
 
-// Sign 返回符号 (SIGN)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT SIGN(-10); -- 结果为 -1
-// SELECT SIGN(0); -- 结果为 0
-// SELECT SIGN(10); -- 结果为 1
-func (e DecimalExpr[T]) Sign() IntExpr[int8] {
-	return NewIntExpr[int8](e.signExpr())
-}
-
-// Ceil 向上取整 (CEIL)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT CEIL(1.5); -- 结果为 2
-// SELECT CEIL(-1.5); -- 结果为 -1
-func (e DecimalExpr[T]) Ceil() IntExpr[int64] {
-	return NewIntExpr[int64](e.ceilExpr())
-}
-
-// Floor 向下取整 (FLOOR)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT FLOOR(1.5); -- 结果为 1
-// SELECT FLOOR(-1.5); -- 结果为 -2
-func (e DecimalExpr[T]) Floor() IntExpr[int64] {
-	return NewIntExpr[int64](e.floorExpr())
-}
-
 // Pow 幂运算 (POW)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT POW(2, 3); -- 结果为 8
 // SELECT POW(price, 2) FROM products;
-func (e DecimalExpr[T]) Pow(exponent float64) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.powExpr(exponent))
+func (e DecimalExpr[T]) Pow(exponent float64) FloatExpr[float64] {
+	return NewFloatExpr[float64](e.powExpr(exponent))
 }
 
 // Sqrt 平方根 (SQRT)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT SQRT(16); -- 结果为 4
 // SELECT SQRT(variance) FROM stats;
-func (e DecimalExpr[T]) Sqrt() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.sqrtExpr())
+func (e DecimalExpr[T]) Sqrt() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.sqrtExpr())
 }
 
 // Log 自然对数 (LOG)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT LOG(10); -- 结果为 2.302585...
-func (e DecimalExpr[T]) Log() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.logExpr())
+func (e DecimalExpr[T]) Log() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.logExpr())
 }
 
 // Log10 以10为底的对数 (LOG10)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT LOG10(100); -- 结果为 2
-func (e DecimalExpr[T]) Log10() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.log10Expr())
+func (e DecimalExpr[T]) Log10() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.log10Expr())
 }
 
 // Log2 以2为底的对数 (LOG2)
 // 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
 // SELECT LOG2(8); -- 结果为 3
-func (e DecimalExpr[T]) Log2() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.log2Expr())
+func (e DecimalExpr[T]) Log2() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.log2Expr())
 }
 
 // Exp 指数函数 (EXP)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT EXP(1); -- 结果为 2.718281828...
-func (e DecimalExpr[T]) Exp() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.expExpr())
+func (e DecimalExpr[T]) Exp() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.expExpr())
 }
 
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
-// 
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
 func (e DecimalExpr[T]) IfNull(defaultValue any) DecimalExpr[T] {
 	return NewDecimalExpr[T](e.ifNullExpr(defaultValue))
@@ -168,7 +182,7 @@ func (e DecimalExpr[T]) Coalesce(values ...any) DecimalExpr[T] {
 
 // Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, '') FROM users; -- 空字符串转为NULL
+// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
 func (e DecimalExpr[T]) Nullif(value any) DecimalExpr[T] {
 	return NewDecimalExpr[T](e.nullifExpr(value))
 }
@@ -201,8 +215,8 @@ func (e DecimalExpr[T]) Sum() DecimalExpr[T] {
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT AVG(score) FROM students;
 // SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
-func (e DecimalExpr[T]) Avg() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.avgExpr())
+func (e DecimalExpr[T]) Avg() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
@@ -219,20 +233,5 @@ func (e DecimalExpr[T]) Max() DecimalExpr[T] {
 // SELECT category, MIN(stock) FROM inventory GROUP BY category;
 func (e DecimalExpr[T]) Min() DecimalExpr[T] {
 	return NewDecimalExpr[T](e.minExpr())
-}
-
-// buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e DecimalExpr[T]) Build(builder clause.Builder) {
-	e.buildExpr(builder)
-}
-
-// toExprExpr 返回内部的 Expression
-func (e DecimalExpr[T]) ToExpr() clause.Expression {
-	return e.toExprExpr()
-}
-
-// asExpr 创建一个别名字段
-func (e DecimalExpr[T]) As(alias string) field.IField {
-	return e.asExpr(alias)
 }
 

@@ -6,6 +6,7 @@ import (
 
 var _ clause.Expression = (*YearExpr[int64])(nil)
 
+// @gentype default=[int]
 // YearExpr 年份类型表达式，用于 YEAR 类型字段
 // YEAR 类型存储年份值，范围通常是 1901-2155
 // 使用场景：

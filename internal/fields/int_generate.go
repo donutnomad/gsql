@@ -9,6 +9,21 @@ import (
 
 // ==================== IntExpr 生成的方法 ====================
 
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (e IntExpr[T]) Build(builder clause.Builder) {
+	e.buildExpr(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (e IntExpr[T]) ToExpr() clause.Expression {
+	return e.toExprExpr()
+}
+
+// asExpr 创建一个别名字段
+func (e IntExpr[T]) As(alias string) field.IField {
+	return e.asExpr(alias)
+}
+
 // Add 加法 (+)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT price + 100 FROM products;
@@ -65,22 +80,6 @@ func (e IntExpr[T]) Abs() IntExpr[T] {
 	return NewIntExpr[T](e.absExpr())
 }
 
-// Round 四舍五入 (ROUND)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT ROUND(1.567); -- 结果为 2
-// SELECT ROUND(1.567, 2); -- 结果为 1.57
-func (e IntExpr[T]) Round(decimals ...int) IntExpr[T] {
-	return NewIntExpr[T](e.roundExpr(decimals...))
-}
-
-// Truncate 截断小数 (TRUNCATE)
-// 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
-// SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
-// SELECT TRUNCATE(1.567, 0); -- 结果为 1
-func (e IntExpr[T]) Truncate(decimals int) IntExpr[T] {
-	return NewIntExpr[T](e.truncateExpr(decimals))
-}
-
 // Sign 返回符号 (SIGN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT SIGN(-10); -- 结果为 -1
@@ -106,12 +105,28 @@ func (e IntExpr[T]) Floor() IntExpr[T] {
 	return NewIntExpr[T](e.floorExpr())
 }
 
+// Round 四舍五入 (ROUND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ROUND(1.567); -- 结果为 2
+// SELECT ROUND(1.567, 2); -- 结果为 1.57
+func (e IntExpr[T]) Round(decimals ...int) IntExpr[T] {
+	return NewIntExpr[T](e.roundExpr(decimals...))
+}
+
+// Truncate 截断小数 (TRUNCATE)
+// 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
+// SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
+// SELECT TRUNCATE(1.567, 0); -- 结果为 1
+func (e IntExpr[T]) Truncate(decimals int) IntExpr[T] {
+	return NewIntExpr[T](e.truncateExpr(decimals))
+}
+
 // Pow 幂运算 (POW)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT POW(2, 3); -- 结果为 8
 // SELECT POW(price, 2) FROM products;
-func (e IntExpr[T]) Pow(exponent int) FloatExpr[float64] {
-	return NewFloatExpr[float64](e.powExpr(float64(exponent)))
+func (e IntExpr[T]) Pow(exponent float64) FloatExpr[float64] {
+	return NewFloatExpr[float64](e.powExpr(exponent))
 }
 
 // Sqrt 平方根 (SQRT)
@@ -153,7 +168,6 @@ func (e IntExpr[T]) Exp() FloatExpr[float64] {
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
-// 
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
 func (e IntExpr[T]) IfNull(defaultValue any) IntExpr[T] {
 	return NewIntExpr[T](e.ifNullExpr(defaultValue))
@@ -168,7 +182,7 @@ func (e IntExpr[T]) Coalesce(values ...any) IntExpr[T] {
 
 // Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, '') FROM users; -- 空字符串转为NULL
+// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
 func (e IntExpr[T]) Nullif(value any) IntExpr[T] {
 	return NewIntExpr[T](e.nullifExpr(value))
 }
@@ -275,20 +289,5 @@ func (e IntExpr[T]) Max() IntExpr[T] {
 // SELECT category, MIN(stock) FROM inventory GROUP BY category;
 func (e IntExpr[T]) Min() IntExpr[T] {
 	return NewIntExpr[T](e.minExpr())
-}
-
-// buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e IntExpr[T]) Build(builder clause.Builder) {
-	e.buildExpr(builder)
-}
-
-// toExprExpr 返回内部的 Expression
-func (e IntExpr[T]) ToExpr() clause.Expression {
-	return e.toExprExpr()
-}
-
-// asExpr 创建一个别名字段
-func (e IntExpr[T]) As(alias string) field.IField {
-	return e.asExpr(alias)
 }
 

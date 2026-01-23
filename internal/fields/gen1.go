@@ -11,278 +11,512 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 )
 
-// MethodDef 方法定义
-type MethodDef struct {
-	Name        string   // 公开方法名 (首字母大写)，InnerName 自动生成为 首字母小写+Expr
-	InnerName   string   // 内部方法名 (可选，为空时自动生成)
-	Comments    []string // 注释行
-	Params      string   // 参数列表 (如 "defaultValue any")
-	Args        string   // 调用参数 (如 "defaultValue")
-	ReturnType  string   // 返回类型 (空表示返回自身类型)
-	Constructor string   // 返回类型的构造函数 (空表示使用接收者的构造函数)
-	Direct      bool     // true 表示直接调用内部方法，不用构造函数包装
-	Void        bool     // true 表示无返回值
+// ==================== 数据结构 ====================
+
+// GenDirective 代码生成指令，从 @gen 注释解析
+type GenDirective struct {
+	Public      string   // 公开方法名
+	Return      string   // 返回类型 ("self" 表示返回接收者类型)
+	Constructor string   // 构造函数 (可选，自动推导)
+	For         []string // 适用的表达式类型 (空表示所有嵌入此类型的表达式)
+	Exclude     []string // 排除的表达式类型
+	Direct      bool     // 直接返回，不用构造函数包装
+	Void        bool     // 无返回值
 }
 
-// getInnerName 获取内部方法名
-// 如果 InnerName 已设置则直接返回，否则自动生成：首字母小写 + "Expr"
-func (m MethodDef) getInnerName() string {
-	if m.InnerName != "" {
-		return m.InnerName
+// MethodInfo 从源码解析的方法信息
+type MethodInfo struct {
+	ReceiverType string         // 接收者类型名 (如 arithmeticSql)
+	InnerName    string         // 内部方法名 (如 addExpr)
+	Params       string         // 参数列表 (如 "value any")
+	Args         string         // 调用参数 (如 "value")
+	Comments     []string       // 注释行 (不含 @gen)
+	Directives   []GenDirective // 生成指令
+}
+
+// TypeInfo 表达式类型信息
+type TypeInfo struct {
+	Name         string // 类型名 (如 IntExpr)
+	TypeParam    string // 泛型参数 (如 [T])
+	Constructor  string // 构造函数名 (如 NewIntExpr)
+	FileName     string // 源文件名 (不含 .go)
+	Embeddings   []string // 嵌入的类型列表
+	DefaultParam string // 默认泛型参数 (如 [int], [string])
+}
+
+// GeneratedMethod 要生成的方法
+type GeneratedMethod struct {
+	TypeName    string
+	TypeParam   string
+	MethodName  string
+	InnerName   string
+	Params      string
+	Args        string
+	ReturnType  string
+	Constructor string
+	Comments    []string
+	Direct      bool
+	Void        bool
+}
+
+// ==================== 配置 ====================
+
+// 源文件列表 (包含内部方法定义，带 @gen 注解的方法)
+var sourceFiles = []string{
+	"numeric_base.go",
+}
+
+// ==================== 主程序 ====================
+
+func main() {
+	// 1. 扫描目录，解析所有带 @gentype 注解的表达式类型
+	types := scanAndParseTypes()
+	if len(types) == 0 {
+		fmt.Fprintln(os.Stderr, "No types found (ensure structs have @gentype annotation)")
+		os.Exit(1)
 	}
-	// 自动生成: Name 首字母小写 + "Expr"
-	if len(m.Name) == 0 {
-		return ""
+
+	// 2. 解析所有源文件获取方法信息
+	methods := parseSourceFiles()
+	if len(methods) == 0 {
+		fmt.Fprintln(os.Stderr, "No methods found")
+		os.Exit(1)
 	}
-	return strings.ToLower(m.Name[:1]) + m.Name[1:] + "Expr"
+
+	// 3. 构建默认泛型参数映射
+	defaultTypeParams := buildDefaultTypeParams(types)
+
+	// 4. 为每个类型生成方法
+	generated := generateMethods(types, methods, defaultTypeParams)
+
+	// 5. 按文件分组并写入
+	writeGeneratedFiles(types, generated)
+
+	// 6. 清理旧文件
+	os.Remove("generate1.go")
 }
 
-// TypeDef 类型定义
-type TypeDef struct {
-	Name        string // 类型名 (如 IntExpr)
-	TypeParam   string // 泛型参数 (如 [T])
-	Constructor string // 构造函数名
-	FileName    string // 对应的源文件名 (不含 .go 后缀)
+// ==================== 类型扫描与解析 ====================
+
+// scanAndParseTypes 扫描当前目录的所有 .go 文件，查找带 @gentype 注解的结构体
+func scanAndParseTypes() []TypeInfo {
+	var types []TypeInfo
+
+	// 获取当前目录下所有 .go 文件
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error listing files: %v\n", err)
+		return nil
+	}
+
+	for _, fileName := range files {
+		// 跳过生成的文件和测试文件
+		if strings.HasSuffix(fileName, "_generate.go") ||
+			strings.HasSuffix(fileName, "_test.go") ||
+			fileName == "gen1.go" ||
+			fileName == "gen.go" {
+			continue
+		}
+
+		fset := token.NewFileSet()
+		node, err := parser.ParseFile(fset, fileName, nil, parser.ParseComments)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", fileName, err)
+			continue
+		}
+
+		// 遍历所有声明
+		for _, decl := range node.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			if !ok || genDecl.Tok != token.TYPE {
+				continue
+			}
+
+			for _, spec := range genDecl.Specs {
+				typeSpec, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+
+				structType, ok := typeSpec.Type.(*ast.StructType)
+				if !ok {
+					continue
+				}
+
+				// 检查是否有 @gentype 注解
+				gentypeDirective := parseGentypeDirective(genDecl.Doc)
+				if gentypeDirective == nil {
+					continue
+				}
+
+				info := TypeInfo{
+					Name:         typeSpec.Name.Name,
+					FileName:     strings.TrimSuffix(fileName, ".go"),
+					DefaultParam: gentypeDirective.DefaultParam,
+				}
+
+				// 解析泛型参数
+				if typeSpec.TypeParams != nil && len(typeSpec.TypeParams.List) > 0 {
+					info.TypeParam = "[T]"
+				}
+
+				// 推导构造函数名
+				info.Constructor = "New" + info.Name
+
+				// 解析嵌入字段
+				for _, field := range structType.Fields.List {
+					if len(field.Names) > 0 {
+						continue // 非嵌入字段
+					}
+					embName := getTypeName(field.Type)
+					if embName != "" {
+						info.Embeddings = append(info.Embeddings, embName)
+					}
+				}
+
+				types = append(types, info)
+			}
+		}
+	}
+
+	return types
 }
 
-// EmbeddedMethods 嵌入类型及其方法映射
-// InnerName 可省略，默认自动生成为: 首字母小写(Name) + "Expr"
-var embeddedMethods = map[string][]MethodDef{
-	// 基础表达式方法 (Build, ToExpr, As)
-	// Build 方法用于解决多个嵌入 clause.Expression 导致的歧义问题
-	"baseExprSql": {
-		{Name: "Build", Params: "builder clause.Builder", Args: "builder", Void: true},
-		{Name: "ToExpr", ReturnType: "clause.Expression", Direct: true},
-		{Name: "As", Params: "alias string", Args: "alias", ReturnType: "field.IField", Direct: true},
-	},
-	"arithmeticSql": {
-		{Name: "Add", Params: "value any", Args: "value"},
-		{Name: "Sub", Params: "value any", Args: "value"},
-		{Name: "Mul", Params: "value any", Args: "value"},
-		{Name: "Div", Params: "value any", Args: "value"},
-		{Name: "Neg"},
-		{Name: "Mod", Params: "value any", Args: "value"},
-	},
-	"mathFuncSql": {
-		{Name: "Abs"},
-		{Name: "Round", Params: "decimals ...int", Args: "decimals..."},
-		{Name: "Truncate", Params: "decimals int", Args: "decimals"},
-	},
-	// IntExpr 特有的数学函数 (返回自身类型)
-	"mathFuncIntSql": {
-		{Name: "Sign", ReturnType: "IntExpr[int8]", Constructor: "NewIntExpr[int8]"},
-		{Name: "Ceil"},
-		{Name: "Floor"},
-		{Name: "Pow", Params: "exponent int", Args: "float64(exponent)", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-		{Name: "Sqrt", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-		{Name: "Log", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-		{Name: "Log10", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-		{Name: "Log2", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-		{Name: "Exp", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-	},
-	// FloatExpr/DecimalExpr 的数学函数 (Sign/Ceil/Floor 返回不同类型)
-	"mathFuncFloatSql": {
-		{Name: "Sign", ReturnType: "IntExpr[int8]", Constructor: "NewIntExpr[int8]"},
-		{Name: "Ceil", ReturnType: "IntExpr[int64]", Constructor: "NewIntExpr[int64]"},
-		{Name: "Floor", ReturnType: "IntExpr[int64]", Constructor: "NewIntExpr[int64]"},
-		{Name: "Pow", Params: "exponent float64", Args: "exponent"},
-		{Name: "Sqrt"},
-		{Name: "Log"},
-		{Name: "Log10"},
-		{Name: "Log2"},
-		{Name: "Exp"},
-	},
-	"nullCondFuncSql": {
-		{Name: "IfNull", Params: "defaultValue any", Args: "defaultValue"},
-		{Name: "Coalesce", Params: "values ...any", Args: "values..."},
-		{Name: "Nullif", Params: "value any", Args: "value"},
-	},
-	"numericCondFuncSql": {
-		{Name: "Greatest", Params: "values ...any", Args: "values..."},
-		{Name: "Least", Params: "values ...any", Args: "values..."},
-	},
-	"bitOpSql": {
-		{Name: "BitAnd", Params: "value any", Args: "value"},
-		{Name: "BitOr", Params: "value any", Args: "value"},
-		{Name: "BitXor", Params: "value any", Args: "value"},
-		{Name: "BitNot"},
-		{Name: "LeftShift", Params: "n int", Args: "n"},
-		{Name: "RightShift", Params: "n int", Args: "n"},
-		{Name: "IntDiv", Params: "value any", Args: "value"},
-	},
-	// IntExpr 的聚合函数 (Avg 返回 FloatExpr)
-	"aggregateIntSql": {
-		{Name: "Sum"},
-		{Name: "Avg", ReturnType: "FloatExpr[float64]", Constructor: "NewFloatExpr[float64]"},
-		{Name: "Max"},
-		{Name: "Min"},
-	},
-	// 三角函数 (FloatExpr 专用)
-	"trigFuncSql": {
-		{Name: "Sin"},
-		{Name: "Cos"},
-		{Name: "Tan"},
-		{Name: "Asin"},
-		{Name: "Acos"},
-		{Name: "Atan"},
-		{Name: "Radians"},
-		{Name: "Degrees"},
-	},
-	// FloatExpr/DecimalExpr 的聚合函数 (返回自身类型)
-	"aggregateFloatSql": {
-		{Name: "Sum"},
-		{Name: "Avg"},
-		{Name: "Max"},
-		{Name: "Min"},
-	},
-	// 日期时间类型的聚合函数 (只有 Max/Min)
-	"aggregateDateSql": {
-		{Name: "Max"},
-		{Name: "Min"},
-	},
-	// 日期提取函数 (DateExpr, DateTimeExpr, TimestampExpr 共用)
-	"dateExtractSql": {
-		{Name: "Year", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Month", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Day", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "DayOfMonth", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "DayOfWeek", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "DayOfYear", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Week", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "WeekOfYear", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Quarter", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-	},
-	// 时间提取函数 (DateTimeExpr, TimeExpr, TimestampExpr 共用)
-	"timeExtractSql": {
-		{Name: "Hour", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Minute", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Second", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-		{Name: "Microsecond", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-	},
-	// 日期时间间隔运算 (DateExpr, DateTimeExpr, TimeExpr, TimestampExpr 共用)
-	"dateIntervalSql": {
-		{Name: "AddInterval", Params: "interval string", Args: "interval"},
-		{Name: "SubInterval", Params: "interval string", Args: "interval"},
-	},
-	// 日期差值计算 (DateExpr, DateTimeExpr, TimestampExpr)
-	"dateDiffSql": {
-		{Name: "DateDiff", Params: "other clause.Expression", Args: "other", ReturnType: "IntExpr[int]", Constructor: "NewIntExpr[int]"},
-	},
-	// 时间差值计算 (DateTimeExpr, TimeExpr, TimestampExpr)
-	// 注意: TimeExpr 的 TimeDiff 返回自身类型，需要特殊处理
-	"timeDiffSql": {
-		{Name: "TimeDiff", Params: "other clause.Expression", Args: "other", ReturnType: "TimeExpr[string]", Constructor: "NewTimeExpr[string]"},
-	},
-	// TimeExpr 专用的 TimeDiff (返回自身类型)
-	"timeDiffSelfSql": {
-		{Name: "TimeDiff", Params: "other clause.Expression", Args: "other"},
-	},
-	// 时间戳差值计算 (DateTimeExpr, TimestampExpr)
-	"timestampDiffSql": {
-		{Name: "TimestampDiff", Params: "unit string, other clause.Expression", Args: "unit, other", ReturnType: "IntExpr[int64]", Constructor: "NewIntExpr[int64]"},
-	},
-	// 日期格式化 (DateExpr, DateTimeExpr, TimestampExpr)
-	// 注意: Format 的内部方法名是 dateFormatExpr，不是默认的 formatExpr
-	"dateFormatSql": {
-		{Name: "Format", InnerName: "dateFormatExpr", Params: "format string", Args: "format", ReturnType: "TextExpr[string]", Constructor: "NewTextExpr[string]"},
-	},
-	// 时间格式化 (TimeExpr)
-	// 注意: Format 的内部方法名是 timeFormatExpr
-	"timeFormatSql": {
-		{Name: "Format", InnerName: "timeFormatExpr", Params: "format string", Args: "format", ReturnType: "TextExpr[string]", Constructor: "NewTextExpr[string]"},
-	},
-	// 日期时间转换 (DateTimeExpr, TimestampExpr)
-	// 注意: Date/Time 的内部方法名是 extractDateExpr/extractTimeExpr
-	"dateConversionSql": {
-		{Name: "Date", InnerName: "extractDateExpr", ReturnType: "DateExpr[string]", Constructor: "NewDateExpr[string]"},
-		{Name: "Time", InnerName: "extractTimeExpr", ReturnType: "TimeExpr[string]", Constructor: "NewTimeExpr[string]"},
-	},
-	// Unix 时间戳转换 (DateExpr, DateTimeExpr, TimestampExpr)
-	"unixTimestampSql": {
-		{Name: "UnixTimestamp", ReturnType: "IntExpr[int64]", Constructor: "NewIntExpr[int64]"},
-	},
+// GentypeDirective @gentype 注解的解析结果
+type GentypeDirective struct {
+	DefaultParam string // 默认泛型参数，如 [int], [string]
 }
 
-// 类型配置
-var typeConfigs = []TypeDef{
-	{Name: "IntExpr", TypeParam: "[T]", Constructor: "NewIntExpr", FileName: "int"},
-	{Name: "FloatExpr", TypeParam: "[T]", Constructor: "NewFloatExpr", FileName: "float"},
-	{Name: "DecimalExpr", TypeParam: "[T]", Constructor: "NewDecimalExpr", FileName: "decimal"},
-	{Name: "TextExpr", TypeParam: "[T]", Constructor: "NewTextExpr", FileName: "text"},
-	{Name: "DateExpr", TypeParam: "[T]", Constructor: "NewDateExpr", FileName: "date"},
-	{Name: "DateTimeExpr", TypeParam: "[T]", Constructor: "NewDateTimeExpr", FileName: "datetime"},
-	{Name: "TimeExpr", TypeParam: "[T]", Constructor: "NewTimeExpr", FileName: "time"},
-	{Name: "TimestampExpr", TypeParam: "[T]", Constructor: "NewTimestampExpr", FileName: "timestamp"},
-	{Name: "YearExpr", TypeParam: "[T]", Constructor: "NewYearExpr", FileName: "year"},
+// parseGentypeDirective 解析 @gentype 注解
+// 格式: @gentype default=[int]
+func parseGentypeDirective(doc *ast.CommentGroup) *GentypeDirective {
+	if doc == nil {
+		return nil
+	}
+
+	for _, comment := range doc.List {
+		text := strings.TrimPrefix(comment.Text, "//")
+		text = strings.TrimSpace(text)
+
+		if !strings.HasPrefix(text, "@gentype") {
+			continue
+		}
+
+		d := &GentypeDirective{}
+
+		// 解析参数
+		text = strings.TrimPrefix(text, "@gentype")
+		text = strings.TrimSpace(text)
+
+		// 使用正则解析 default=[xxx]
+		re := regexp.MustCompile(`default=(\[[^\]]+\])`)
+		if matches := re.FindStringSubmatch(text); len(matches) > 1 {
+			d.DefaultParam = matches[1]
+		}
+
+		return d
+	}
+
+	return nil
 }
 
-// embeddingAdditions 嵌入类型追加配置
-// 用于处理"虚拟嵌入"：实际嵌入类型 -> 额外的代码生成类型列表
-// 这些追加类型定义了特殊的返回值类型方法
-var embeddingAdditions = map[string]map[string][]string{
-	"IntExpr": {
-		"mathFuncSql":  {"mathFuncIntSql"},  // 追加 IntExpr 特有的数学函数
-		"aggregateSql": {"aggregateIntSql"}, // 替换为 IntExpr 特有的聚合函数
-	},
-	"FloatExpr": {
-		"mathFuncSql":  {"mathFuncFloatSql"},  // 追加 Float 的数学函数
-		"aggregateSql": {"aggregateFloatSql"}, // 替换为 Float 的聚合函数
-	},
-	"DecimalExpr": {
-		"mathFuncSql":  {"mathFuncFloatSql"},
-		"aggregateSql": {"aggregateFloatSql"},
-	},
-	"TimeExpr": {
-		"aggregateSql": {"aggregateDateSql"},  // 替换为只有 Max/Min 的聚合函数
-		"timeDiffSql":  {"timeDiffSelfSql"},   // 替换为返回自身类型的 TimeDiff
-	},
-	"DateExpr": {
-		"aggregateSql": {"aggregateDateSql"},
-	},
-	"DateTimeExpr": {
-		"aggregateSql": {"aggregateDateSql"},
-	},
-	"TimestampExpr": {
-		"aggregateSql": {"aggregateDateSql"},
-	},
-	"YearExpr": {
-		"aggregateSql": {"aggregateDateSql"},
-	},
+// buildDefaultTypeParams 从类型列表构建默认泛型参数映射
+func buildDefaultTypeParams(types []TypeInfo) map[string]string {
+	result := make(map[string]string)
+	for _, t := range types {
+		if t.DefaultParam != "" {
+			result[t.Name] = t.DefaultParam
+		}
+	}
+	return result
 }
 
-// embeddingSkips 需要跳过的嵌入类型
-// 当某个嵌入类型被完全替换时（如 aggregateSql 被替换为 aggregateIntSql），原嵌入需要跳过
-var embeddingSkips = map[string]map[string]bool{
-	"IntExpr": {
-		"aggregateSql": true, // 跳过基础聚合，使用 aggregateIntSql
-	},
-	"FloatExpr": {
-		"aggregateSql": true,
-	},
-	"DecimalExpr": {
-		"aggregateSql": true,
-	},
-	"TimeExpr": {
-		"aggregateSql": true,
-		"timeDiffSql":  true, // 跳过基础 timeDiffSql，使用 timeDiffSelfSql
-	},
-	"DateExpr": {
-		"aggregateSql": true,
-	},
-	"DateTimeExpr": {
-		"aggregateSql": true,
-	},
-	"TimestampExpr": {
-		"aggregateSql": true,
-	},
-	"YearExpr": {
-		"aggregateSql": true,
-	},
+func getTypeName(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.IndexExpr:
+		if ident, ok := t.X.(*ast.Ident); ok {
+			return ident.Name
+		}
+	}
+	return ""
 }
+
+// ==================== 方法解析 ====================
+
+func parseSourceFiles() []MethodInfo {
+	var methods []MethodInfo
+
+	for _, fileName := range sourceFiles {
+		fset := token.NewFileSet()
+		node, err := parser.ParseFile(fset, fileName, nil, parser.ParseComments)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", fileName, err)
+			continue
+		}
+
+		for _, decl := range node.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Recv == nil || len(fn.Recv.List) == 0 {
+				continue
+			}
+
+			// 获取接收者类型
+			recvType := getTypeName(fn.Recv.List[0].Type)
+			if recvType == "" {
+				continue
+			}
+
+			// 解析注释
+			var comments []string
+			var directives []GenDirective
+			if fn.Doc != nil {
+				for _, c := range fn.Doc.List {
+					text := strings.TrimPrefix(c.Text, "//")
+					text = strings.TrimSpace(text)
+					if strings.HasPrefix(text, "@gen") {
+						if d := parseGenDirective(text); d != nil {
+							directives = append(directives, *d)
+						}
+					} else if text != "" {
+						comments = append(comments, text)
+					}
+				}
+			}
+
+			// 没有 @gen 指令的方法跳过（完全依赖注解驱动）
+			if len(directives) == 0 {
+				continue
+			}
+
+			// 解析参数
+			params, args := parseParams(fn.Type.Params)
+
+			methods = append(methods, MethodInfo{
+				ReceiverType: recvType,
+				InnerName:    fn.Name.Name,
+				Params:       params,
+				Args:         args,
+				Comments:     comments,
+				Directives:   directives,
+			})
+		}
+	}
+
+	return methods
+}
+
+// parseGenDirective 解析 @gen 指令
+// 格式: @gen public=Name return=Type for=Type1,Type2 exclude=Type3
+func parseGenDirective(text string) *GenDirective {
+	text = strings.TrimPrefix(text, "@gen")
+	text = strings.TrimSpace(text)
+
+	d := &GenDirective{}
+
+	// 使用正则解析键值对
+	re := regexp.MustCompile(`(\w+)=([^\s]+)`)
+	matches := re.FindAllStringSubmatch(text, -1)
+
+	for _, m := range matches {
+		key, value := m[1], m[2]
+		switch key {
+		case "public":
+			d.Public = value
+		case "return":
+			d.Return = value
+		case "constructor":
+			d.Constructor = value
+		case "for":
+			// 去掉方括号后按逗号分隔，如 [IntExpr,FloatExpr] -> ["IntExpr", "FloatExpr"]
+			d.For = strings.Split(strings.Trim(value, "[]"), ",")
+		case "exclude":
+			d.Exclude = strings.Split(strings.Trim(value, "[]"), ",")
+		case "direct":
+			d.Direct = value == "true"
+		case "void":
+			d.Void = value == "true"
+		}
+	}
+
+	if d.Public == "" {
+		return nil
+	}
+
+	return d
+}
+
+func parseParams(params *ast.FieldList) (paramStr, argStr string) {
+	if params == nil || len(params.List) == 0 {
+		return "", ""
+	}
+
+	var paramParts []string
+	var argParts []string
+
+	for _, field := range params.List {
+		typeStr := exprToString(field.Type)
+		for _, name := range field.Names {
+			paramParts = append(paramParts, name.Name+" "+typeStr)
+			// 处理可变参数
+			if strings.HasPrefix(typeStr, "...") {
+				argParts = append(argParts, name.Name+"...")
+			} else {
+				argParts = append(argParts, name.Name)
+			}
+		}
+	}
+
+	return strings.Join(paramParts, ", "), strings.Join(argParts, ", ")
+}
+
+func exprToString(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.SelectorExpr:
+		return exprToString(t.X) + "." + t.Sel.Name
+	case *ast.StarExpr:
+		return "*" + exprToString(t.X)
+	case *ast.ArrayType:
+		if t.Len == nil {
+			return "[]" + exprToString(t.Elt)
+		}
+		return "[" + exprToString(t.Len) + "]" + exprToString(t.Elt)
+	case *ast.Ellipsis:
+		return "..." + exprToString(t.Elt)
+	case *ast.IndexExpr:
+		return exprToString(t.X) + "[" + exprToString(t.Index) + "]"
+	case *ast.BasicLit:
+		return t.Value
+	}
+	return "any"
+}
+
+// ==================== 代码生成 ====================
+
+func generateMethods(types []TypeInfo, methods []MethodInfo, defaultTypeParams map[string]string) map[string][]GeneratedMethod {
+	result := make(map[string][]GeneratedMethod)
+
+	// 构建类型名到类型信息的映射
+	typeMap := make(map[string]TypeInfo)
+	for _, t := range types {
+		typeMap[t.Name] = t
+	}
+
+	// 构建嵌入类型到表达式类型的映射
+	embeddingToTypes := make(map[string][]string)
+	for _, t := range types {
+		for _, emb := range t.Embeddings {
+			embeddingToTypes[emb] = append(embeddingToTypes[emb], t.Name)
+		}
+	}
+
+	for _, method := range methods {
+		for _, directive := range method.Directives {
+			// 确定适用的类型
+			var targetTypes []string
+			if len(directive.For) > 0 {
+				targetTypes = directive.For
+			} else {
+				targetTypes = embeddingToTypes[method.ReceiverType]
+			}
+
+			// 排除指定类型
+			if len(directive.Exclude) > 0 {
+				excludeMap := make(map[string]bool)
+				for _, e := range directive.Exclude {
+					excludeMap[e] = true
+				}
+				var filtered []string
+				for _, t := range targetTypes {
+					if !excludeMap[t] {
+						filtered = append(filtered, t)
+					}
+				}
+				targetTypes = filtered
+			}
+
+			// 为每个目标类型生成方法
+			for _, typeName := range targetTypes {
+				typeInfo, ok := typeMap[typeName]
+				if !ok {
+					continue
+				}
+
+				gm := GeneratedMethod{
+					TypeName:   typeInfo.Name,
+					TypeParam:  typeInfo.TypeParam,
+					MethodName: directive.Public,
+					InnerName:  method.InnerName,
+					Params:     method.Params,
+					Args:       method.Args,
+					Comments:   method.Comments,
+					Direct:     directive.Direct,
+					Void:       directive.Void,
+				}
+
+				// 确定返回类型
+				if directive.Void {
+					// 无返回值
+				} else if directive.Direct {
+					gm.ReturnType = directive.Return
+				} else if directive.Return == "self" || directive.Return == "" {
+					// 返回自身类型
+					gm.ReturnType = typeInfo.Name + typeInfo.TypeParam
+					gm.Constructor = typeInfo.Constructor + typeInfo.TypeParam
+				} else {
+					// 指定返回类型
+					gm.ReturnType = normalizeReturnType(directive.Return, typeInfo.TypeParam, defaultTypeParams)
+					gm.Constructor = directive.Constructor
+					if gm.Constructor == "" {
+						gm.Constructor = deriveConstructor(gm.ReturnType)
+					}
+				}
+
+				result[typeInfo.FileName] = append(result[typeInfo.FileName], gm)
+			}
+		}
+	}
+
+	return result
+}
+
+func normalizeReturnType(ret string, callerTypeParam string, defaultTypeParams map[string]string) string {
+	// 如果返回类型包含 [T]，用调用者的泛型参数替换
+	if strings.Contains(ret, "[T]") {
+		return strings.Replace(ret, "[T]", callerTypeParam, 1)
+	}
+	// 如果已经有其他泛型参数，直接返回
+	if strings.Contains(ret, "[") {
+		return ret
+	}
+	// 添加默认泛型参数
+	if param, ok := defaultTypeParams[ret]; ok {
+		return ret + param
+	}
+	return ret
+}
+
+func deriveConstructor(returnType string) string {
+	// 从返回类型推导构造函数
+	// IntExpr[int8] -> NewIntExpr[int8]
+	if idx := strings.Index(returnType, "["); idx > 0 {
+		baseName := returnType[:idx]
+		typeParam := returnType[idx:]
+		return "New" + baseName + typeParam
+	}
+	return "New" + returnType
+}
+
+// ==================== 文件写入 ====================
 
 const methodTemplate = `{{range .Comments}}
 // {{.}}{{end}}
@@ -293,76 +527,36 @@ func (e {{.TypeName}}{{.TypeParam}}) {{.MethodName}}({{.Params}}){{if .ReturnTyp
 {{end}}}
 `
 
-func main() {
-	// 解析源文件获取注释
-	comments := parseComments("numeric_base.go")
-
-	// 为每个方法填充注释
-	for embType, methods := range embeddedMethods {
-		for i := range methods {
-			innerName := methods[i].getInnerName()
-			key := embType + "." + innerName
-			if c, ok := comments[key]; ok {
-				embeddedMethods[embType][i].Comments = c
-			}
-			// 如果没找到，尝试用基础类型的注释
-			if len(embeddedMethods[embType][i].Comments) == 0 {
-				// 尝试 mathFuncSql
-				key = "mathFuncSql." + innerName
-				if c, ok := comments[key]; ok {
-					embeddedMethods[embType][i].Comments = c
-				}
-			}
-			if len(embeddedMethods[embType][i].Comments) == 0 {
-				// 尝试 aggregateSql
-				key = "aggregateSql." + innerName
-				if c, ok := comments[key]; ok {
-					embeddedMethods[embType][i].Comments = c
-				}
-			}
-		}
-	}
-
+func writeGeneratedFiles(types []TypeInfo, generated map[string][]GeneratedMethod) {
 	tmpl := template.Must(template.New("method").Parse(methodTemplate))
 
 	// 按文件名分组类型
-	fileTypes := make(map[string][]TypeDef)
-	for _, typeDef := range typeConfigs {
-		fileTypes[typeDef.FileName] = append(fileTypes[typeDef.FileName], typeDef)
+	fileToTypes := make(map[string][]TypeInfo)
+	for _, t := range types {
+		fileToTypes[t.FileName] = append(fileToTypes[t.FileName], t)
 	}
 
-	// 为每个文件生成代码
-	for fileName, types := range fileTypes {
+	for fileName, methods := range generated {
+		if len(methods) == 0 {
+			continue
+		}
+
 		var buf bytes.Buffer
+
+		// 检查需要的导入
 		needClauseImport := false
 		needFieldImport := false
-
-		// 检查是否需要导入 clause 和 field 包
-		for _, typeDef := range types {
-			embeddings := getTypeEmbeddings(typeDef.Name, typeDef.FileName)
-			if len(embeddings) == 0 {
-				continue
+		for _, m := range methods {
+			if strings.Contains(m.Params, "clause.") || strings.Contains(m.ReturnType, "clause.") {
+				needClauseImport = true
 			}
-			for _, embType := range embeddings {
-				methods, ok := embeddedMethods[embType]
-				if !ok {
-					continue
-				}
-				for _, method := range methods {
-					if strings.Contains(method.Params, "clause.") || strings.Contains(method.ReturnType, "clause.") {
-						needClauseImport = true
-					}
-					if strings.Contains(method.Params, "field.") || strings.Contains(method.ReturnType, "field.") {
-						needFieldImport = true
-					}
-				}
+			if strings.Contains(m.Params, "field.") || strings.Contains(m.ReturnType, "field.") {
+				needFieldImport = true
 			}
 		}
 
-		buf.WriteString(`// Code generated by gen1.go; DO NOT EDIT.
-
-package fields
-`)
+		// 写入文件头
+		buf.WriteString("// Code generated by gen1.go; DO NOT EDIT.\n\npackage fields\n")
 		if needClauseImport || needFieldImport {
 			buf.WriteString("\nimport (\n")
 			if needClauseImport {
@@ -375,47 +569,24 @@ package fields
 		}
 		buf.WriteString("\n")
 
-		for _, typeDef := range types {
-			embeddings := getTypeEmbeddings(typeDef.Name, typeDef.FileName)
-			if len(embeddings) == 0 {
+		// 按类型分组写入
+		typesMethods := make(map[string][]GeneratedMethod)
+		for _, m := range methods {
+			typesMethods[m.TypeName] = append(typesMethods[m.TypeName], m)
+		}
+
+		for _, typeInfo := range fileToTypes[fileName] {
+			typeMethods := typesMethods[typeInfo.Name]
+			if len(typeMethods) == 0 {
 				continue
 			}
 
-			fmt.Fprintf(&buf, "// ==================== %s 生成的方法 ====================\n", typeDef.Name)
+			fmt.Fprintf(&buf, "// ==================== %s 生成的方法 ====================\n", typeInfo.Name)
 
-			for _, embType := range embeddings {
-				methods, ok := embeddedMethods[embType]
-				if !ok {
-					continue
-				}
-
-				for _, method := range methods {
-					// 确定返回类型
-					returnType := method.ReturnType
-					constructor := method.Constructor
-					if returnType == "" && !method.Void {
-						// 返回自身类型（Void 方法除外）
-						returnType = typeDef.Name + typeDef.TypeParam
-						constructor = typeDef.Constructor + typeDef.TypeParam
-					}
-
-					data := map[string]any{
-						"TypeName":    typeDef.Name,
-						"TypeParam":   typeDef.TypeParam,
-						"MethodName":  method.Name,
-						"Params":      method.Params,
-						"Args":        method.Args,
-						"ReturnType":  returnType,
-						"Constructor": constructor,
-						"InnerName":   method.getInnerName(),
-						"Comments":    method.Comments,
-						"Direct":      method.Direct,
-						"Void":        method.Void,
-					}
-					if err := tmpl.Execute(&buf, data); err != nil {
-						fmt.Fprintf(os.Stderr, "Error executing template: %v\n", err)
-						os.Exit(1)
-					}
+			for _, m := range typeMethods {
+				if err := tmpl.Execute(&buf, m); err != nil {
+					fmt.Fprintf(os.Stderr, "Error executing template: %v\n", err)
+					os.Exit(1)
 				}
 			}
 			buf.WriteString("\n")
@@ -424,180 +595,9 @@ package fields
 		// 写入文件
 		outputFile := fileName + "_generate.go"
 		if err := os.WriteFile(outputFile, buf.Bytes(), 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", outputFile, err)
+			fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", outputFile, err)
 			os.Exit(1)
 		}
-
 		fmt.Printf("Generated %s successfully\n", outputFile)
 	}
-
-	// 删除旧的 generate1.go 文件
-	if err := os.Remove("generate1.go"); err != nil && !os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Warning: failed to remove generate1.go: %v\n", err)
-	}
-}
-
-// parseStructEmbeddings 解析源文件中的结构体嵌入字段
-// 返回类型名 -> 嵌入字段名列表
-func parseStructEmbeddings(filename string) map[string][]string {
-	result := make(map[string][]string)
-
-	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing file %s: %v\n", filename, err)
-		return result
-	}
-
-	for _, decl := range node.Decls {
-		genDecl, ok := decl.(*ast.GenDecl)
-		if !ok || genDecl.Tok != token.TYPE {
-			continue
-		}
-
-		for _, spec := range genDecl.Specs {
-			typeSpec, ok := spec.(*ast.TypeSpec)
-			if !ok {
-				continue
-			}
-
-			structType, ok := typeSpec.Type.(*ast.StructType)
-			if !ok {
-				continue
-			}
-
-			typeName := typeSpec.Name.Name
-			var embeddings []string
-
-			for _, field := range structType.Fields.List {
-				// 嵌入字段没有名字
-				if len(field.Names) > 0 {
-					continue
-				}
-
-				// 获取嵌入类型名
-				var embName string
-				switch t := field.Type.(type) {
-				case *ast.Ident:
-					embName = t.Name
-				case *ast.IndexExpr:
-					// 泛型类型如 numericComparableImpl[T]
-					if ident, ok := t.X.(*ast.Ident); ok {
-						embName = ident.Name
-					}
-				}
-
-				if embName != "" {
-					embeddings = append(embeddings, embName)
-				}
-			}
-
-			if len(embeddings) > 0 {
-				result[typeName] = embeddings
-			}
-		}
-	}
-
-	return result
-}
-
-// getTypeEmbeddings 获取类型的嵌入字段列表，并应用配置
-// 返回用于代码生成的嵌入类型列表
-func getTypeEmbeddings(typeName, fileName string) []string {
-	// 解析源文件获取实际嵌入
-	structEmbeddings := parseStructEmbeddings(fileName + ".go")
-	actualEmbeddings := structEmbeddings[typeName]
-
-	// 获取该类型的配置
-	additions := embeddingAdditions[typeName]
-	skips := embeddingSkips[typeName]
-
-	var result []string
-	for _, emb := range actualEmbeddings {
-		// 检查是否需要跳过
-		if skips != nil && skips[emb] {
-			// 跳过此嵌入，但添加其替代项
-			if addList, ok := additions[emb]; ok {
-				result = append(result, addList...)
-			}
-			continue
-		}
-
-		// 检查是否在 embeddedMethods 中定义了
-		if _, ok := embeddedMethods[emb]; ok {
-			result = append(result, emb)
-		}
-
-		// 检查是否有追加项
-		if addList, ok := additions[emb]; ok {
-			result = append(result, addList...)
-		}
-		// 否则跳过（如 pointerExprImpl, castSql 等不需要生成方法的类型）
-	}
-
-	return result
-}
-
-// parseComments 解析源文件中的方法注释
-func parseComments(filename string) map[string][]string {
-	result := make(map[string][]string)
-
-	// 需要解析注释的类型（包括用于注释回退的基础类型）
-	commentTypes := make(map[string]bool)
-	for k := range embeddedMethods {
-		commentTypes[k] = true
-	}
-	// 添加用于注释回退的基础类型
-	commentTypes["aggregateSql"] = true
-
-	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing file: %v\n", err)
-		return result
-	}
-
-	for _, decl := range node.Decls {
-		fn, ok := decl.(*ast.FuncDecl)
-		if !ok || fn.Recv == nil || len(fn.Recv.List) == 0 {
-			continue
-		}
-
-		// 获取接收者类型名
-		var recvType string
-		switch t := fn.Recv.List[0].Type.(type) {
-		case *ast.Ident:
-			recvType = t.Name
-		case *ast.StarExpr:
-			if ident, ok := t.X.(*ast.Ident); ok {
-				recvType = ident.Name
-			}
-		}
-
-		if recvType == "" {
-			continue
-		}
-
-		// 只处理我们关心的类型
-		if !commentTypes[recvType] {
-			continue
-		}
-
-		// 获取方法名
-		methodName := fn.Name.Name
-
-		// 获取注释
-		if fn.Doc != nil {
-			var comments []string
-			for _, c := range fn.Doc.List {
-				text := strings.TrimPrefix(c.Text, "//")
-				text = strings.TrimPrefix(text, " ")
-				comments = append(comments, text)
-			}
-			key := recvType + "." + methodName
-			result[key] = comments
-		}
-	}
-
-	return result
 }

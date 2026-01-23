@@ -8,6 +8,7 @@ var _ clause.Expression = (*FloatExpr[float64])(nil)
 
 // ==================== FloatExpr 定义 ====================
 
+// @gentype default=[float64]
 // FloatExpr 浮点类型表达式，用于 AVG, SUM 等返回浮点数的聚合函数
 // 支持比较操作、算术运算和数学函数
 // 使用场景：

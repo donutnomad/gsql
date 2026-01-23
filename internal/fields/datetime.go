@@ -6,6 +6,7 @@ import (
 
 var _ clause.Expression = (*DateTimeExpr[string])(nil)
 
+// @gentype default=[string]
 // DateTimeExpr 日期时间类型表达式，用于 DATETIME 类型字段 (YYYY-MM-DD HH:MM:SS)
 // 支持日期时间比较、运算和提取函数
 // 使用场景：

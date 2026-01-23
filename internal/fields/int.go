@@ -8,6 +8,7 @@ var _ clause.Expression = (*IntExpr[int64])(nil)
 
 // ==================== IntExpr 定义 ====================
 
+// @gentype default=[int]
 // IntExpr 整数类型表达式，用于 COUNT 等返回整数的聚合函数
 // 支持比较操作、算术运算、位运算和数学函数
 // 使用场景：

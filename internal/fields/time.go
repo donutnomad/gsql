@@ -6,6 +6,7 @@ import (
 
 var _ clause.Expression = (*TimeExpr[string])(nil)
 
+// @gentype default=[string]
 // TimeExpr 时间类型表达式，用于 TIME 类型字段 (HH:MM:SS)
 // 支持时间比较、运算和提取函数
 // 使用场景：

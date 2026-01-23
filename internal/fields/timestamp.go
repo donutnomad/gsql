@@ -6,6 +6,7 @@ import (
 
 var _ clause.Expression = (*TimestampExpr[int64])(nil)
 
+// @gentype default=[string]
 // TimestampExpr 时间戳类型表达式，用于 TIMESTAMP 类型字段
 // TIMESTAMP 类型在存储时会转换为 UTC，读取时转换为当前时区
 // 使用场景：

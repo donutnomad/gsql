@@ -9,6 +9,7 @@ var _ clause.Expression = (*DecimalExpr[float64])(nil)
 // ==================== DecimalExpr 定义 ====================
 
 // DecimalExpr 定点数类型表达式，用于精确的十进制数计算
+// @gentype default=[float64]
 // 与 FloatExpr 不同，DECIMAL 是精确类型，适合金融计算
 // 使用场景：
 //   - 价格、金额等需要精确计算的字段

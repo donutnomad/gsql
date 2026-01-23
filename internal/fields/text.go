@@ -10,6 +10,7 @@ var _ clause.Expression = (*TextExpr[string])(nil)
 
 // ==================== TextExpr 定义 ====================
 
+// @gentype default=[string]
 // TextExpr 文本类型表达式，用于 VARCHAR 和 TEXT 类型字段
 // 支持比较操作和模式匹配操作
 // 使用场景：

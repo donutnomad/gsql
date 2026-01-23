@@ -134,7 +134,7 @@ func TestDecimalExprT_Ceil(t *testing.T) {
 	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Ceil()
 
-	e := result.Gte(int64(0))
+	e := result.Gte(float64(0))
 	_, ok := e.(clause.Expr)
 	assert.True(t, ok)
 }
@@ -143,7 +143,7 @@ func TestDecimalExprT_Floor(t *testing.T) {
 	expr := NewDecimalExpr[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Floor()
 
-	e := result.Gte(int64(0))
+	e := result.Gte(float64(0))
 	_, ok := e.(clause.Expr)
 	assert.True(t, ok)
 }
