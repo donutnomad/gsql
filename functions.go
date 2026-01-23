@@ -18,12 +18,6 @@ var allowedCharsets = map[string]bool{
 
 var Star field.IField = field.NewBase("", "*")
 
-// Deprecated: 使用 Lit 替代。
-// Primitive 已被弃用，请使用更简洁的 Lit 函数。
-func Primitive[T primitive](value T) field.ExpressionTo {
-	return Lit(value)
-}
-
 func Lit[T primitive](value T) field.ExpressionTo {
 	return Val(value)
 }
@@ -153,55 +147,7 @@ func IF(condition, valueIfTrue, valueIfFalse field.Expression) field.ExpressionT
 	}}
 }
 
-// IFNULL 如果第一个表达式不为NULL则返回它，否则返回第二个表达式
-// 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
-// SELECT IFNULL(nickname, username) FROM users;
-// SELECT IFNULL(discount, 0) FROM products;
-// SELECT IFNULL(email, 'no-email') FROM contacts;
-// SELECT name, IFNULL(phone, 'N/A') FROM users;
-//
-// Deprecated: 建议使用 COALESCE 替代 IFNULL，语法为 COALESCE(expr1, expr2, ...)
-// COALESCE 是 SQL 标准函数，所有主流数据库都支持，且可接受多个参数，返回参数列表中第一个非 NULL 的值。
-// 示例: field.Coalesce(defaultValue) 或直接使用 SQL: COALESCE(nickname, username, 'Anonymous')
-func IFNULL(expr1, expr2 any) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "IFNULL(?, ?)",
-		Vars: []any{expr1, expr2},
-	}}
-}
-
-// NULLIF 如果两个表达式相等则返回NULL，否则返回第一个表达式
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(10, 10);
-// SELECT NULLIF(10, 5);
-// SELECT NULLIF(username, ") FROM users;
-// SELECT 100 / NULLIF(quantity, 0) FROM inventory;
-func NULLIF(expr1, expr2 any) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  "NULLIF(?, ?)",
-		Vars: []any{expr1, expr2},
-	}}
-}
-
 // ==================== 类型转换函数 ====================
-
-// CAST 将表达式转换为指定的数据类型
-// 数据库支持: MySQL, PostgreSQL, SQLite (语法通用，但支持的类型因数据库而异)
-// SELECT CAST('123' AS UNSIGNED);
-// SELECT CAST('2023-10-26' AS DATE);
-// SELECT CAST(price AS CHAR) FROM products;
-// SELECT CAST(amount AS DECIMAL(10,2)) FROM orders;
-// 使用示例：
-//
-//	CAST(field, CastTypeSigned)
-//	CAST(field, CastTypeDate)
-//	CAST(field, "DECIMAL(10,2)") // 对于需要指定精度的类型，可以直接传字符串
-func CAST(expr field.Expression, dataType string) field.ExpressionTo {
-	return ExprTo{clause.Expr{
-		SQL:  fmt.Sprintf("CAST(? AS %s)", dataType),
-		Vars: []any{expr},
-	}}
-}
 
 // CONVERT 将表达式转换为指定的数据类型或字符集
 // 数据库支持: MySQL (PostgreSQL 使用 CAST 或 :: 操作符)

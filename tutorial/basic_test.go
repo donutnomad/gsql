@@ -1071,7 +1071,7 @@ func TestFunc_FlowControl(t *testing.T) {
 		// NULLIF(stock, 0) returns NULL if stock is 0
 		err := gsql.Select(
 			p.Name,
-			gsql.NULLIF(p.Stock.ToExpr(), gsql.Lit(0)).AsF("stock_null"),
+			p.Stock.NullIf(0).As("stock_null"),
 		).
 			From(&p).
 			Where(p.Name.In("In Stock", "Out of Stock")).
