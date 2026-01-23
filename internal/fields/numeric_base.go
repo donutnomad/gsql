@@ -2,6 +2,7 @@ package fields
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
@@ -21,6 +22,30 @@ func (f pointerExprImpl) IsNull() clause.Expression {
 
 func (f pointerExprImpl) IsNotNull() clause.Expression {
 	return clause.Expr{SQL: "? IS NOT NULL", Vars: []any{f.Expression}}
+}
+
+// ==================== 基础表达式方法实现 ====================
+
+// baseExprSql 提供基础表达式方法的实现
+// Build, ToExpr, As 方法通过代码生成器生成
+// 注意：不嵌入 clause.Expression 以避免与其他嵌入类型冲突
+type baseExprSql struct {
+	Expr clause.Expression
+}
+
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (b baseExprSql) buildExpr(builder clause.Builder) {
+	b.Expr.Build(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (b baseExprSql) toExprExpr() clause.Expression {
+	return b.Expr
+}
+
+// asExpr 创建一个别名字段
+func (b baseExprSql) asExpr(alias string) field.IField {
+	return field.NewBaseFromSql(b.Expr, alias)
 }
 
 // ==================== 基础比较操作实现（等于/不等于/In/NotIn）====================
@@ -457,34 +482,66 @@ type trigFuncSql struct {
 	clause.Expression
 }
 
+// Sin 正弦 (SIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIN(0); -- 结果为 0
+// SELECT SIN(PI()/2); -- 结果为 1
 func (t trigFuncSql) sinExpr() clause.Expr {
 	return clause.Expr{SQL: "SIN(?)", Vars: []any{t.Expression}}
 }
 
+// Cos 余弦 (COS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COS(0); -- 结果为 1
+// SELECT COS(PI()); -- 结果为 -1
 func (t trigFuncSql) cosExpr() clause.Expr {
 	return clause.Expr{SQL: "COS(?)", Vars: []any{t.Expression}}
 }
 
+// Tan 正切 (TAN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT TAN(0); -- 结果为 0
+// SELECT TAN(PI()/4); -- 结果约为 1
 func (t trigFuncSql) tanExpr() clause.Expr {
 	return clause.Expr{SQL: "TAN(?)", Vars: []any{t.Expression}}
 }
 
+// Asin 反正弦 (ASIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ASIN(0); -- 结果为 0
+// SELECT ASIN(1); -- 结果为 PI()/2
 func (t trigFuncSql) asinExpr() clause.Expr {
 	return clause.Expr{SQL: "ASIN(?)", Vars: []any{t.Expression}}
 }
 
+// Acos 反余弦 (ACOS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ACOS(1); -- 结果为 0
+// SELECT ACOS(0); -- 结果为 PI()/2
 func (t trigFuncSql) acosExpr() clause.Expr {
 	return clause.Expr{SQL: "ACOS(?)", Vars: []any{t.Expression}}
 }
 
+// Atan 反正切 (ATAN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ATAN(0); -- 结果为 0
+// SELECT ATAN(1); -- 结果为 PI()/4
 func (t trigFuncSql) atanExpr() clause.Expr {
 	return clause.Expr{SQL: "ATAN(?)", Vars: []any{t.Expression}}
 }
 
+// Radians 角度转弧度 (RADIANS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT RADIANS(180); -- 结果为 PI()
+// SELECT RADIANS(90); -- 结果为 PI()/2
 func (t trigFuncSql) radiansExpr() clause.Expr {
 	return clause.Expr{SQL: "RADIANS(?)", Vars: []any{t.Expression}}
 }
 
+// Degrees 弧度转角度 (DEGREES)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT DEGREES(PI()); -- 结果为 180
+// SELECT DEGREES(PI()/2); -- 结果为 90
 func (t trigFuncSql) degreesExpr() clause.Expr {
 	return clause.Expr{SQL: "DEGREES(?)", Vars: []any{t.Expression}}
 }
@@ -496,32 +553,346 @@ type bitOpSql struct {
 	clause.Expression
 }
 
+// BitAnd 按位与 (&)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 5 & 3; -- 结果为 1
+// SELECT flags & 0x0F FROM settings;
 func (b bitOpSql) bitAndExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? & ?", Vars: []any{b.Expression, value}}
 }
 
+// BitOr 按位或 (|)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 5 | 3; -- 结果为 7
+// SELECT flags | 0x10 FROM settings;
 func (b bitOpSql) bitOrExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? | ?", Vars: []any{b.Expression, value}}
 }
 
+// BitXor 按位异或 (^)
+// 数据库支持: MySQL, PostgreSQL (使用 #), SQLite
+// SELECT 5 ^ 3; -- 结果为 6
+// SELECT flags ^ mask FROM settings;
 func (b bitOpSql) bitXorExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? ^ ?", Vars: []any{b.Expression, value}}
 }
 
+// BitNot 按位取反 (~)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ~5; -- 结果为 -6 (有符号整数)
+// SELECT ~flags FROM settings;
 func (b bitOpSql) bitNotExpr() clause.Expr {
 	return clause.Expr{SQL: "~?", Vars: []any{b.Expression}}
 }
 
+// LeftShift 左移 (<<)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 1 << 4; -- 结果为 16
+// SELECT value << 2 FROM data;
 func (b bitOpSql) leftShiftExpr(n int) clause.Expr {
 	return clause.Expr{SQL: "? << ?", Vars: []any{b.Expression, n}}
 }
 
+// RightShift 右移 (>>)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 16 >> 2; -- 结果为 4
+// SELECT value >> 1 FROM data;
 func (b bitOpSql) rightShiftExpr(n int) clause.Expr {
 	return clause.Expr{SQL: "? >> ?", Vars: []any{b.Expression, n}}
 }
 
+// IntDiv 整数除法 (DIV)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 / 或 TRUNC)
+// SELECT 10 DIV 3; -- 结果为 3
+// SELECT total DIV page_size as pages FROM posts;
 func (b bitOpSql) intDivExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? DIV ?", Vars: []any{b.Expression, value}}
+}
+
+// ==================== 聚合函数的 SQL 生成 ====================
+
+// aggregateSql 生成聚合函数的 SQL 表达式
+type aggregateSql struct {
+	clause.Expression
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (a aggregateSql) sumExpr() clause.Expr {
+	return clause.Expr{SQL: "SUM(?)", Vars: []any{a.Expression}}
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (a aggregateSql) avgExpr() clause.Expr {
+	return clause.Expr{SQL: "AVG(?)", Vars: []any{a.Expression}}
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (a aggregateSql) maxExpr() clause.Expr {
+	return clause.Expr{SQL: "MAX(?)", Vars: []any{a.Expression}}
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (a aggregateSql) minExpr() clause.Expr {
+	return clause.Expr{SQL: "MIN(?)", Vars: []any{a.Expression}}
+}
+
+// ==================== 日期提取函数的 SQL 生成 ====================
+
+// dateExtractSql 生成日期提取函数的 SQL 表达式
+// 适用于 DateExpr, DateTimeExpr, TimestampExpr
+type dateExtractSql struct {
+	clause.Expression
+}
+
+// Year 提取年份部分 (YEAR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT YEAR(date_column) FROM table;
+func (d dateExtractSql) yearExpr() clause.Expr {
+	return clause.Expr{SQL: "YEAR(?)", Vars: []any{d.Expression}}
+}
+
+// Month 提取月份部分 (MONTH)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MONTH(date_column) FROM table;
+func (d dateExtractSql) monthExpr() clause.Expr {
+	return clause.Expr{SQL: "MONTH(?)", Vars: []any{d.Expression}}
+}
+
+// Day 提取天数部分 (DAY)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT DAY(date_column) FROM table;
+func (d dateExtractSql) dayExpr() clause.Expr {
+	return clause.Expr{SQL: "DAY(?)", Vars: []any{d.Expression}}
+}
+
+// DayOfMonth 提取一月中的天数 (DAYOFMONTH)
+// 数据库支持: MySQL
+// 与 DAY() 等价
+func (d dateExtractSql) dayOfMonthExpr() clause.Expr {
+	return clause.Expr{SQL: "DAYOFMONTH(?)", Vars: []any{d.Expression}}
+}
+
+// DayOfWeek 返回一周中的索引 (DAYOFWEEK)
+// 数据库支持: MySQL
+// 1=周日, 2=周一, ..., 7=周六
+func (d dateExtractSql) dayOfWeekExpr() clause.Expr {
+	return clause.Expr{SQL: "DAYOFWEEK(?)", Vars: []any{d.Expression}}
+}
+
+// DayOfYear 返回一年中的天数 (DAYOFYEAR)
+// 数据库支持: MySQL
+// 范围: 1-366
+func (d dateExtractSql) dayOfYearExpr() clause.Expr {
+	return clause.Expr{SQL: "DAYOFYEAR(?)", Vars: []any{d.Expression}}
+}
+
+// Week 提取周数 (WEEK)
+// 数据库支持: MySQL
+// 范围: 0-53
+func (d dateExtractSql) weekExpr() clause.Expr {
+	return clause.Expr{SQL: "WEEK(?)", Vars: []any{d.Expression}}
+}
+
+// WeekOfYear 提取周数 (WEEKOFYEAR)
+// 数据库支持: MySQL
+// 范围: 1-53，相当于 WEEK(date, 3)
+func (d dateExtractSql) weekOfYearExpr() clause.Expr {
+	return clause.Expr{SQL: "WEEKOFYEAR(?)", Vars: []any{d.Expression}}
+}
+
+// Quarter 提取季度 (QUARTER)
+// 数据库支持: MySQL
+// 范围: 1-4
+func (d dateExtractSql) quarterExpr() clause.Expr {
+	return clause.Expr{SQL: "QUARTER(?)", Vars: []any{d.Expression}}
+}
+
+// ==================== 时间提取函数的 SQL 生成 ====================
+
+// timeExtractSql 生成时间提取函数的 SQL 表达式
+// 适用于 DateTimeExpr, TimeExpr, TimestampExpr
+type timeExtractSql struct {
+	clause.Expression
+}
+
+// Hour 提取小时部分 (HOUR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-23
+func (t timeExtractSql) hourExpr() clause.Expr {
+	return clause.Expr{SQL: "HOUR(?)", Vars: []any{t.Expression}}
+}
+
+// Minute 提取分钟部分 (MINUTE)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-59
+func (t timeExtractSql) minuteExpr() clause.Expr {
+	return clause.Expr{SQL: "MINUTE(?)", Vars: []any{t.Expression}}
+}
+
+// Second 提取秒数部分 (SECOND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-59
+func (t timeExtractSql) secondExpr() clause.Expr {
+	return clause.Expr{SQL: "SECOND(?)", Vars: []any{t.Expression}}
+}
+
+// Microsecond 提取微秒部分 (MICROSECOND)
+// 数据库支持: MySQL
+// 范围: 0-999999
+func (t timeExtractSql) microsecondExpr() clause.Expr {
+	return clause.Expr{SQL: "MICROSECOND(?)", Vars: []any{t.Expression}}
+}
+
+// ==================== 日期时间运算的 SQL 生成 ====================
+
+// dateIntervalSql 生成日期时间间隔运算的 SQL 表达式
+// 适用于 DateExpr, DateTimeExpr, TimeExpr, TimestampExpr
+type dateIntervalSql struct {
+	clause.Expression
+}
+
+// AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
+// SELECT DATE_ADD(date_column, INTERVAL 1 DAY) FROM table;
+func (d dateIntervalSql) addIntervalExpr(interval string) clause.Expr {
+	safeInterval := parseInterval(interval, "AddInterval")
+	return clause.Expr{
+		SQL:  fmt.Sprintf("DATE_ADD(?, INTERVAL %s)", safeInterval),
+		Vars: []any{d.Expression},
+	}
+}
+
+// SubInterval 从日期/时间中减去时间间隔 (DATE_SUB)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// SELECT DATE_SUB(date_column, INTERVAL 1 MONTH) FROM table;
+func (d dateIntervalSql) subIntervalExpr(interval string) clause.Expr {
+	safeInterval := parseInterval(interval, "SubInterval")
+	return clause.Expr{
+		SQL:  fmt.Sprintf("DATE_SUB(?, INTERVAL %s)", safeInterval),
+		Vars: []any{d.Expression},
+	}
+}
+
+// dateDiffSql 生成日期差值计算的 SQL 表达式
+// 适用于 DateExpr, DateTimeExpr, TimestampExpr
+type dateDiffSql struct {
+	clause.Expression
+}
+
+// DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
+// 数据库支持: MySQL
+// 返回 this - other 的天数
+// SELECT DATEDIFF(end_date, start_date) FROM events;
+func (d dateDiffSql) dateDiffExpr(other clause.Expression) clause.Expr {
+	return clause.Expr{SQL: "DATEDIFF(?, ?)", Vars: []any{d.Expression, other}}
+}
+
+// timeDiffSql 生成时间差值计算的 SQL 表达式
+// 适用于 DateTimeExpr, TimeExpr, TimestampExpr
+type timeDiffSql struct {
+	clause.Expression
+}
+
+// TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
+// 数据库支持: MySQL
+// SELECT TIMEDIFF(end_time, start_time) FROM events;
+func (t timeDiffSql) timeDiffExpr(other clause.Expression) clause.Expr {
+	return clause.Expr{SQL: "TIMEDIFF(?, ?)", Vars: []any{t.Expression, other}}
+}
+
+// timestampDiffSql 生成时间戳差值计算的 SQL 表达式
+// 适用于 DateTimeExpr, TimestampExpr
+type timestampDiffSql struct {
+	clause.Expression
+}
+
+// TimestampDiff 计算与另一个日期时间的差值（指定单位）(TIMESTAMPDIFF)
+// 数据库支持: MySQL
+// unit: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
+// SELECT TIMESTAMPDIFF(DAY, start_date, end_date) FROM events;
+func (t timestampDiffSql) timestampDiffExpr(unit string, other clause.Expression) clause.Expr {
+	unit = strings.ToUpper(strings.TrimSpace(unit))
+	if !allowedIntervalUnits[unit] {
+		panic(fmt.Sprintf("TimestampDiff: invalid unit: %s", unit))
+	}
+	return clause.Expr{
+		SQL:  fmt.Sprintf("TIMESTAMPDIFF(%s, ?, ?)", unit),
+		Vars: []any{other, t.Expression},
+	}
+}
+
+// dateFormatSql 生成日期格式化的 SQL 表达式
+// 适用于 DateExpr, DateTimeExpr, TimestampExpr
+type dateFormatSql struct {
+	clause.Expression
+}
+
+// DateFormat 格式化日期为字符串 (DATE_FORMAT)
+// 数据库支持: MySQL
+// SELECT DATE_FORMAT(date_column, '%Y年%m月%d日') FROM table;
+func (d dateFormatSql) dateFormatExpr(format string) clause.Expr {
+	return clause.Expr{SQL: "DATE_FORMAT(?, ?)", Vars: []any{d.Expression, format}}
+}
+
+// timeFormatSql 生成时间格式化的 SQL 表达式
+// 适用于 TimeExpr
+type timeFormatSql struct {
+	clause.Expression
+}
+
+// TimeFormat 格式化时间为字符串 (TIME_FORMAT)
+// 数据库支持: MySQL
+// SELECT TIME_FORMAT(time_column, '%H:%i:%s') FROM table;
+func (t timeFormatSql) timeFormatExpr(format string) clause.Expr {
+	return clause.Expr{SQL: "TIME_FORMAT(?, ?)", Vars: []any{t.Expression, format}}
+}
+
+// dateConversionSql 生成日期时间转换的 SQL 表达式
+// 适用于 DateTimeExpr, TimestampExpr
+type dateConversionSql struct {
+	clause.Expression
+}
+
+// Date 提取日期部分 (DATE)
+// 数据库支持: MySQL
+// SELECT DATE(datetime_column) FROM table;
+func (d dateConversionSql) extractDateExpr() clause.Expr {
+	return clause.Expr{SQL: "DATE(?)", Vars: []any{d.Expression}}
+}
+
+// Time 提取时间部分 (TIME)
+// 数据库支持: MySQL
+// SELECT TIME(datetime_column) FROM table;
+func (d dateConversionSql) extractTimeExpr() clause.Expr {
+	return clause.Expr{SQL: "TIME(?)", Vars: []any{d.Expression}}
+}
+
+// unixTimestampSql 生成 Unix 时间戳转换的 SQL 表达式
+// 适用于 DateExpr, DateTimeExpr, TimestampExpr
+type unixTimestampSql struct {
+	clause.Expression
+}
+
+// UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
+// 数据库支持: MySQL
+// SELECT UNIX_TIMESTAMP(date_column) FROM table;
+func (u unixTimestampSql) unixTimestampExpr() clause.Expr {
+	return clause.Expr{SQL: "UNIX_TIMESTAMP(?)", Vars: []any{u.Expression}}
 }
 
 // ==================== 模式匹配的 SQL 生成 ====================

@@ -2,6 +2,11 @@
 
 package fields
 
+import (
+	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
+)
+
 // ==================== IntExpr 生成的方法 ====================
 
 // Add 加法 (+)
@@ -76,6 +81,75 @@ func (e IntExpr[T]) Truncate(decimals int) IntExpr[T] {
 	return NewIntExpr[T](e.truncateExpr(decimals))
 }
 
+// Sign 返回符号 (SIGN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIGN(-10); -- 结果为 -1
+// SELECT SIGN(0); -- 结果为 0
+// SELECT SIGN(10); -- 结果为 1
+func (e IntExpr[T]) Sign() IntExpr[int8] {
+	return NewIntExpr[int8](e.signExpr())
+}
+
+// Ceil 向上取整 (CEIL)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT CEIL(1.5); -- 结果为 2
+// SELECT CEIL(-1.5); -- 结果为 -1
+func (e IntExpr[T]) Ceil() IntExpr[T] {
+	return NewIntExpr[T](e.ceilExpr())
+}
+
+// Floor 向下取整 (FLOOR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT FLOOR(1.5); -- 结果为 1
+// SELECT FLOOR(-1.5); -- 结果为 -2
+func (e IntExpr[T]) Floor() IntExpr[T] {
+	return NewIntExpr[T](e.floorExpr())
+}
+
+// Pow 幂运算 (POW)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT POW(2, 3); -- 结果为 8
+// SELECT POW(price, 2) FROM products;
+func (e IntExpr[T]) Pow(exponent int) FloatExpr[float64] {
+	return NewFloatExpr[float64](e.powExpr(float64(exponent)))
+}
+
+// Sqrt 平方根 (SQRT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SQRT(16); -- 结果为 4
+// SELECT SQRT(variance) FROM stats;
+func (e IntExpr[T]) Sqrt() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.sqrtExpr())
+}
+
+// Log 自然对数 (LOG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG(10); -- 结果为 2.302585...
+func (e IntExpr[T]) Log() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.logExpr())
+}
+
+// Log10 以10为底的对数 (LOG10)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG10(100); -- 结果为 2
+func (e IntExpr[T]) Log10() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.log10Expr())
+}
+
+// Log2 以2为底的对数 (LOG2)
+// 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
+// SELECT LOG2(8); -- 结果为 3
+func (e IntExpr[T]) Log2() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.log2Expr())
+}
+
+// Exp 指数函数 (EXP)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT EXP(1); -- 结果为 2.718281828...
+func (e IntExpr[T]) Exp() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.expExpr())
+}
+
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
@@ -113,5 +187,108 @@ func (e IntExpr[T]) Greatest(values ...any) IntExpr[T] {
 // SELECT LEAST(price, max_price) FROM products;
 func (e IntExpr[T]) Least(values ...any) IntExpr[T] {
 	return NewIntExpr[T](e.leastExpr(values...))
+}
+
+// BitAnd 按位与 (&)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 5 & 3; -- 结果为 1
+// SELECT flags & 0x0F FROM settings;
+func (e IntExpr[T]) BitAnd(value any) IntExpr[T] {
+	return NewIntExpr[T](e.bitAndExpr(value))
+}
+
+// BitOr 按位或 (|)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 5 | 3; -- 结果为 7
+// SELECT flags | 0x10 FROM settings;
+func (e IntExpr[T]) BitOr(value any) IntExpr[T] {
+	return NewIntExpr[T](e.bitOrExpr(value))
+}
+
+// BitXor 按位异或 (^)
+// 数据库支持: MySQL, PostgreSQL (使用 #), SQLite
+// SELECT 5 ^ 3; -- 结果为 6
+// SELECT flags ^ mask FROM settings;
+func (e IntExpr[T]) BitXor(value any) IntExpr[T] {
+	return NewIntExpr[T](e.bitXorExpr(value))
+}
+
+// BitNot 按位取反 (~)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ~5; -- 结果为 -6 (有符号整数)
+// SELECT ~flags FROM settings;
+func (e IntExpr[T]) BitNot() IntExpr[T] {
+	return NewIntExpr[T](e.bitNotExpr())
+}
+
+// LeftShift 左移 (<<)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 1 << 4; -- 结果为 16
+// SELECT value << 2 FROM data;
+func (e IntExpr[T]) LeftShift(n int) IntExpr[T] {
+	return NewIntExpr[T](e.leftShiftExpr(n))
+}
+
+// RightShift 右移 (>>)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 16 >> 2; -- 结果为 4
+// SELECT value >> 1 FROM data;
+func (e IntExpr[T]) RightShift(n int) IntExpr[T] {
+	return NewIntExpr[T](e.rightShiftExpr(n))
+}
+
+// IntDiv 整数除法 (DIV)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 / 或 TRUNC)
+// SELECT 10 DIV 3; -- 结果为 3
+// SELECT total DIV page_size as pages FROM posts;
+func (e IntExpr[T]) IntDiv(value any) IntExpr[T] {
+	return NewIntExpr[T](e.intDivExpr(value))
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (e IntExpr[T]) Sum() IntExpr[T] {
+	return NewIntExpr[T](e.sumExpr())
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (e IntExpr[T]) Avg() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.avgExpr())
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (e IntExpr[T]) Max() IntExpr[T] {
+	return NewIntExpr[T](e.maxExpr())
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (e IntExpr[T]) Min() IntExpr[T] {
+	return NewIntExpr[T](e.minExpr())
+}
+
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (e IntExpr[T]) Build(builder clause.Builder) {
+	e.buildExpr(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (e IntExpr[T]) ToExpr() clause.Expression {
+	return e.toExprExpr()
+}
+
+// asExpr 创建一个别名字段
+func (e IntExpr[T]) As(alias string) field.IField {
+	return e.asExpr(alias)
 }
 

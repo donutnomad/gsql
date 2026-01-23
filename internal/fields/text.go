@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
 )
 
 var _ clause.Expression = (*TextExpr[string])(nil)
@@ -22,6 +21,7 @@ type TextExpr[T any] struct {
 	patternExprImpl[T]
 	pointerExprImpl
 	nullCondFuncSql
+	baseExprSql
 }
 
 func NewTextExpr[T any](expr clause.Expression) TextExpr[T] {
@@ -30,21 +30,8 @@ func NewTextExpr[T any](expr clause.Expression) TextExpr[T] {
 		patternExprImpl:    patternExprImpl[T]{Expression: expr},
 		pointerExprImpl:    pointerExprImpl{Expression: expr},
 		nullCondFuncSql:    nullCondFuncSql{Expression: expr},
+		baseExprSql:        baseExprSql{Expr: expr},
 	}
-}
-
-// Build 实现 clause.Expression 接口
-func (e TextExpr[T]) Build(builder clause.Builder) {
-	e.baseComparableImpl.Expression.Build(builder)
-}
-
-func (e TextExpr[T]) ToExpr() clause.Expression {
-	return e.baseComparableImpl.Expression
-}
-
-// As 创建一个别名字段
-func (e TextExpr[T]) As(alias string) field.IField {
-	return field.NewBaseFromSql(e.baseComparableImpl.Expression, alias)
 }
 
 // ==================== 类型转换 ====================

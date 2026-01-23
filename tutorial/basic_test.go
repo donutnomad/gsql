@@ -441,7 +441,7 @@ func TestFunc_DateTime(t *testing.T) {
 			CurrentTime time.Time `gorm:"column:current_time"`
 		}
 		// MySQL: SELECT NOW() AS current_time FROM employees LIMIT 1
-		err := gsql.Select(gsql.NOW().AsF("current_time")).
+		err := gsql.Select(gsql.Sys.Now().As("current_time")).
 			From(&e).
 			Limit(1).
 			First(db, &result)

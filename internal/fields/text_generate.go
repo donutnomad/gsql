@@ -2,6 +2,11 @@
 
 package fields
 
+import (
+	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/field"
+)
+
 // ==================== TextExpr 生成的方法 ====================
 
 // IfNull 如果表达式为NULL则返回默认值 (IFNULL)
@@ -25,5 +30,20 @@ func (e TextExpr[T]) Coalesce(values ...any) TextExpr[T] {
 // SELECT NULLIF(username, '') FROM users; -- 空字符串转为NULL
 func (e TextExpr[T]) Nullif(value any) TextExpr[T] {
 	return NewTextExpr[T](e.nullifExpr(value))
+}
+
+// buildExpr 实现 clause.Expression 接口的 Build 方法
+func (e TextExpr[T]) Build(builder clause.Builder) {
+	e.buildExpr(builder)
+}
+
+// toExprExpr 返回内部的 Expression
+func (e TextExpr[T]) ToExpr() clause.Expression {
+	return e.toExprExpr()
+}
+
+// asExpr 创建一个别名字段
+func (e TextExpr[T]) As(alias string) field.IField {
+	return e.asExpr(alias)
 }
 
