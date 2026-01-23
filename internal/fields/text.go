@@ -21,6 +21,7 @@ type TextExpr[T any] struct {
 	baseComparableImpl[T] // 只包含 Eq/Not/In/NotIn，字符串没有大小比较
 	patternExprImpl[T]
 	pointerExprImpl
+	nullCondFuncSql
 }
 
 func NewTextExpr[T any](expr clause.Expression) TextExpr[T] {
@@ -28,6 +29,7 @@ func NewTextExpr[T any](expr clause.Expression) TextExpr[T] {
 		baseComparableImpl: baseComparableImpl[T]{Expression: expr},
 		patternExprImpl:    patternExprImpl[T]{Expression: expr},
 		pointerExprImpl:    pointerExprImpl{Expression: expr},
+		nullCondFuncSql:    nullCondFuncSql{Expression: expr},
 	}
 }
 
@@ -316,6 +318,20 @@ func (e TextExpr[T]) RPad(length int, padStr string) TextExpr[T] {
 	return NewTextExpr[T](clause.Expr{
 		SQL:  "RPAD(?, ?, ?)",
 		Vars: []any{e.baseComparableImpl.Expression, length, padStr},
+	})
+}
+
+// ==================== 日期时间转换 ====================
+
+// ToDate 将字符串按照指定格式转换为日期/时间 (STR_TO_DATE)
+// SELECT STR_TO_DATE('2023-10-26', '%Y-%m-%d');
+// SELECT STR_TO_DATE('2023年10月26日', '%Y年%m月%d日');
+// SELECT STR_TO_DATE('10/26/2023 10:30:45', '%m/%d/%Y %H:%i:%s');
+// SELECT * FROM orders WHERE order_date = STR_TO_DATE('20231026', '%Y%m%d');
+func (e TextExpr[T]) ToDate(format string) DateTimeExpr[string] {
+	return NewDateTimeExpr[string](clause.Expr{
+		SQL:  "STR_TO_DATE(?, ?)",
+		Vars: []any{e.baseComparableImpl.Expression, format},
 	})
 }
 

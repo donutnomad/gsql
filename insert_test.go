@@ -265,8 +265,8 @@ func TestVALUES_Deprecated(t *testing.T) {
 	id := field.NewComparable[int64]("", "id")
 
 	// VALUES 和 InsertValue 函数应该和 RowValue 行为相同
-	valuesExpr := gsql.VALUES(id)
-	insertValueExpr := gsql.InsertValue(id)
+	valuesExpr := gsql.RowValue(id)
+	insertValueExpr := gsql.RowValue(id)
 	rowValueExpr := gsql.RowValue(id)
 
 	sql1 := gsql.Select(valuesExpr.AsF("v1")).From(gsql.TN("test")).ToSQL()
@@ -318,7 +318,7 @@ func TestRowValue_InSelect(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		version    gsql.MySQLVersion
+		version    gsql.DbType
 		buildExpr  func() field.ExpressionTo
 		expectLike string // 期望包含的子字符串
 	}{

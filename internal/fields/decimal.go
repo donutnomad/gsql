@@ -20,7 +20,8 @@ type DecimalExpr[T any] struct {
 	pointerExprImpl
 	arithmeticSql
 	mathFuncSql
-	condFuncSql
+	nullCondFuncSql
+	numericCondFuncSql
 	castSql
 	formatSql
 }
@@ -31,7 +32,8 @@ func NewDecimalExpr[T any](expr clause.Expression) DecimalExpr[T] {
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
 		mathFuncSql:           mathFuncSql{Expression: expr},
-		condFuncSql:           condFuncSql{Expression: expr},
+		nullCondFuncSql:       nullCondFuncSql{Expression: expr},
+		numericCondFuncSql:    numericCondFuncSql{Expression: expr},
 		castSql:               castSql{Expression: expr},
 		formatSql:             formatSql{Expression: expr},
 	}
@@ -50,59 +52,7 @@ func (e DecimalExpr[T]) As(alias string) field.IField {
 	return field.NewBaseFromSql(e.numericComparableImpl.Expression, alias)
 }
 
-// ==================== 算术运算 ====================
-
-// Add 加法 (+)
-// SELECT price + tax FROM products;
-// SELECT balance + deposit FROM accounts;
-func (e DecimalExpr[T]) Add(value any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.addExpr(value))
-}
-
-// Sub 减法 (-)
-// SELECT price - discount FROM products;
-// SELECT balance - withdrawal FROM accounts;
-func (e DecimalExpr[T]) Sub(value any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.subExpr(value))
-}
-
-// Mul 乘法 (*)
-// SELECT price * quantity FROM order_items;
-// SELECT rate * hours as total FROM invoices;
-func (e DecimalExpr[T]) Mul(value any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.mulExpr(value))
-}
-
-// Div 除法 (/)
-// SELECT total / count FROM stats;
-// SELECT amount / exchange_rate FROM transactions;
-func (e DecimalExpr[T]) Div(value any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.divExpr(value))
-}
-
-// Neg 取负 (-)
-// SELECT -price FROM products;
-// SELECT -balance FROM accounts;
-func (e DecimalExpr[T]) Neg() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.negExpr())
-}
-
-// Mod 取模 (MOD)
-// SELECT MOD(amount, 100) FROM transactions;
-// SELECT * FROM orders WHERE MOD(total, 10) = 0;
-func (e DecimalExpr[T]) Mod(value any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.modExpr(value))
-}
-
-// ==================== 数学函数 ====================
-
-// Abs 返回数值的绝对值 (ABS)
-// SELECT ABS(-10.50); -- 结果为 10.50
-// SELECT ABS(balance) FROM accounts;
-// SELECT * FROM transactions WHERE ABS(amount) > 1000.00;
-func (e DecimalExpr[T]) Abs() DecimalExpr[T] {
-	return NewDecimalExpr[T](e.absExpr())
-}
+// ==================== 数学函数 (特殊方法) ====================
 
 // Sign 返回数值的符号 (SIGN)：负数返回-1，零返回0，正数返回1
 // SELECT SIGN(-10.50); -- 结果为 -1
@@ -126,30 +76,6 @@ func (e DecimalExpr[T]) Ceil() IntExpr[int64] {
 // SELECT FLOOR(price * 0.9) FROM products;
 func (e DecimalExpr[T]) Floor() IntExpr[int64] {
 	return NewIntExpr[int64](e.floorExpr())
-}
-
-// Round 四舍五入 (ROUND) 到指定小数位数，默认四舍五入到整数
-// SELECT ROUND(4.567); -- 结果为 5
-// SELECT ROUND(4.567, 2); -- 结果为 4.57
-// SELECT ROUND(price, 2) FROM products;
-func (e DecimalExpr[T]) Round(decimals ...int) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.roundExpr(decimals...))
-}
-
-// Truncate 截断数值到指定小数位数 (TRUNCATE)，不进行四舍五入
-// SELECT TRUNCATE(4.567, 2); -- 结果为 4.56
-// SELECT TRUNCATE(4.567, 0); -- 结果为 4
-// SELECT TRUNCATE(price, 2) FROM products;
-func (e DecimalExpr[T]) Truncate(decimals int) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.truncateExpr(decimals))
-}
-
-// Pow 返回X的Y次幂 (POW)
-// SELECT POW(2.5, 3); -- 结果为 15.625
-// SELECT POW(10, 2); -- 结果为 100
-// SELECT POW(rate, years) FROM investments;
-func (e DecimalExpr[T]) Pow(exponent float64) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.powExpr(exponent))
 }
 
 // Sqrt 返回X的平方根 (SQRT)，X必须为非负数
@@ -190,33 +116,6 @@ func (e DecimalExpr[T]) CastFloat() FloatExpr[float64] {
 // CastChar 转换为字符串 (CAST AS CHAR)
 func (e DecimalExpr[T]) CastChar(length ...int) TextExpr[string] {
 	return NewTextExpr[string](e.castCharExpr(length...))
-}
-
-// ==================== 条件函数 ====================
-
-// IfNull 如果为NULL则返回默认值 (IFNULL)
-func (e DecimalExpr[T]) IfNull(defaultValue T) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.ifNullExpr(defaultValue))
-}
-
-// Coalesce 返回第一个非NULL值 (COALESCE)
-func (e DecimalExpr[T]) Coalesce(values ...any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.coalesceExpr(values...))
-}
-
-// Nullif 如果两个值相等则返回NULL (NULLIF)
-func (e DecimalExpr[T]) Nullif(value T) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.nullifExpr(value))
-}
-
-// Greatest 返回最大值 (GREATEST)
-func (e DecimalExpr[T]) Greatest(values ...any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.greatestExpr(values...))
-}
-
-// Least 返回最小值 (LEAST)
-func (e DecimalExpr[T]) Least(values ...any) DecimalExpr[T] {
-	return NewDecimalExpr[T](e.leastExpr(values...))
 }
 
 // ==================== 格式化 ====================

@@ -1,0 +1,239 @@
+//go:build ignore
+
+//go:generate go run gen1.go
+
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
+	"strings"
+	"text/template"
+)
+
+// MethodDef 方法定义
+type MethodDef struct {
+	Name       string   // 公开方法名 (首字母大写)
+	InnerName  string   // 内部方法名 (首字母小写+Expr后缀)
+	Comments   []string // 注释行
+	Params     string   // 参数列表 (如 "defaultValue any")
+	Args       string   // 调用参数 (如 "defaultValue")
+	ReturnSelf bool     // 是否返回自身类型
+}
+
+// TypeDef 类型定义
+type TypeDef struct {
+	Name        string // 类型名 (如 IntExpr)
+	TypeParam   string // 泛型参数 (如 [T])
+	Constructor string // 构造函数名
+	FileName    string // 对应的源文件名 (不含 .go 后缀)
+}
+
+// EmbeddedMethods 嵌入类型及其方法映射
+var embeddedMethods = map[string][]MethodDef{
+	"arithmeticSql": {
+		{Name: "Add", InnerName: "addExpr", Params: "value any", Args: "value", ReturnSelf: true},
+		{Name: "Sub", InnerName: "subExpr", Params: "value any", Args: "value", ReturnSelf: true},
+		{Name: "Mul", InnerName: "mulExpr", Params: "value any", Args: "value", ReturnSelf: true},
+		{Name: "Div", InnerName: "divExpr", Params: "value any", Args: "value", ReturnSelf: true},
+		{Name: "Neg", InnerName: "negExpr", Params: "", Args: "", ReturnSelf: true},
+		{Name: "Mod", InnerName: "modExpr", Params: "value any", Args: "value", ReturnSelf: true},
+	},
+	"mathFuncSql": {
+		{Name: "Abs", InnerName: "absExpr", Params: "", Args: "", ReturnSelf: true},
+		// Sign, Ceil, Floor 对于不同类型返回不同类型，不生成
+		{Name: "Round", InnerName: "roundExpr", Params: "decimals ...int", Args: "decimals...", ReturnSelf: true},
+		{Name: "Truncate", InnerName: "truncateExpr", Params: "decimals int", Args: "decimals", ReturnSelf: true},
+		// Pow 对于 IntExpr 返回 FloatExpr，单独处理
+		// Sqrt, Log, Log10, Log2, Exp 对于 IntExpr 返回 FloatExpr，不生成
+	},
+	// mathFuncPowSql 只用于 FloatExpr 和 DecimalExpr (返回自身类型)
+	"mathFuncPowSql": {
+		{Name: "Pow", InnerName: "powExpr", Params: "exponent float64", Args: "exponent", ReturnSelf: true},
+	},
+	"nullCondFuncSql": {
+		{Name: "IfNull", InnerName: "ifNullExpr", Params: "defaultValue any", Args: "defaultValue", ReturnSelf: true},
+		{Name: "Coalesce", InnerName: "coalesceExpr", Params: "values ...any", Args: "values...", ReturnSelf: true},
+		{Name: "Nullif", InnerName: "nullifExpr", Params: "value any", Args: "value", ReturnSelf: true},
+	},
+	"numericCondFuncSql": {
+		{Name: "Greatest", InnerName: "greatestExpr", Params: "values ...any", Args: "values...", ReturnSelf: true},
+		{Name: "Least", InnerName: "leastExpr", Params: "values ...any", Args: "values...", ReturnSelf: true},
+	},
+}
+
+// 类型配置
+var typeConfigs = []TypeDef{
+	{Name: "IntExpr", TypeParam: "[T]", Constructor: "NewIntExpr", FileName: "typed_int"},
+	{Name: "FloatExpr", TypeParam: "[T]", Constructor: "NewFloatExpr", FileName: "typed_float"},
+	{Name: "DecimalExpr", TypeParam: "[T]", Constructor: "NewDecimalExpr", FileName: "typed_decimal"},
+	{Name: "TextExpr", TypeParam: "[T]", Constructor: "NewTextExpr", FileName: "typed_text"},
+	{Name: "DateExpr", TypeParam: "[T]", Constructor: "NewDateExpr", FileName: "typed_datetime"},
+	{Name: "DateTimeExpr", TypeParam: "[T]", Constructor: "NewDateTimeExpr", FileName: "typed_datetime"},
+	{Name: "TimeExpr", TypeParam: "[T]", Constructor: "NewTimeExpr", FileName: "typed_datetime"},
+	{Name: "TimestampExpr", TypeParam: "[T]", Constructor: "NewTimestampExpr", FileName: "typed_datetime"},
+	{Name: "YearExpr", TypeParam: "[T]", Constructor: "NewYearExpr", FileName: "typed_datetime"},
+}
+
+// 类型嵌入的字段映射 (哪些类型嵌入了哪些字段)
+var typeEmbeddings = map[string][]string{
+	"IntExpr":       {"arithmeticSql", "mathFuncSql", "nullCondFuncSql", "numericCondFuncSql"},
+	"FloatExpr":     {"arithmeticSql", "mathFuncSql", "mathFuncPowSql", "nullCondFuncSql", "numericCondFuncSql"},
+	"DecimalExpr":   {"arithmeticSql", "mathFuncSql", "mathFuncPowSql", "nullCondFuncSql", "numericCondFuncSql"},
+	"TextExpr":      {"nullCondFuncSql"},
+	"DateExpr":      {"nullCondFuncSql"},
+	"DateTimeExpr":  {"nullCondFuncSql"},
+	"TimeExpr":      {"nullCondFuncSql"},
+	"TimestampExpr": {"nullCondFuncSql"},
+	"YearExpr":      {"nullCondFuncSql"},
+}
+
+const methodTemplate = `{{range .Comments}}
+// {{.}}{{end}}
+func (e {{.TypeName}}{{.TypeParam}}) {{.MethodName}}({{.Params}}) {{.ReturnType}} {
+	return {{.Constructor}}{{.TypeParam}}(e.{{.InnerName}}({{.Args}}))
+}
+`
+
+func main() {
+	// 解析源文件获取注释
+	comments := parseComments("typed_numeric_base.go")
+
+	// 为每个方法填充注释
+	for embType, methods := range embeddedMethods {
+		for i := range methods {
+			key := embType + "." + methods[i].InnerName
+			if c, ok := comments[key]; ok {
+				embeddedMethods[embType][i].Comments = c
+			}
+		}
+	}
+
+	tmpl := template.Must(template.New("method").Parse(methodTemplate))
+
+	// 按文件名分组类型
+	fileTypes := make(map[string][]TypeDef)
+	for _, typeDef := range typeConfigs {
+		fileTypes[typeDef.FileName] = append(fileTypes[typeDef.FileName], typeDef)
+	}
+
+	// 为每个文件生成代码
+	for fileName, types := range fileTypes {
+		var buf bytes.Buffer
+		buf.WriteString(`// Code generated by gen1.go; DO NOT EDIT.
+
+package fields
+
+`)
+
+		for _, typeDef := range types {
+			embeddings, ok := typeEmbeddings[typeDef.Name]
+			if !ok {
+				continue
+			}
+
+			fmt.Fprintf(&buf, "// ==================== %s 生成的方法 ====================\n", typeDef.Name)
+
+			for _, embType := range embeddings {
+				methods, ok := embeddedMethods[embType]
+				if !ok {
+					continue
+				}
+
+				for _, method := range methods {
+					returnType := typeDef.Name + typeDef.TypeParam
+					data := map[string]any{
+						"TypeName":    typeDef.Name,
+						"TypeParam":   typeDef.TypeParam,
+						"MethodName":  method.Name,
+						"Params":      method.Params,
+						"Args":        method.Args,
+						"ReturnType":  returnType,
+						"Constructor": typeDef.Constructor,
+						"InnerName":   method.InnerName,
+						"Comments":    method.Comments,
+					}
+					if err := tmpl.Execute(&buf, data); err != nil {
+						fmt.Fprintf(os.Stderr, "Error executing template: %v\n", err)
+						os.Exit(1)
+					}
+				}
+			}
+			buf.WriteString("\n")
+		}
+
+		// 写入文件
+		outputFile := fileName + "_generate.go"
+		if err := os.WriteFile(outputFile, buf.Bytes(), 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing file %s: %v\n", outputFile, err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Generated %s successfully\n", outputFile)
+	}
+
+	// 删除旧的 generate1.go 文件
+	if err := os.Remove("generate1.go"); err != nil && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Warning: failed to remove generate1.go: %v\n", err)
+	}
+}
+
+// parseComments 解析源文件中的方法注释
+func parseComments(filename string) map[string][]string {
+	result := make(map[string][]string)
+
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing file: %v\n", err)
+		return result
+	}
+
+	for _, decl := range node.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Recv == nil || len(fn.Recv.List) == 0 {
+			continue
+		}
+
+		// 获取接收者类型名
+		var recvType string
+		switch t := fn.Recv.List[0].Type.(type) {
+		case *ast.Ident:
+			recvType = t.Name
+		case *ast.StarExpr:
+			if ident, ok := t.X.(*ast.Ident); ok {
+				recvType = ident.Name
+			}
+		}
+
+		if recvType == "" {
+			continue
+		}
+
+		// 只处理我们关心的类型
+		if _, ok := embeddedMethods[recvType]; !ok {
+			continue
+		}
+
+		// 获取方法名
+		methodName := fn.Name.Name
+
+		// 获取注释
+		if fn.Doc != nil {
+			var comments []string
+			for _, c := range fn.Doc.List {
+				text := strings.TrimPrefix(c.Text, "//")
+				text = strings.TrimPrefix(text, " ")
+				comments = append(comments, text)
+			}
+			key := recvType + "." + methodName
+			result[key] = comments
+		}
+	}
+
+	return result
+}

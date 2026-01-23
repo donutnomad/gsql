@@ -20,7 +20,8 @@ type IntExpr[T any] struct {
 	pointerExprImpl
 	arithmeticSql
 	mathFuncSql
-	condFuncSql
+	nullCondFuncSql
+	numericCondFuncSql
 	castSql
 	formatSql
 	bitOpSql
@@ -32,7 +33,8 @@ func NewIntExpr[T any](expr clause.Expression) IntExpr[T] {
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
 		mathFuncSql:           mathFuncSql{Expression: expr},
-		condFuncSql:           condFuncSql{Expression: expr},
+		nullCondFuncSql:       nullCondFuncSql{Expression: expr},
+		numericCondFuncSql:    numericCondFuncSql{Expression: expr},
 		castSql:               castSql{Expression: expr},
 		formatSql:             formatSql{Expression: expr},
 		bitOpSql:              bitOpSql{Expression: expr},
@@ -54,56 +56,13 @@ func (e IntExpr[T]) As(alias string) field.IField {
 	return field.NewBaseFromSql(e.numericComparableImpl.Expression, alias)
 }
 
-// ==================== 算术运算 ====================
-
-// Add 加法 (+)
-// SELECT price + 100 FROM products;
-// SELECT users.age + 1 FROM users;
-func (e IntExpr[T]) Add(value any) IntExpr[T] {
-	return NewIntExpr[T](e.addExpr(value))
-}
-
-// Sub 减法 (-)
-// SELECT price - discount FROM products;
-// SELECT stock - sold FROM inventory;
-func (e IntExpr[T]) Sub(value any) IntExpr[T] {
-	return NewIntExpr[T](e.subExpr(value))
-}
-
-// Mul 乘法 (*)
-// SELECT price * quantity FROM order_items;
-// SELECT users.level * 10 as points FROM users;
-func (e IntExpr[T]) Mul(value any) IntExpr[T] {
-	return NewIntExpr[T](e.mulExpr(value))
-}
-
-// Div 除法 (/)
-// SELECT total / count FROM stats;
-// SELECT points / 100 as level FROM users;
-func (e IntExpr[T]) Div(value any) IntExpr[T] {
-	return NewIntExpr[T](e.divExpr(value))
-}
+// ==================== 算术运算 (特殊方法) ====================
 
 // IntDiv 整数除法 (DIV)
 // SELECT 10 DIV 3; -- 结果为 3
 // SELECT total DIV page_size as pages FROM posts;
 func (e IntExpr[T]) IntDiv(value any) IntExpr[T] {
 	return NewIntExpr[T](e.intDivExpr(value))
-}
-
-// Mod 取模 (MOD)
-// SELECT MOD(10, 3); -- 结果为 1
-// SELECT MOD(234, 10); -- 结果为 4
-// SELECT * FROM users WHERE MOD(id, 2) = 0; -- 偶数ID
-func (e IntExpr[T]) Mod(value any) IntExpr[T] {
-	return NewIntExpr[T](e.modExpr(value))
-}
-
-// Neg 取负 (-)
-// SELECT -price FROM products;
-// SELECT -balance FROM accounts;
-func (e IntExpr[T]) Neg() IntExpr[T] {
-	return NewIntExpr[T](e.negExpr())
 }
 
 // ==================== 位运算 ====================
@@ -138,16 +97,7 @@ func (e IntExpr[T]) RightShift(n int) IntExpr[T] {
 	return NewIntExpr[T](e.rightShiftExpr(n))
 }
 
-// ==================== 数学函数 ====================
-
-// Abs 返回数值的绝对值 (ABS)
-// SELECT ABS(-10); -- 结果为 10
-// SELECT ABS(10); -- 结果为 10
-// SELECT ABS(users.balance) FROM users;
-// SELECT * FROM transactions WHERE ABS(amount) > 1000;
-func (e IntExpr[T]) Abs() IntExpr[T] {
-	return NewIntExpr[T](e.absExpr())
-}
+// ==================== 数学函数 (特殊方法) ====================
 
 // Sign 返回数值的符号 (SIGN)：负数返回-1，零返回0，正数返回1
 // SELECT SIGN(-10); -- 结果为 -1
@@ -172,15 +122,6 @@ func (e IntExpr[T]) Ceil() IntExpr[T] {
 // SELECT FLOOR(price * 0.9) FROM products;
 func (e IntExpr[T]) Floor() IntExpr[T] {
 	return NewIntExpr[T](e.floorExpr())
-}
-
-// Round 四舍五入 (ROUND) 到指定小数位数，默认四舍五入到整数
-// SELECT ROUND(4.567); -- 结果为 5
-// SELECT ROUND(4.567, 2); -- 结果为 4.57
-// SELECT ROUND(price, 2) FROM products;
-// SELECT ROUND(123.456, -1); -- 结果为 120
-func (e IntExpr[T]) Round(decimals ...int) IntExpr[T] {
-	return NewIntExpr[T](e.roundExpr(decimals...))
 }
 
 // Pow 返回X的Y次幂 (POW)
@@ -261,33 +202,6 @@ func (e IntExpr[T]) Bin() TextExpr[string] {
 // Oct 转换为八进制字符串 (OCT)
 func (e IntExpr[T]) Oct() TextExpr[string] {
 	return NewTextExpr[string](e.octExpr())
-}
-
-// ==================== 条件函数 ====================
-
-// IfNull 如果为NULL则返回默认值 (IFNULL)
-func (e IntExpr[T]) IfNull(defaultValue T) IntExpr[T] {
-	return NewIntExpr[T](e.ifNullExpr(defaultValue))
-}
-
-// Coalesce 返回第一个非NULL值 (COALESCE)
-func (e IntExpr[T]) Coalesce(values ...any) IntExpr[T] {
-	return NewIntExpr[T](e.coalesceExpr(values...))
-}
-
-// Nullif 如果两个值相等则返回NULL (NULLIF)
-func (e IntExpr[T]) Nullif(value T) IntExpr[T] {
-	return NewIntExpr[T](e.nullifExpr(value))
-}
-
-// Greatest 返回最大值 (GREATEST)
-func (e IntExpr[T]) Greatest(values ...any) IntExpr[T] {
-	return NewIntExpr[T](e.greatestExpr(values...))
-}
-
-// Least 返回最小值 (LEAST)
-func (e IntExpr[T]) Least(values ...any) IntExpr[T] {
-	return NewIntExpr[T](e.leastExpr(values...))
 }
 
 // ==================== 聚合函数 ====================

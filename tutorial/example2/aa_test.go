@@ -386,11 +386,10 @@ func TestD(t *testing.T) {
 
 		spew.Dump(gsql.SelectG[TmpRet2](
 			gsql.IF(u.Name.Eq("bb"), gsql.Lit("Big"), u.Name).AsF("name"),
-			gsql.UUID().As("uuid"),
-			gsql.NOW().AsF("now"),
-			gsql.UNIX_TIMESTAMP().As("now2"),
-			//gsql.FROM_UNIXTIME(gsql.Expr("? + 3600", u.Age)).AsF("now3"),
-			gsql.FROM_UNIXTIME(gsql.Lit(1222222)).AsF("now3"),
+			gsql.Sys.UUID().As("uuid"),
+			gsql.Sys.Now().As("now"),
+			gsql.Sys.UnixTimestamp().As("now2"),
+			gsql.NewTimestampExpr[int64](gsql.Lit(1222222)).ToDateTime().As("now3"),
 		).From(u).Find(db),
 		)
 

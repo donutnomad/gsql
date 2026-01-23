@@ -20,7 +20,8 @@ type FloatExpr[T any] struct {
 	pointerExprImpl
 	arithmeticSql
 	mathFuncSql
-	condFuncSql
+	nullCondFuncSql
+	numericCondFuncSql
 	castSql
 	formatSql
 	trigFuncSql
@@ -33,7 +34,8 @@ func NewFloatExpr[T any](expr clause.Expression) FloatExpr[T] {
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
 		mathFuncSql:           mathFuncSql{Expression: expr},
-		condFuncSql:           condFuncSql{Expression: expr},
+		nullCondFuncSql:       nullCondFuncSql{Expression: expr},
+		numericCondFuncSql:    numericCondFuncSql{Expression: expr},
 		castSql:               castSql{Expression: expr},
 		formatSql:             formatSql{Expression: expr},
 		trigFuncSql:           trigFuncSql{Expression: expr},
@@ -55,52 +57,7 @@ func (e FloatExpr[T]) As(alias string) field.IField {
 	return field.NewBaseFromSql(e.numericComparableImpl.Expression, alias)
 }
 
-// ==================== 算术运算 ====================
-
-// Add 加法 (+)
-// SELECT price + 100 FROM products;
-// SELECT users.balance + deposit FROM users;
-func (e FloatExpr[T]) Add(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.addExpr(value))
-}
-
-// Sub 减法 (-)
-// SELECT price - discount FROM products;
-// SELECT balance - withdrawal FROM accounts;
-func (e FloatExpr[T]) Sub(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.subExpr(value))
-}
-
-// Mul 乘法 (*)
-// SELECT price * quantity FROM order_items;
-// SELECT rate * hours as total FROM timesheets;
-func (e FloatExpr[T]) Mul(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.mulExpr(value))
-}
-
-// Div 除法 (/)
-// SELECT total / count FROM stats;
-// SELECT amount / rate as quantity FROM orders;
-func (e FloatExpr[T]) Div(value any) FloatExpr[T] {
-	return NewFloatExpr[T](e.divExpr(value))
-}
-
-// Neg 取负 (-)
-// SELECT -price FROM products;
-// SELECT -balance FROM accounts;
-func (e FloatExpr[T]) Neg() FloatExpr[T] {
-	return NewFloatExpr[T](e.negExpr())
-}
-
-// ==================== 数学函数 ====================
-
-// Abs 返回数值的绝对值 (ABS)
-// SELECT ABS(-10.5); -- 结果为 10.5
-// SELECT ABS(users.balance) FROM users;
-// SELECT * FROM transactions WHERE ABS(amount) > 1000;
-func (e FloatExpr[T]) Abs() FloatExpr[T] {
-	return NewFloatExpr[T](e.absExpr())
-}
+// ==================== 数学函数 (特殊方法) ====================
 
 // Sign 返回数值的符号 (SIGN)：负数返回-1，零返回0，正数返回1
 // SELECT SIGN(-10.5); -- 结果为 -1
@@ -124,33 +81,6 @@ func (e FloatExpr[T]) Ceil() IntExpr[int64] {
 // SELECT FLOOR(price * 0.9) FROM products;
 func (e FloatExpr[T]) Floor() IntExpr[int64] {
 	return NewIntExpr[int64](e.floorExpr())
-}
-
-// Round 四舍五入 (ROUND) 到指定小数位数，默认四舍五入到整数
-// SELECT ROUND(4.567); -- 结果为 5
-// SELECT ROUND(4.567, 2); -- 结果为 4.57
-// SELECT ROUND(price, 2) FROM products;
-// SELECT ROUND(123.456, -1); -- 结果为 120
-func (e FloatExpr[T]) Round(decimals ...int) FloatExpr[T] {
-	return NewFloatExpr[T](e.roundExpr(decimals...))
-}
-
-// Truncate 截断数值到指定小数位数 (TRUNCATE)，不进行四舍五入
-// SELECT TRUNCATE(4.567, 2); -- 结果为 4.56
-// SELECT TRUNCATE(4.567, 0); -- 结果为 4
-// SELECT TRUNCATE(123.456, -1); -- 结果为 120
-// SELECT TRUNCATE(price, 2) FROM products;
-func (e FloatExpr[T]) Truncate(decimals int) FloatExpr[T] {
-	return NewFloatExpr[T](e.truncateExpr(decimals))
-}
-
-// Pow 返回X的Y次幂 (POW)
-// SELECT POW(2, 3); -- 结果为 8
-// SELECT POW(10, 2); -- 结果为 100
-// SELECT POW(5, -1); -- 结果为 0.2
-// SELECT SQRT(POW(x2 - x1, 2) + POW(y2 - y1, 2)) as distance FROM points;
-func (e FloatExpr[T]) Pow(exponent float64) FloatExpr[T] {
-	return NewFloatExpr[T](e.powExpr(exponent))
 }
 
 // Sqrt 返回X的平方根 (SQRT)，X必须为非负数
@@ -248,33 +178,6 @@ func (e FloatExpr[T]) CastDecimal(precision, scale int) DecimalExpr[float64] {
 // CastChar 转换为字符串 (CAST AS CHAR)
 func (e FloatExpr[T]) CastChar(length ...int) TextExpr[string] {
 	return NewTextExpr[string](e.castCharExpr(length...))
-}
-
-// ==================== 条件函数 ====================
-
-// IfNull 如果为NULL则返回默认值 (IFNULL)
-func (e FloatExpr[T]) IfNull(defaultValue T) FloatExpr[T] {
-	return NewFloatExpr[T](e.ifNullExpr(defaultValue))
-}
-
-// Coalesce 返回第一个非NULL值 (COALESCE)
-func (e FloatExpr[T]) Coalesce(values ...any) FloatExpr[T] {
-	return NewFloatExpr[T](e.coalesceExpr(values...))
-}
-
-// Nullif 如果两个值相等则返回NULL (NULLIF)
-func (e FloatExpr[T]) Nullif(value T) FloatExpr[T] {
-	return NewFloatExpr[T](e.nullifExpr(value))
-}
-
-// Greatest 返回最大值 (GREATEST)
-func (e FloatExpr[T]) Greatest(values ...any) FloatExpr[T] {
-	return NewFloatExpr[T](e.greatestExpr(values...))
-}
-
-// Least 返回最小值 (LEAST)
-func (e FloatExpr[T]) Least(values ...any) FloatExpr[T] {
-	return NewFloatExpr[T](e.leastExpr(values...))
 }
 
 // ==================== 格式化 ====================

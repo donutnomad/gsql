@@ -159,26 +159,50 @@ type arithmeticSql struct {
 	clause.Expression
 }
 
+// Add 加法 (+)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price + 100 FROM products;
+// SELECT users.age + 1 FROM users;
 func (a arithmeticSql) addExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? + ?", Vars: []any{a.Expression, value}}
 }
 
+// Sub 减法 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price - discount FROM products;
+// SELECT stock - sold FROM inventory;
 func (a arithmeticSql) subExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? - ?", Vars: []any{a.Expression, value}}
 }
 
+// Mul 乘法 (*)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price * quantity FROM order_items;
+// SELECT users.level * 10 as points FROM users;
 func (a arithmeticSql) mulExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? * ?", Vars: []any{a.Expression, value}}
 }
 
+// Div 除法 (/)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT total / count FROM stats;
+// SELECT points / 100 as level FROM users;
 func (a arithmeticSql) divExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? / ?", Vars: []any{a.Expression, value}}
 }
 
+// Neg 取负 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT -price FROM products;
 func (a arithmeticSql) negExpr() clause.Expr {
 	return clause.Expr{SQL: "-?", Vars: []any{a.Expression}}
 }
 
+// Mod 取模 (MOD)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 % 操作符)
+// SELECT MOD(10, 3); -- 结果为 1
+// SELECT MOD(234, 10); -- 结果为 4
+// SELECT * FROM users WHERE MOD(id, 2) = 0; -- 偶数ID
 func (a arithmeticSql) modExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "? MOD ?", Vars: []any{a.Expression, value}}
 }
@@ -190,22 +214,43 @@ type mathFuncSql struct {
 	clause.Expression
 }
 
+// Abs 返回绝对值 (ABS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ABS(-10); -- 结果为 10
+// SELECT ABS(price - cost) FROM products;
 func (m mathFuncSql) absExpr() clause.Expr {
 	return clause.Expr{SQL: "ABS(?)", Vars: []any{m.Expression}}
 }
 
+// Sign 返回符号 (SIGN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIGN(-10); -- 结果为 -1
+// SELECT SIGN(0); -- 结果为 0
+// SELECT SIGN(10); -- 结果为 1
 func (m mathFuncSql) signExpr() clause.Expr {
 	return clause.Expr{SQL: "SIGN(?)", Vars: []any{m.Expression}}
 }
 
+// Ceil 向上取整 (CEIL)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT CEIL(1.5); -- 结果为 2
+// SELECT CEIL(-1.5); -- 结果为 -1
 func (m mathFuncSql) ceilExpr() clause.Expr {
 	return clause.Expr{SQL: "CEIL(?)", Vars: []any{m.Expression}}
 }
 
+// Floor 向下取整 (FLOOR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT FLOOR(1.5); -- 结果为 1
+// SELECT FLOOR(-1.5); -- 结果为 -2
 func (m mathFuncSql) floorExpr() clause.Expr {
 	return clause.Expr{SQL: "FLOOR(?)", Vars: []any{m.Expression}}
 }
 
+// Round 四舍五入 (ROUND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ROUND(1.567); -- 结果为 2
+// SELECT ROUND(1.567, 2); -- 结果为 1.57
 func (m mathFuncSql) roundExpr(decimals ...int) clause.Expr {
 	if len(decimals) > 0 {
 		return clause.Expr{SQL: "ROUND(?, ?)", Vars: []any{m.Expression, decimals[0]}}
@@ -213,46 +258,79 @@ func (m mathFuncSql) roundExpr(decimals ...int) clause.Expr {
 	return clause.Expr{SQL: "ROUND(?)", Vars: []any{m.Expression}}
 }
 
+// Truncate 截断小数 (TRUNCATE)
+// 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
+// SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
+// SELECT TRUNCATE(1.567, 0); -- 结果为 1
 func (m mathFuncSql) truncateExpr(decimals int) clause.Expr {
 	return clause.Expr{SQL: "TRUNCATE(?, ?)", Vars: []any{m.Expression, decimals}}
 }
 
+// Pow 幂运算 (POW)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT POW(2, 3); -- 结果为 8
+// SELECT POW(price, 2) FROM products;
 func (m mathFuncSql) powExpr(exponent float64) clause.Expr {
 	return clause.Expr{SQL: "POW(?, ?)", Vars: []any{m.Expression, exponent}}
 }
 
+// Sqrt 平方根 (SQRT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SQRT(16); -- 结果为 4
+// SELECT SQRT(variance) FROM stats;
 func (m mathFuncSql) sqrtExpr() clause.Expr {
 	return clause.Expr{SQL: "SQRT(?)", Vars: []any{m.Expression}}
 }
 
+// Log 自然对数 (LOG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG(10); -- 结果为 2.302585...
 func (m mathFuncSql) logExpr() clause.Expr {
 	return clause.Expr{SQL: "LOG(?)", Vars: []any{m.Expression}}
 }
 
+// Log10 以10为底的对数 (LOG10)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG10(100); -- 结果为 2
 func (m mathFuncSql) log10Expr() clause.Expr {
 	return clause.Expr{SQL: "LOG10(?)", Vars: []any{m.Expression}}
 }
 
+// Log2 以2为底的对数 (LOG2)
+// 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
+// SELECT LOG2(8); -- 结果为 3
 func (m mathFuncSql) log2Expr() clause.Expr {
 	return clause.Expr{SQL: "LOG2(?)", Vars: []any{m.Expression}}
 }
 
+// Exp 指数函数 (EXP)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT EXP(1); -- 结果为 2.718281828...
 func (m mathFuncSql) expExpr() clause.Expr {
 	return clause.Expr{SQL: "EXP(?)", Vars: []any{m.Expression}}
 }
 
 // ==================== 条件函数的 SQL 生成 ====================
 
-// condFuncSql 生成条件函数的 SQL 表达式
-type condFuncSql struct {
+// nullCondFuncSql 生成空值处理函数的 SQL 表达式
+// 适用于所有类型（包括 TextExpr）
+type nullCondFuncSql struct {
 	clause.Expression
 }
 
-func (c condFuncSql) ifNullExpr(defaultValue any) clause.Expr {
+// IfNull 如果表达式为NULL则返回默认值 (IFNULL)
+// 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
+// SELECT IFNULL(nickname, 'Anonymous') FROM users;
+//
+// Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
+func (c nullCondFuncSql) ifNullExpr(defaultValue any) clause.Expr {
 	return clause.Expr{SQL: "IFNULL(?, ?)", Vars: []any{c.Expression, defaultValue}}
 }
 
-func (c condFuncSql) coalesceExpr(values ...any) clause.Expr {
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (c nullCondFuncSql) coalesceExpr(values ...any) clause.Expr {
 	allArgs := []any{c.Expression}
 	placeholders := "?"
 	for _, v := range values {
@@ -262,11 +340,24 @@ func (c condFuncSql) coalesceExpr(values ...any) clause.Expr {
 	return clause.Expr{SQL: "COALESCE(" + placeholders + ")", Vars: allArgs}
 }
 
-func (c condFuncSql) nullifExpr(value any) clause.Expr {
+// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, '') FROM users; -- 空字符串转为NULL
+func (c nullCondFuncSql) nullifExpr(value any) clause.Expr {
 	return clause.Expr{SQL: "NULLIF(?, ?)", Vars: []any{c.Expression, value}}
 }
 
-func (c condFuncSql) greatestExpr(values ...any) clause.Expr {
+// numericCondFuncSql 生成数值比较函数的 SQL 表达式
+// 仅适用于数值类型（IntExpr, FloatExpr, DecimalExpr）
+type numericCondFuncSql struct {
+	clause.Expression
+}
+
+// Greatest 返回参数列表中的最大值 (GREATEST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT GREATEST(10, 20, 30); -- 返回 30
+// SELECT GREATEST(price, min_price) FROM products;
+func (c numericCondFuncSql) greatestExpr(values ...any) clause.Expr {
 	allArgs := []any{c.Expression}
 	placeholders := "?"
 	for _, v := range values {
@@ -276,7 +367,11 @@ func (c condFuncSql) greatestExpr(values ...any) clause.Expr {
 	return clause.Expr{SQL: "GREATEST(" + placeholders + ")", Vars: allArgs}
 }
 
-func (c condFuncSql) leastExpr(values ...any) clause.Expr {
+// Least 返回参数列表中的最小值 (LEAST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT LEAST(10, 20, 30); -- 返回 10
+// SELECT LEAST(price, max_price) FROM products;
+func (c numericCondFuncSql) leastExpr(values ...any) clause.Expr {
 	allArgs := []any{c.Expression}
 	placeholders := "?"
 	for _, v := range values {

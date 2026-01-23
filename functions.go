@@ -75,6 +75,7 @@ var Null field.ExpressionTo = ExprTo{clause.Expr{
 }}
 
 // RAND 返回0到1之间的随机浮点数，可选种子参数
+// 数据库支持: MySQL
 // SELECT RAND();
 // SELECT RAND() * 100;
 // SELECT RAND(123);
@@ -86,6 +87,7 @@ func RAND() fields.FloatExpr[float64] {
 // ==================== 聚合函数 ====================
 
 // COUNT 计算行数或非NULL值的数量，不提供参数时统计所有行（包括NULL）
+// 数据库支持: MySQL, PostgreSQL, SQLite
 // 返回 IntExpr，支持 .Gt(), .Lt(), .Eq() 等比较操作
 // 示例:
 //
@@ -103,6 +105,7 @@ func COUNT(expr ...field.IField) fields.IntExpr[int64] {
 }
 
 // COUNT_DISTINCT 计算不重复的非NULL值的数量
+// 数据库支持: MySQL, PostgreSQL, SQLite
 // 返回 IntExpr，支持比较操作
 // 示例:
 //
@@ -116,6 +119,7 @@ func COUNT_DISTINCT(expr field.IField) fields.IntExpr[int64] {
 }
 
 // GROUP_CONCAT 将分组内的字符串连接起来，默认用逗号分隔，可指定分隔符
+// 数据库支持: MySQL (PostgreSQL 使用 STRING_AGG, SQLite 支持 GROUP_CONCAT 但语法略有不同)
 // SELECT GROUP_CONCAT(name) FROM users;
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
 // SELECT user_id, GROUP_CONCAT(product_name) FROM orders GROUP BY user_id;
@@ -137,6 +141,7 @@ func GROUP_CONCAT(expr field.Expression, separator ...string) fields.TextExpr[st
 // ==================== 流程控制函数 ====================
 
 // IF 条件判断函数，如果条件为真返回第一个值，否则返回第二个值
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 CASE WHEN 替代)
 // SELECT IF(score >= 60, '及格', '不及格') FROM students;
 // SELECT IF(stock > 0, 'In Stock', 'Out of Stock') FROM products;
 // SELECT name, IF(age >= 18, '成年', '未成年') FROM users;
@@ -149,10 +154,15 @@ func IF(condition, valueIfTrue, valueIfFalse field.Expression) field.ExpressionT
 }
 
 // IFNULL 如果第一个表达式不为NULL则返回它，否则返回第二个表达式
+// 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, username) FROM users;
 // SELECT IFNULL(discount, 0) FROM products;
 // SELECT IFNULL(email, 'no-email') FROM contacts;
 // SELECT name, IFNULL(phone, 'N/A') FROM users;
+//
+// Deprecated: 建议使用 COALESCE 替代 IFNULL，语法为 COALESCE(expr1, expr2, ...)
+// COALESCE 是 SQL 标准函数，所有主流数据库都支持，且可接受多个参数，返回参数列表中第一个非 NULL 的值。
+// 示例: field.Coalesce(defaultValue) 或直接使用 SQL: COALESCE(nickname, username, 'Anonymous')
 func IFNULL(expr1, expr2 any) field.ExpressionTo {
 	return ExprTo{clause.Expr{
 		SQL:  "IFNULL(?, ?)",
@@ -161,9 +171,10 @@ func IFNULL(expr1, expr2 any) field.ExpressionTo {
 }
 
 // NULLIF 如果两个表达式相等则返回NULL，否则返回第一个表达式
+// 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(10, 10);
 // SELECT NULLIF(10, 5);
-// SELECT NULLIF(username, ”) FROM users;
+// SELECT NULLIF(username, ") FROM users;
 // SELECT 100 / NULLIF(quantity, 0) FROM inventory;
 func NULLIF(expr1, expr2 any) field.ExpressionTo {
 	return ExprTo{clause.Expr{
@@ -175,6 +186,7 @@ func NULLIF(expr1, expr2 any) field.ExpressionTo {
 // ==================== 类型转换函数 ====================
 
 // CAST 将表达式转换为指定的数据类型
+// 数据库支持: MySQL, PostgreSQL, SQLite (语法通用，但支持的类型因数据库而异)
 // SELECT CAST('123' AS UNSIGNED);
 // SELECT CAST('2023-10-26' AS DATE);
 // SELECT CAST(price AS CHAR) FROM products;
@@ -192,6 +204,7 @@ func CAST(expr field.Expression, dataType string) field.ExpressionTo {
 }
 
 // CONVERT 将表达式转换为指定的数据类型或字符集
+// 数据库支持: MySQL (PostgreSQL 使用 CAST 或 :: 操作符)
 // 语法1: CONVERT(expr, type) - 类型转换，与CAST类似
 // SELECT CONVERT('123', UNSIGNED);
 // SELECT CONVERT('2023-10-26', DATE);
@@ -211,6 +224,7 @@ func CONVERT(expr field.Expression, dataType string) field.ExpressionTo {
 }
 
 // CONVERT_CHARSET 将表达式转换为指定的字符集
+// 数据库支持: MySQL
 // SELECT CONVERT(name USING utf8mb4) FROM users;
 // SELECT CONVERT(content USING latin1) FROM articles;
 // SELECT CONVERT(description USING gbk) FROM products;
@@ -227,51 +241,4 @@ func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
 		SQL:  fmt.Sprintf("CONVERT(? USING %s)", charset),
 		Vars: []any{expr},
 	}}
-}
-
-// ==================== 其它常用函数 ====================
-
-// DATABASE 返回当前使用的数据库名，如果未选择数据库则返回NULL
-// SELECT DATABASE();
-// INSERT INTO logs (db_name) VALUES (DATABASE());
-// SELECT DATABASE() as current_db;
-// SELECT * FROM information_schema.tables WHERE table_schema = DATABASE();
-func DATABASE() fields.TextExpr[string] {
-	return fields.NewTextExpr[string](clause.Expr{SQL: "DATABASE()"})
-}
-
-// USER 返回当前MySQL用户名和主机名，格式为 'user@host'
-// SELECT USER();
-// INSERT INTO audit_logs (user) VALUES (USER());
-// SELECT USER() as current_user;
-// SELECT * FROM connections WHERE user = USER();
-func USER() fields.TextExpr[string] {
-	return fields.NewTextExpr[string](clause.Expr{SQL: "USER()"})
-}
-
-// CURRENT_USER 返回当前MySQL用户名和主机名，与USER()相同
-// SELECT CURRENT_USER();
-// SELECT CURRENT_USER;
-// INSERT INTO access_logs (accessed_by) VALUES (CURRENT_USER());
-// SELECT CURRENT_USER() as authenticated_user;
-func CURRENT_USER() fields.TextExpr[string] {
-	return fields.NewTextExpr[string](clause.Expr{SQL: "CURRENT_USER()"})
-}
-
-// VERSION 返回MySQL服务器的版本号
-// SELECT VERSION();
-// SELECT VERSION() as mysql_version;
-// INSERT INTO system_info (version) VALUES (VERSION());
-// SELECT IF(VERSION() LIKE '8.%', 'MySQL 8', 'Older') as version_check;
-func VERSION() fields.TextExpr[string] {
-	return fields.NewTextExpr[string](clause.Expr{SQL: "VERSION()"})
-}
-
-// UUID 生成一个符合RFC 4122标准的通用唯一标识符（36字符的字符串）
-// SELECT UUID();
-// INSERT INTO records (id) VALUES (UUID());
-// SELECT UUID() as unique_id;
-// UPDATE sessions SET session_id = UUID() WHERE session_id IS NULL;
-func UUID() fields.TextExpr[string] {
-	return fields.NewTextExpr[string](clause.Expr{SQL: "UUID()"})
 }

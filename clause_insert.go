@@ -46,15 +46,3 @@ func (e rowValueExpr) Build(builder clause.Builder) {
 	builder.WriteByte('.')
 	builder.WriteQuoted(e.field.Name())
 }
-
-// VALUES 返回 INSERT 语句中指定列的值，用于 ON DUPLICATE KEY UPDATE 子句
-// Deprecated: 请使用 RowValue 替代，它会根据 MySQL 版本自动选择正确的语法
-func VALUES(f field.IField) field.ExpressionTo {
-	return RowValue(f)
-}
-
-// InsertValue 返回 INSERT 语句中要插入的行值
-// Deprecated: 请使用 RowValue 替代，命名更清晰
-func InsertValue(f field.IField) field.ExpressionTo {
-	return RowValue(f)
-}

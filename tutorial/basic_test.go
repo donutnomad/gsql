@@ -1042,7 +1042,7 @@ func TestFunc_FlowControl(t *testing.T) {
 		}
 		err := gsql.Select(
 			p.Name,
-			gsql.IFNULL(p.Description.ToExpr(), gsql.Lit("No description")).AsF("desc"),
+			p.Description.Coalesce(gsql.Lit("No description")).As("desc"),
 		).
 			From(&p).
 			Where(p.Name.In("With Desc", "No Desc")).

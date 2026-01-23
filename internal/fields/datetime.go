@@ -55,6 +55,7 @@ var _ clause.Expression = (*DateExpr[string])(nil)
 type DateExpr[T any] struct {
 	baseComparableImpl[T]
 	pointerExprImpl
+	nullCondFuncSql
 	castSql
 }
 
@@ -63,6 +64,7 @@ func NewDateExpr[T any](expr clause.Expression) DateExpr[T] {
 	return DateExpr[T]{
 		baseComparableImpl: baseComparableImpl[T]{Expression: expr},
 		pointerExprImpl:    pointerExprImpl{Expression: expr},
+		nullCondFuncSql:    nullCondFuncSql{Expression: expr},
 		castSql:            castSql{Expression: expr},
 	}
 }
@@ -297,6 +299,7 @@ var _ clause.Expression = (*DateTimeExpr[string])(nil)
 type DateTimeExpr[T any] struct {
 	baseComparableImpl[T]
 	pointerExprImpl
+	nullCondFuncSql
 	castSql
 }
 
@@ -305,6 +308,7 @@ func NewDateTimeExpr[T any](expr clause.Expression) DateTimeExpr[T] {
 	return DateTimeExpr[T]{
 		baseComparableImpl: baseComparableImpl[T]{Expression: expr},
 		pointerExprImpl:    pointerExprImpl{Expression: expr},
+		nullCondFuncSql:    nullCondFuncSql{Expression: expr},
 		castSql:            castSql{Expression: expr},
 	}
 }
@@ -608,6 +612,7 @@ var _ clause.Expression = (*TimeExpr[string])(nil)
 type TimeExpr[T any] struct {
 	baseComparableImpl[T]
 	pointerExprImpl
+	nullCondFuncSql
 	castSql
 }
 
@@ -616,6 +621,7 @@ func NewTimeExpr[T any](expr clause.Expression) TimeExpr[T] {
 	return TimeExpr[T]{
 		baseComparableImpl: baseComparableImpl[T]{Expression: expr},
 		pointerExprImpl:    pointerExprImpl{Expression: expr},
+		nullCondFuncSql:    nullCondFuncSql{Expression: expr},
 		castSql:            castSql{Expression: expr},
 	}
 }
@@ -787,6 +793,7 @@ var _ clause.Expression = (*TimestampExpr[int64])(nil)
 type TimestampExpr[T any] struct {
 	baseComparableImpl[T]
 	pointerExprImpl
+	nullCondFuncSql
 	castSql
 }
 
@@ -795,6 +802,7 @@ func NewTimestampExpr[T any](expr clause.Expression) TimestampExpr[T] {
 	return TimestampExpr[T]{
 		baseComparableImpl: baseComparableImpl[T]{Expression: expr},
 		pointerExprImpl:    pointerExprImpl{Expression: expr},
+		nullCondFuncSql:    nullCondFuncSql{Expression: expr},
 		castSql:            castSql{Expression: expr},
 	}
 }
@@ -1038,6 +1046,17 @@ func (e TimestampExpr[T]) UnixTimestamp() IntExpr[int64] {
 	})
 }
 
+// ToDateTime 将Unix时间戳转换为DATETIME类型 (FROM_UNIXTIME)
+// SELECT FROM_UNIXTIME(1698306600);
+// SELECT FROM_UNIXTIME(users.created_at);
+// SELECT FROM_UNIXTIME(users.created_at).Format('%Y年%m月%d日');
+func (e TimestampExpr[T]) ToDateTime() DateTimeExpr[string] {
+	return NewDateTimeExpr[string](clause.Expr{
+		SQL:  "FROM_UNIXTIME(?)",
+		Vars: []any{e.baseComparableImpl.Expression},
+	})
+}
+
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
@@ -1095,6 +1114,7 @@ var _ clause.Expression = (*YearExpr[int64])(nil)
 type YearExpr[T any] struct {
 	numericComparableImpl[T]
 	pointerExprImpl
+	nullCondFuncSql
 	castSql
 }
 
@@ -1103,6 +1123,7 @@ func NewYearExpr[T any](expr clause.Expression) YearExpr[T] {
 	return YearExpr[T]{
 		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
+		nullCondFuncSql:       nullCondFuncSql{Expression: expr},
 		castSql:               castSql{Expression: expr},
 	}
 }
