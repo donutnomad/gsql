@@ -224,20 +224,6 @@ func TestIntExprT_Floor(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestIntExprT_Round(t *testing.T) {
-	expr := NewIntExpr[int](clause.Expr{SQL: "score", Vars: nil})
-
-	result := expr.Round()
-	e := result.Gte(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
-
-	result2 := expr.Round(2)
-	e2 := result2.Gte(0)
-	_, ok = e2.(clause.Expr)
-	assert.True(t, ok)
-}
-
 func TestIntExprT_Pow(t *testing.T) {
 	expr := NewIntExpr[int](clause.Expr{SQL: "base", Vars: nil})
 	result := expr.Pow(2)
@@ -354,9 +340,9 @@ func TestIntExprT_Coalesce(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestIntExprT_Nullif(t *testing.T) {
+func TestIntExprT_NullIf(t *testing.T) {
 	expr := NewIntExpr[int](clause.Expr{SQL: "score", Vars: nil})
-	result := expr.Nullif(0)
+	result := expr.NullIf(0)
 
 	e := result.IsNull()
 	_, ok := e.(clause.Expr)

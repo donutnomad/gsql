@@ -93,16 +93,16 @@ func (e FloatExpr[T]) Sign() IntExpr[int8] {
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT CEIL(1.5); -- 结果为 2
 // SELECT CEIL(-1.5); -- 结果为 -1
-func (e FloatExpr[T]) Ceil() FloatExpr[T] {
-	return NewFloatExpr[T](e.ceilExpr())
+func (e FloatExpr[T]) Ceil() IntExpr[int64] {
+	return NewIntExpr[int64](e.ceilExpr())
 }
 
 // Floor 向下取整 (FLOOR)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT FLOOR(1.5); -- 结果为 1
 // SELECT FLOOR(-1.5); -- 结果为 -2
-func (e FloatExpr[T]) Floor() FloatExpr[T] {
-	return NewFloatExpr[T](e.floorExpr())
+func (e FloatExpr[T]) Floor() IntExpr[int64] {
+	return NewIntExpr[int64](e.floorExpr())
 }
 
 // Round 四舍五入 (ROUND)
@@ -180,10 +180,10 @@ func (e FloatExpr[T]) Coalesce(values ...any) FloatExpr[T] {
 	return NewFloatExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e FloatExpr[T]) Nullif(value any) FloatExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e FloatExpr[T]) NullIf(value any) FloatExpr[T] {
 	return NewFloatExpr[T](e.nullifExpr(value))
 }
 

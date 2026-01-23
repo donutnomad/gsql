@@ -39,19 +39,11 @@ func (e DateTimeExpr[T]) Coalesce(values ...any) DateTimeExpr[T] {
 	return NewDateTimeExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e DateTimeExpr[T]) Nullif(value any) DateTimeExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e DateTimeExpr[T]) NullIf(value any) DateTimeExpr[T] {
 	return NewDateTimeExpr[T](e.nullifExpr(value))
-}
-
-// Sum 计算数值的总和 (SUM)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT SUM(quantity) FROM orders;
-// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-func (e DateTimeExpr[T]) Sum() DateTimeExpr[T] {
-	return NewDateTimeExpr[T](e.sumExpr())
 }
 
 // Avg 计算数值的平均值 (AVG)
@@ -141,6 +133,34 @@ func (e DateTimeExpr[T]) Quarter() IntExpr[int] {
 	return NewIntExpr[int](e.quarterExpr())
 }
 
+// LastDay 返回指定日期所在月份的最后一天 (LAST_DAY)
+// 数据库支持: MySQL
+// SELECT LAST_DAY('2024-02-15'); -- 返回 '2024-02-29'
+func (e DateTimeExpr[T]) LastDay() DateExpr[string] {
+	return NewDateExpr[string](e.lastDayExpr())
+}
+
+// DayName 返回日期的星期名称 (DAYNAME)
+// 数据库支持: MySQL
+// SELECT DAYNAME('2024-01-15'); -- 返回 'Monday'
+func (e DateTimeExpr[T]) DayName() TextExpr[string] {
+	return NewTextExpr[string](e.dayNameExpr())
+}
+
+// MonthName 返回日期的月份名称 (MONTHNAME)
+// 数据库支持: MySQL
+// SELECT MONTHNAME('2024-01-15'); -- 返回 'January'
+func (e DateTimeExpr[T]) MonthName() TextExpr[string] {
+	return NewTextExpr[string](e.monthNameExpr())
+}
+
+// ToDays 将日期转换为天数（从公元0年开始）(TO_DAYS)
+// 数据库支持: MySQL
+// SELECT TO_DAYS('2024-01-15'); -- 返回 739259
+func (e DateTimeExpr[T]) ToDays() IntExpr[int] {
+	return NewIntExpr[int](e.toDaysExpr())
+}
+
 // Hour 提取小时部分 (HOUR)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-23
@@ -167,6 +187,13 @@ func (e DateTimeExpr[T]) Second() IntExpr[int] {
 // 范围: 0-999999
 func (e DateTimeExpr[T]) Microsecond() IntExpr[int] {
 	return NewIntExpr[int](e.microsecondExpr())
+}
+
+// TimeToSec 将时间转换为秒数 (TIME_TO_SEC)
+// 数据库支持: MySQL
+// SELECT TIME_TO_SEC('01:30:00'); -- 返回 5400
+func (e DateTimeExpr[T]) TimeToSec() IntExpr[int] {
+	return NewIntExpr[int](e.timeToSecExpr())
 }
 
 // AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)

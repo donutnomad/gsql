@@ -71,7 +71,7 @@ func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange
 		var left = fieldComparable.ToExpr()
 		var right clause.Expression = gsql.Lit(*value)
 		if fieldIsTimeStruct {
-			right = gsql.NewTimestampExpr[int64](right).ToDateTime()
+			right = gsql.NewIntExpr[int64](right).ToDateTime()
 		}
 		return gsql.Expr("? "+op+" ?", left, right)
 	}
@@ -82,7 +82,7 @@ func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange
 		var left = fieldComparable.ToExpr()
 		var right = value
 		if !fieldIsTimeStruct {
-			left = gsql.NewTimestampExpr[int64](left).ToDateTime()
+			left = gsql.NewIntExpr[int64](left).ToDateTime()
 		}
 		return gsql.Expr("? "+op+" ?", left, right)
 	}

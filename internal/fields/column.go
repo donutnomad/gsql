@@ -88,18 +88,6 @@ func (b TimeColumnBuilder) From(source interface{ TableName() string }) TimeExpr
 	return NewTimeExprField[string](source.TableName(), b.name)
 }
 
-func TimestampColumn(name string) TimestampColumnBuilder {
-	return TimestampColumnBuilder{name: name}
-}
-
-type TimestampColumnBuilder struct {
-	name string
-}
-
-func (b TimestampColumnBuilder) From(source interface{ TableName() string }) TimestampExprField[string] {
-	return NewTimestampExprField[string](source.TableName(), b.name)
-}
-
 func DecimalColumn(name string) DecimalColumnBuilder {
 	return DecimalColumnBuilder{name: name}
 }

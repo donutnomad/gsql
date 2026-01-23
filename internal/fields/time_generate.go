@@ -39,19 +39,11 @@ func (e TimeExpr[T]) Coalesce(values ...any) TimeExpr[T] {
 	return NewTimeExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e TimeExpr[T]) Nullif(value any) TimeExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e TimeExpr[T]) NullIf(value any) TimeExpr[T] {
 	return NewTimeExpr[T](e.nullifExpr(value))
-}
-
-// Sum 计算数值的总和 (SUM)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT SUM(quantity) FROM orders;
-// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-func (e TimeExpr[T]) Sum() TimeExpr[T] {
-	return NewTimeExpr[T](e.sumExpr())
 }
 
 // Avg 计算数值的平均值 (AVG)
@@ -104,6 +96,13 @@ func (e TimeExpr[T]) Second() IntExpr[int] {
 // 范围: 0-999999
 func (e TimeExpr[T]) Microsecond() IntExpr[int] {
 	return NewIntExpr[int](e.microsecondExpr())
+}
+
+// TimeToSec 将时间转换为秒数 (TIME_TO_SEC)
+// 数据库支持: MySQL
+// SELECT TIME_TO_SEC('01:30:00'); -- 返回 5400
+func (e TimeExpr[T]) TimeToSec() IntExpr[int] {
+	return NewIntExpr[int](e.timeToSecExpr())
 }
 
 // AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)

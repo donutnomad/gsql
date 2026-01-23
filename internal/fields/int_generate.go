@@ -52,8 +52,8 @@ func (e IntExpr[T]) Mul(value any) IntExpr[T] {
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT total / count FROM stats;
 // SELECT points / 100 as level FROM users;
-func (e IntExpr[T]) Div(value any) IntExpr[T] {
-	return NewIntExpr[T](e.divExpr(value))
+func (e IntExpr[T]) Div(value any) FloatExpr[float64] {
+	return NewFloatExpr[float64](e.divExpr(value))
 }
 
 // Neg 取负 (-)
@@ -103,22 +103,6 @@ func (e IntExpr[T]) Ceil() IntExpr[T] {
 // SELECT FLOOR(-1.5); -- 结果为 -2
 func (e IntExpr[T]) Floor() IntExpr[T] {
 	return NewIntExpr[T](e.floorExpr())
-}
-
-// Round 四舍五入 (ROUND)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT ROUND(1.567); -- 结果为 2
-// SELECT ROUND(1.567, 2); -- 结果为 1.57
-func (e IntExpr[T]) Round(decimals ...int) IntExpr[T] {
-	return NewIntExpr[T](e.roundExpr(decimals...))
-}
-
-// Truncate 截断小数 (TRUNCATE)
-// 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
-// SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
-// SELECT TRUNCATE(1.567, 0); -- 结果为 1
-func (e IntExpr[T]) Truncate(decimals int) IntExpr[T] {
-	return NewIntExpr[T](e.truncateExpr(decimals))
 }
 
 // Pow 幂运算 (POW)
@@ -180,10 +164,10 @@ func (e IntExpr[T]) Coalesce(values ...any) IntExpr[T] {
 	return NewIntExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e IntExpr[T]) Nullif(value any) IntExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e IntExpr[T]) NullIf(value any) IntExpr[T] {
 	return NewIntExpr[T](e.nullifExpr(value))
 }
 
@@ -263,8 +247,8 @@ func (e IntExpr[T]) IntDiv(value any) IntExpr[T] {
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT SUM(quantity) FROM orders;
 // SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-func (e IntExpr[T]) Sum() IntExpr[T] {
-	return NewIntExpr[T](e.sumExpr())
+func (e IntExpr[T]) Sum() DecimalExpr[T] {
+	return NewDecimalExpr[T](e.sumExpr())
 }
 
 // Avg 计算数值的平均值 (AVG)

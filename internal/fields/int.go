@@ -47,6 +47,16 @@ func NewIntExpr[T any](expr clause.Expression) IntExpr[T] {
 
 // ==================== 类型转换 ====================
 
+// AsFloat 转换为 FloatExpr（不生成 SQL，仅类型转换）
+func (e IntExpr[T]) AsFloat() FloatExpr[float64] {
+	return NewFloatExpr[float64](e.numericComparableImpl.Expression)
+}
+
+// AsDecimal 转换为 DecimalExpr（不生成 SQL，仅类型转换）
+func (e IntExpr[T]) AsDecimal() DecimalExpr[float64] {
+	return NewDecimalExpr[float64](e.numericComparableImpl.Expression)
+}
+
 // Cast 类型转换 (CAST)
 func (e IntExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
@@ -97,6 +107,40 @@ func (e IntExpr[T]) Oct() TextExpr[string] {
 func (e IntExpr[T]) InetNtoa() TextExpr[string] {
 	return NewTextExpr[string](clause.Expr{
 		SQL:  "INET_NTOA(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// ==================== 日期/时间转换 ====================
+
+// SecToTime 将秒数转换为时间 (SEC_TO_TIME)
+// 数据库支持: MySQL
+// SELECT SEC_TO_TIME(5400); -- 返回 '01:30:00'
+func (e IntExpr[T]) SecToTime() TimeExpr[string] {
+	return NewTimeExpr[string](clause.Expr{
+		SQL:  "SEC_TO_TIME(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// FromDays 将天数转换为日期 (FROM_DAYS)
+// 数据库支持: MySQL
+// SELECT FROM_DAYS(739259); -- 返回 '2024-01-15'
+func (e IntExpr[T]) FromDays() DateExpr[string] {
+	return NewDateExpr[string](clause.Expr{
+		SQL:  "FROM_DAYS(?)",
+		Vars: []any{e.numericComparableImpl.Expression},
+	})
+}
+
+// ToDateTime 将 Unix 时间戳转换为 DATETIME 类型 (FROM_UNIXTIME)
+// 数据库支持: MySQL
+// SELECT FROM_UNIXTIME(1698306600); -- 返回 '2023-10-26 10:30:00'
+// SELECT FROM_UNIXTIME(created_at) FROM users;
+// 可链式调用日期时间方法，如 .Year(), .Format() 等
+func (e IntExpr[T]) ToDateTime() DateTimeExpr[string] {
+	return NewDateTimeExpr[string](clause.Expr{
+		SQL:  "FROM_UNIXTIME(?)",
 		Vars: []any{e.numericComparableImpl.Expression},
 	})
 }

@@ -39,10 +39,10 @@ func (e TextExpr[T]) Coalesce(values ...any) TextExpr[T] {
 	return NewTextExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e TextExpr[T]) Nullif(value any) TextExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e TextExpr[T]) NullIf(value any) TextExpr[T] {
 	return NewTextExpr[T](e.nullifExpr(value))
 }
 

@@ -28,6 +28,8 @@ type GenDirective struct {
 	Exclude     []string // 排除的表达式类型
 	Direct      bool     // 直接返回，不用构造函数包装
 	Void        bool     // 无返回值
+	Param       string   // 覆盖参数类型 (如 "int64", "IntExpr[T]")
+	ParamName   string   // 参数名 (默认使用原始参数名)
 }
 
 // MethodInfo 从源码解析的方法信息
@@ -52,17 +54,19 @@ type TypeInfo struct {
 
 // GeneratedMethod 要生成的方法
 type GeneratedMethod struct {
-	TypeName    string
-	TypeParam   string
-	MethodName  string
-	InnerName   string
-	Params      string
-	Args        string
-	ReturnType  string
-	Constructor string
-	Comments    []string
-	Direct      bool
-	Void        bool
+	TypeName        string
+	TypeParam       string
+	MethodName      string
+	InnerName       string
+	Params          string   // 生成的参数列表 (如 "value int64")
+	Args            string   // 调用内部方法的参数 (如 "value")
+	ReturnType      string
+	Constructor     string
+	Comments        []string
+	Direct          bool
+	Void            bool
+	VariadicConvert bool   // 是否需要变参转换（从具体类型到 any）
+	VariadicArgName string // 变参参数名
 }
 
 // ==================== 配置 ====================
@@ -314,7 +318,7 @@ func parseSourceFiles() []MethodInfo {
 }
 
 // parseGenDirective 解析 @gen 指令
-// 格式: @gen public=Name return=Type for=Type1,Type2 exclude=Type3
+// 格式: @gen public=Name return=Type for=Type1,Type2 exclude=Type3 param=int64 paramName=value
 func parseGenDirective(text string) *GenDirective {
 	text = strings.TrimPrefix(text, "@gen")
 	text = strings.TrimSpace(text)
@@ -343,6 +347,10 @@ func parseGenDirective(text string) *GenDirective {
 			d.Direct = value == "true"
 		case "void":
 			d.Void = value == "true"
+		case "param":
+			d.Param = value
+		case "paramName":
+			d.ParamName = value
 		}
 	}
 
@@ -463,6 +471,28 @@ func generateMethods(types []TypeInfo, methods []MethodInfo, defaultTypeParams m
 					Void:       directive.Void,
 				}
 
+				// 处理参数类型覆盖
+				if directive.Param != "" {
+					paramName := directive.ParamName
+					if paramName == "" {
+						// 从原始参数中提取第一个参数名
+						paramName = extractFirstParamName(method.Args)
+					}
+					// 处理泛型参数替换 [T] -> 调用者的泛型参数
+					paramType := normalizeReturnType(directive.Param, typeInfo.TypeParam, defaultTypeParams)
+					// 检查原始参数是否是变参（args 以 ... 结尾）
+					isVariadic := strings.HasSuffix(method.Args, "...")
+					if isVariadic {
+						gm.Params = paramName + " ..." + paramType
+						gm.Args = "_anyValues..."
+						gm.VariadicConvert = true
+						gm.VariadicArgName = paramName
+					} else {
+						gm.Params = paramName + " " + paramType
+						gm.Args = paramName
+					}
+				}
+
 				// 确定返回类型
 				if directive.Void {
 					// 无返回值
@@ -487,6 +517,22 @@ func generateMethods(types []TypeInfo, methods []MethodInfo, defaultTypeParams m
 	}
 
 	return result
+}
+
+// extractFirstParamName 从参数列表字符串中提取第一个参数名
+// 如 "value, other..." -> "value"
+func extractFirstParamName(args string) string {
+	if args == "" {
+		return "value"
+	}
+	// 去除可能的 ... 后缀和空格
+	args = strings.TrimSuffix(args, "...")
+	args = strings.TrimSpace(args)
+	// 按逗号分割取第一个
+	if idx := strings.Index(args, ","); idx > 0 {
+		return strings.TrimSpace(args[:idx])
+	}
+	return args
 }
 
 func normalizeReturnType(ret string, callerTypeParam string, defaultTypeParams map[string]string) string {
@@ -521,7 +567,11 @@ func deriveConstructor(returnType string) string {
 const methodTemplate = `{{range .Comments}}
 // {{.}}{{end}}
 func (e {{.TypeName}}{{.TypeParam}}) {{.MethodName}}({{.Params}}){{if .ReturnType}} {{.ReturnType}}{{end}} {
-{{if .Void}}	e.{{.InnerName}}({{.Args}})
+{{if .VariadicConvert}}	_anyValues := make([]any, len({{.VariadicArgName}}))
+	for _i, _v := range {{.VariadicArgName}} {
+		_anyValues[_i] = _v
+	}
+{{end}}{{if .Void}}	e.{{.InnerName}}({{.Args}})
 {{else if .Direct}}	return e.{{.InnerName}}({{.Args}})
 {{else}}	return {{.Constructor}}(e.{{.InnerName}}({{.Args}}))
 {{end}}}

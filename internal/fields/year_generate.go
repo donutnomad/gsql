@@ -39,19 +39,11 @@ func (e YearExpr[T]) Coalesce(values ...any) YearExpr[T] {
 	return NewYearExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e YearExpr[T]) Nullif(value any) YearExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e YearExpr[T]) NullIf(value any) YearExpr[T] {
 	return NewYearExpr[T](e.nullifExpr(value))
-}
-
-// Sum 计算数值的总和 (SUM)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT SUM(quantity) FROM orders;
-// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-func (e YearExpr[T]) Sum() YearExpr[T] {
-	return NewYearExpr[T](e.sumExpr())
 }
 
 // Avg 计算数值的平均值 (AVG)

@@ -39,19 +39,11 @@ func (e DateExpr[T]) Coalesce(values ...any) DateExpr[T] {
 	return NewDateExpr[T](e.coalesceExpr(values...))
 }
 
-// Nullif 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT NULLIF(username, ”) FROM users; -- 空字符串转为NULL
-func (e DateExpr[T]) Nullif(value any) DateExpr[T] {
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (e DateExpr[T]) NullIf(value any) DateExpr[T] {
 	return NewDateExpr[T](e.nullifExpr(value))
-}
-
-// Sum 计算数值的总和 (SUM)
-// 数据库支持: MySQL, PostgreSQL, SQLite
-// SELECT SUM(quantity) FROM orders;
-// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
-func (e DateExpr[T]) Sum() DateExpr[T] {
-	return NewDateExpr[T](e.sumExpr())
 }
 
 // Avg 计算数值的平均值 (AVG)
@@ -139,6 +131,34 @@ func (e DateExpr[T]) WeekOfYear() IntExpr[int] {
 // 范围: 1-4
 func (e DateExpr[T]) Quarter() IntExpr[int] {
 	return NewIntExpr[int](e.quarterExpr())
+}
+
+// LastDay 返回指定日期所在月份的最后一天 (LAST_DAY)
+// 数据库支持: MySQL
+// SELECT LAST_DAY('2024-02-15'); -- 返回 '2024-02-29'
+func (e DateExpr[T]) LastDay() DateExpr[string] {
+	return NewDateExpr[string](e.lastDayExpr())
+}
+
+// DayName 返回日期的星期名称 (DAYNAME)
+// 数据库支持: MySQL
+// SELECT DAYNAME('2024-01-15'); -- 返回 'Monday'
+func (e DateExpr[T]) DayName() TextExpr[string] {
+	return NewTextExpr[string](e.dayNameExpr())
+}
+
+// MonthName 返回日期的月份名称 (MONTHNAME)
+// 数据库支持: MySQL
+// SELECT MONTHNAME('2024-01-15'); -- 返回 'January'
+func (e DateExpr[T]) MonthName() TextExpr[string] {
+	return NewTextExpr[string](e.monthNameExpr())
+}
+
+// ToDays 将日期转换为天数（从公元0年开始）(TO_DAYS)
+// 数据库支持: MySQL
+// SELECT TO_DAYS('2024-01-15'); -- 返回 739259
+func (e DateExpr[T]) ToDays() IntExpr[int] {
+	return NewIntExpr[int](e.toDaysExpr())
 }
 
 // AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)

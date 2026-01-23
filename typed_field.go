@@ -91,10 +91,6 @@ func NewTimeExpr[T any](expr clause.Expression) fields.TimeExpr[T] {
 	return fields.NewTimeExpr[T](expr)
 }
 
-func NewTimestampExpr[T any](expr clause.Expression) fields.TimestampExpr[T] {
-	return fields.NewTimestampExpr[T](expr)
-}
-
 func NewYearExpr[T any](expr clause.Expression) fields.YearExpr[T] {
 	return fields.NewYearExpr[T](expr)
 }
@@ -147,6 +143,5 @@ type (
 	TextExprField[T any]     = fields.TextExprField[T]
 	TimeColumnBuilder        = fields.TimeColumnBuilder
 	TimeExpr[T any]          = fields.TimeExpr[T]
-	TimestampExpr[T any]     = fields.TimestampExpr[T]
 	YearExpr[T any]          = fields.YearExpr[T]
 )
