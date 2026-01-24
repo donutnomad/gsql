@@ -3,6 +3,7 @@ package gsql
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 var empty = clause.Expr{}
@@ -49,10 +50,8 @@ func Or(exprs ...field.Expression) field.Expression {
 func filterExpr(input ...field.Expression) []field.Expression {
 	var output = make([]field.Expression, 0, len(input))
 	for _, expr := range input {
-		if v, ok := expr.(clause.Expr); ok {
-			if len(v.SQL) == 0 {
-				continue
-			}
+		if v, ok := expr.(types.SQLChecker); ok && v.IsEmptySQL() {
+			continue
 		}
 		output = append(output, expr)
 	}

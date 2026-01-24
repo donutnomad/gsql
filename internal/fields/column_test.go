@@ -23,10 +23,7 @@ func TestIntColumn_From(t *testing.T) {
 	}
 
 	// Verify comparison works
-	condition := cnt.Gt(10)
-	if condition == nil {
-		t.Error("Gt should return non-nil expression")
-	}
+	_ = cnt.Gt(10)
 }
 
 func TestFloatColumn_From(t *testing.T) {
@@ -41,10 +38,7 @@ func TestFloatColumn_From(t *testing.T) {
 	}
 
 	// Verify comparison works
-	condition := total.Gte(100.5)
-	if condition == nil {
-		t.Error("Gte should return non-nil expression")
-	}
+	_ = total.Gte(100.5)
 }
 
 func TestStringColumn_From(t *testing.T) {
@@ -56,10 +50,7 @@ func TestStringColumn_From(t *testing.T) {
 	}
 
 	// Verify pattern matching works
-	condition := name.Like("%test%")
-	if condition == nil {
-		t.Error("Like should return non-nil expression")
-	}
+	_ = name.Like("%test%")
 }
 
 func TestBoolColumn_From(t *testing.T) {
@@ -74,10 +65,7 @@ func TestBoolColumn_From(t *testing.T) {
 	}
 
 	// Verify comparison works
-	condition := active.Eq(true)
-	if condition == nil {
-		t.Error("Eq should return non-nil expression")
-	}
+	_ = active.Eq(true)
 }
 
 func TestTimeColumn_From(t *testing.T) {
@@ -104,8 +92,5 @@ func TestGenericColumn_From(t *testing.T) {
 	}
 
 	// Verify comparison works with generic type
-	condition := custom.Eq(100)
-	if condition == nil {
-		t.Error("Eq should return non-nil expression")
-	}
+	_ = custom.Eq(100)
 }

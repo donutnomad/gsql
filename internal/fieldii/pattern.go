@@ -1,4 +1,4 @@
-package field
+package fieldii
 
 import (
 	"database/sql/driver"
@@ -7,65 +7,68 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/clauses"
+	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/mo"
 )
 
+type PatternImpl[T any] = patternImpl[T]
+
 type patternImpl[T any] struct {
-	IField
+	fieldi.IField
 }
 
-func (f patternImpl[T]) Like(value T, escape ...byte) Expression {
+func (f patternImpl[T]) Like(value T, escape ...byte) fieldi.Expression {
 	return f.operateValue(value, "LIKE", utils.Optional(escape, 0), func(value string) string { return value })
 }
 
-func (f patternImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) Expression {
+func (f patternImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) fieldi.Expression {
 	if value.IsAbsent() {
 		return emptyExpression
 	}
 	return f.Like(value.MustGet(), escape...)
 }
 
-func (f patternImpl[T]) NotLike(value T, escape ...byte) Expression {
+func (f patternImpl[T]) NotLike(value T, escape ...byte) fieldi.Expression {
 	return f.operateValue(value, "NOT LIKE", utils.Optional(escape, 0), func(value string) string {
 		return value
 	})
 }
 
-func (f patternImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) Expression {
+func (f patternImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) fieldi.Expression {
 	if value.IsAbsent() {
 		return emptyExpression
 	}
 	return f.NotLike(value.MustGet(), escape...)
 }
 
-func (f patternImpl[T]) Contains(value T) Expression {
+func (f patternImpl[T]) Contains(value T) fieldi.Expression {
 	return f.operateValue(value, "LIKE", 0, func(value string) string { return "%" + value + "%" })
 }
 
-func (f patternImpl[T]) ContainsOpt(value mo.Option[T]) Expression {
+func (f patternImpl[T]) ContainsOpt(value mo.Option[T]) fieldi.Expression {
 	if value.IsAbsent() {
 		return emptyExpression
 	}
 	return f.Contains(value.MustGet())
 }
 
-func (f patternImpl[T]) HasPrefix(value T) Expression {
+func (f patternImpl[T]) HasPrefix(value T) fieldi.Expression {
 	return f.operateValue(value, "LIKE", 0, func(value string) string { return value + "%" })
 }
 
-func (f patternImpl[T]) HasPrefixOpt(value mo.Option[T]) Expression {
+func (f patternImpl[T]) HasPrefixOpt(value mo.Option[T]) fieldi.Expression {
 	if value.IsAbsent() {
 		return emptyExpression
 	}
 	return f.HasPrefix(value.MustGet())
 }
 
-func (f patternImpl[T]) HasSuffix(value T) Expression {
+func (f patternImpl[T]) HasSuffix(value T) fieldi.Expression {
 	return f.operateValue(value, "LIKE", 0, func(value string) string { return "%" + value })
 }
 
-func (f patternImpl[T]) HasSuffixOpt(value mo.Option[T]) Expression {
+func (f patternImpl[T]) HasSuffixOpt(value mo.Option[T]) fieldi.Expression {
 	if value.IsAbsent() {
 		return emptyExpression
 	}
@@ -98,7 +101,7 @@ func (f patternImpl[T]) anyToString(value any) string {
 	return valueString
 }
 
-func (f patternImpl[T]) operateValue(value any, operator string, escape byte, valueFormatter func(value string) string) Expression {
+func (f patternImpl[T]) operateValue(value any, operator string, escape byte, valueFormatter func(value string) string) fieldi.Expression {
 	var expr clause.Expression = clause.Like{
 		Column: f.ToColumn(),
 		Value: clauses.EscapeClause{

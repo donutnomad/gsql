@@ -4,24 +4,24 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
 )
 
 // ==================== IntField ====================
 
 type IntField[T any] struct {
-	field.Base
+	fieldi.Base
 	IntExpr[T]
 }
 
-func NewIntField[T any](tableName, name string, flags ...field.FieldFlag) IntField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewIntField[T any](tableName, name string, flags ...fieldi.FieldFlag) IntField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewIntFieldFrom[T](b)
 }
 
-func NewIntFieldFrom[T any](f field.IField) IntField[T] {
-	base := field.IFieldToBase(f)
+func NewIntFieldFrom[T any](f fieldi.IField) IntField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return IntField[T]{
 		Base:    base,
@@ -37,7 +37,7 @@ func (f IntField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f IntField[T]) As(alias string) field.IField {
+func (f IntField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -70,17 +70,17 @@ func (f IntField[T]) Desc() types.OrderItem {
 // ==================== FloatField ====================
 
 type FloatField[T any] struct {
-	field.Base
+	fieldi.Base
 	FloatExpr[T]
 }
 
-func NewFloatField[T any](tableName, name string, flags ...field.FieldFlag) FloatField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewFloatField[T any](tableName, name string, flags ...fieldi.FieldFlag) FloatField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewFloatFieldFrom[T](b)
 }
 
-func NewFloatFieldFrom[T any](f field.IField) FloatField[T] {
-	base := field.IFieldToBase(f)
+func NewFloatFieldFrom[T any](f fieldi.IField) FloatField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return FloatField[T]{
 		Base:      base,
@@ -96,7 +96,7 @@ func (f FloatField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f FloatField[T]) As(alias string) field.IField {
+func (f FloatField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -129,17 +129,17 @@ func (f FloatField[T]) Desc() types.OrderItem {
 // ==================== DecimalField ====================
 
 type DecimalField[T any] struct {
-	field.Base
+	fieldi.Base
 	DecimalExpr[T]
 }
 
-func NewDecimalField[T any](tableName, name string, flags ...field.FieldFlag) DecimalField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewDecimalField[T any](tableName, name string, flags ...fieldi.FieldFlag) DecimalField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewDecimalFieldFrom[T](b)
 }
 
-func NewDecimalFieldFrom[T any](f field.IField) DecimalField[T] {
-	base := field.IFieldToBase(f)
+func NewDecimalFieldFrom[T any](f fieldi.IField) DecimalField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return DecimalField[T]{
 		Base:        base,
@@ -155,7 +155,7 @@ func (f DecimalField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f DecimalField[T]) As(alias string) field.IField {
+func (f DecimalField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -188,17 +188,17 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 // ==================== StringField ====================
 
 type StringField[T any] struct {
-	field.Base
+	fieldi.Base
 	StringExpr[T]
 }
 
-func NewStringField[T any](tableName, name string, flags ...field.FieldFlag) StringField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewStringField[T any](tableName, name string, flags ...fieldi.FieldFlag) StringField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewStringFieldFrom[T](b)
 }
 
-func NewStringFieldFrom[T any](f field.IField) StringField[T] {
-	base := field.IFieldToBase(f)
+func NewStringFieldFrom[T any](f fieldi.IField) StringField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return StringField[T]{
 		Base:       base,
@@ -214,7 +214,7 @@ func (f StringField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f StringField[T]) As(alias string) field.IField {
+func (f StringField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -247,17 +247,17 @@ func (f StringField[T]) Desc() types.OrderItem {
 // ==================== DateTimeField ====================
 
 type DateTimeField[T any] struct {
-	field.Base
+	fieldi.Base
 	DateTimeExpr[T]
 }
 
-func NewDateTimeField[T any](tableName, name string, flags ...field.FieldFlag) DateTimeField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewDateTimeField[T any](tableName, name string, flags ...fieldi.FieldFlag) DateTimeField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewDateTimeFieldFrom[T](b)
 }
 
-func NewDateTimeFieldFrom[T any](f field.IField) DateTimeField[T] {
-	base := field.IFieldToBase(f)
+func NewDateTimeFieldFrom[T any](f fieldi.IField) DateTimeField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return DateTimeField[T]{
 		Base:         base,
@@ -273,7 +273,7 @@ func (f DateTimeField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f DateTimeField[T]) As(alias string) field.IField {
+func (f DateTimeField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -306,17 +306,17 @@ func (f DateTimeField[T]) Desc() types.OrderItem {
 // ==================== DateField ====================
 
 type DateField[T any] struct {
-	field.Base
+	fieldi.Base
 	DateExpr[T]
 }
 
-func NewDateField[T any](tableName, name string, flags ...field.FieldFlag) DateField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewDateField[T any](tableName, name string, flags ...fieldi.FieldFlag) DateField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewDateFieldFrom[T](b)
 }
 
-func NewDateFieldFrom[T any](f field.IField) DateField[T] {
-	base := field.IFieldToBase(f)
+func NewDateFieldFrom[T any](f fieldi.IField) DateField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return DateField[T]{
 		Base:     base,
@@ -332,7 +332,7 @@ func (f DateField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f DateField[T]) As(alias string) field.IField {
+func (f DateField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -365,17 +365,17 @@ func (f DateField[T]) Desc() types.OrderItem {
 // ==================== TimeField ====================
 
 type TimeField[T any] struct {
-	field.Base
+	fieldi.Base
 	TimeExpr[T]
 }
 
-func NewTimeField[T any](tableName, name string, flags ...field.FieldFlag) TimeField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewTimeField[T any](tableName, name string, flags ...fieldi.FieldFlag) TimeField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewTimeFieldFrom[T](b)
 }
 
-func NewTimeFieldFrom[T any](f field.IField) TimeField[T] {
-	base := field.IFieldToBase(f)
+func NewTimeFieldFrom[T any](f fieldi.IField) TimeField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return TimeField[T]{
 		Base:     base,
@@ -391,7 +391,7 @@ func (f TimeField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f TimeField[T]) As(alias string) field.IField {
+func (f TimeField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 
@@ -424,17 +424,17 @@ func (f TimeField[T]) Desc() types.OrderItem {
 // ==================== ScalarField ====================
 
 type ScalarField[T any] struct {
-	field.Base
+	fieldi.Base
 	ScalarExpr[T]
 }
 
-func NewScalarField[T any](tableName, name string, flags ...field.FieldFlag) ScalarField[T] {
-	b := field.NewBase(tableName, name, flags...)
+func NewScalarField[T any](tableName, name string, flags ...fieldi.FieldFlag) ScalarField[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return NewScalarFieldFrom[T](b)
 }
 
-func NewScalarFieldFrom[T any](f field.IField) ScalarField[T] {
-	base := field.IFieldToBase(f)
+func NewScalarFieldFrom[T any](f fieldi.IField) ScalarField[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return ScalarField[T]{
 		Base:       base,
@@ -450,7 +450,7 @@ func (f ScalarField[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f ScalarField[T]) As(alias string) field.IField {
+func (f ScalarField[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 

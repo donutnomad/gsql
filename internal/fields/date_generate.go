@@ -4,7 +4,7 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 )
 
 // ==================== DateExpr 生成的方法 ====================
@@ -20,7 +20,7 @@ func (e DateExpr[T]) ToExpr() clause.Expression {
 }
 
 // asExpr 创建一个别名字段
-func (e DateExpr[T]) As(alias string) field.IField {
+func (e DateExpr[T]) As(alias string) fieldi.IField {
 	return e.asExpr(alias)
 }
 

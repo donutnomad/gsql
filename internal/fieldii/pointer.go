@@ -1,14 +1,17 @@
-package field
+package fieldii
 
 import (
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/fieldi"
 )
 
+type PointerImpl = pointerImpl
+
 type pointerImpl struct {
-	IField
+	fieldi.IField
 }
 
-func (f pointerImpl) IsNil() Expression {
+func (f pointerImpl) IsNil() fieldi.Expression {
 	if f.IsExpr() {
 		panic("[pointerImpl] cannot operate on expr")
 	}
@@ -18,7 +21,7 @@ func (f pointerImpl) IsNil() Expression {
 	}
 }
 
-func (f pointerImpl) NotNil() Expression {
+func (f pointerImpl) NotNil() fieldi.Expression {
 	if f.IsExpr() {
 		panic("[pointerImpl] cannot operate on expr")
 	}

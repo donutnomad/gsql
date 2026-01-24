@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"
 )
@@ -42,7 +42,7 @@ func TestTextExpr_LikeOpt(t *testing.T) {
 
 	// 无值时返回空表达式
 	result2 := expr.LikeOpt(mo.None[string]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, types.EmptyExpression, result2)
 }
 
 func TestTextExpr_NotLike(t *testing.T) {
@@ -74,7 +74,7 @@ func TestTextExpr_ContainsOpt(t *testing.T) {
 	assert.Equal(t, "%test%", e.Vars[1])
 
 	result2 := expr.ContainsOpt(mo.None[string]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, types.EmptyExpression, result2)
 }
 
 func TestTextExpr_HasPrefix(t *testing.T) {
@@ -96,7 +96,7 @@ func TestTextExpr_HasPrefixOpt(t *testing.T) {
 	assert.Equal(t, "PRE_%", e.Vars[1])
 
 	result2 := expr.HasPrefixOpt(mo.None[string]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, types.EmptyExpression, result2)
 }
 
 func TestTextExpr_HasSuffix(t *testing.T) {
@@ -118,65 +118,55 @@ func TestTextExpr_HasSuffixOpt(t *testing.T) {
 	assert.Equal(t, "%.txt", e.Vars[1])
 
 	result2 := expr.HasSuffixOpt(mo.None[string]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, types.EmptyExpression, result2)
 }
 
 func TestTextExpr_Eq(t *testing.T) {
 	expr := String(clause.Expr{SQL: "UPPER(name)", Vars: nil})
 	result := expr.Eq("JOHN")
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", e.SQL)
-	assert.Equal(t, "JOHN", e.Vars[1])
+	assert.Equal(t, "? = ?", result.SQL)
+	assert.Equal(t, "JOHN", result.Vars[1])
 }
 
 func TestTextExpr_EqOpt(t *testing.T) {
 	expr := String(clause.Expr{SQL: "name", Vars: nil})
 
 	result := expr.EqOpt(mo.Some("test"))
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", e.SQL)
+	assert.Equal(t, "? = ?", result.SQL)
 
 	result2 := expr.EqOpt(mo.None[string]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, emptyCondition, result2)
 }
 
 func TestTextExpr_Not(t *testing.T) {
 	expr := String(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.Not("deleted")
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? != ?", e.SQL)
-	assert.Equal(t, "deleted", e.Vars[1])
+	assert.Equal(t, "? != ?", result.SQL)
+	assert.Equal(t, "deleted", result.Vars[1])
 }
 
 func TestTextExpr_In(t *testing.T) {
 	expr := String(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.In("active", "pending")
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? IN ?", e.SQL)
+	assert.Equal(t, "? IN ?", result.SQL)
 
 	// 空列表返回空表达式
 	result2 := expr.In()
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, emptyCondition, result2)
 }
 
 func TestTextExpr_NotIn(t *testing.T) {
 	expr := String(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.NotIn("deleted", "archived")
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? NOT IN ?", e.SQL)
+	assert.Equal(t, "? NOT IN ?", result.SQL)
 
 	// 空列表返回空表达式
 	result2 := expr.NotIn()
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, emptyCondition, result2)
 }
 
 func TestTextExpr_IsNull(t *testing.T) {
@@ -218,9 +208,7 @@ func TestTextExpr_CastSigned(t *testing.T) {
 
 	// CastSigned 返回 IntExpr
 	e := result.Gt(100)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? > ?", exprResult.SQL)
+	assert.Equal(t, "? > ?", e.SQL)
 }
 
 func TestTextExpr_CastUnsigned(t *testing.T) {
@@ -229,9 +217,7 @@ func TestTextExpr_CastUnsigned(t *testing.T) {
 
 	// CastUnsigned 返回 IntExpr
 	e := result.Gte(0)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? >= ?", exprResult.SQL)
+	assert.Equal(t, "? >= ?", e.SQL)
 }
 
 func TestTextExpr_CastDecimal(t *testing.T) {
@@ -240,9 +226,7 @@ func TestTextExpr_CastDecimal(t *testing.T) {
 
 	// CastDecimal 返回 FloatExpr
 	e := result.Lt(100.50)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? < ?", exprResult.SQL)
+	assert.Equal(t, "? < ?", e.SQL)
 }
 
 func TestTextExpr_CastChar(t *testing.T) {
@@ -262,9 +246,7 @@ func TestTextExpr_CastCharNoLength(t *testing.T) {
 
 	// 验证 SQL 生成
 	e := result.Eq("test")
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", exprResult.SQL)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 // 测试泛型类型安全性
@@ -292,9 +274,7 @@ func TestTextExpr_Upper(t *testing.T) {
 
 	// 链式调用测试
 	e := result.Eq("JOHN")
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", exprResult.SQL)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_Lower(t *testing.T) {
@@ -312,9 +292,7 @@ func TestTextExpr_Trim(t *testing.T) {
 	result := expr.Trim()
 
 	e := result.Eq("test")
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", exprResult.SQL)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_LTrim(t *testing.T) {
@@ -322,8 +300,7 @@ func TestTextExpr_LTrim(t *testing.T) {
 	result := expr.LTrim()
 
 	e := result.Eq("test")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_RTrim(t *testing.T) {
@@ -331,8 +308,7 @@ func TestTextExpr_RTrim(t *testing.T) {
 	result := expr.RTrim()
 
 	e := result.Eq("test")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_Substring(t *testing.T) {
@@ -340,9 +316,7 @@ func TestTextExpr_Substring(t *testing.T) {
 	result := expr.Substring(1, 3)
 
 	e := result.Eq("JOH")
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", exprResult.SQL)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_Left(t *testing.T) {
@@ -350,8 +324,9 @@ func TestTextExpr_Left(t *testing.T) {
 	result := expr.Left(5)
 
 	e := result.Like("J%")
-	_, ok := e.(clause.Expr)
+	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
+	assert.Equal(t, "? LIKE ?", exprResult.SQL)
 }
 
 func TestTextExpr_Right(t *testing.T) {
@@ -359,8 +334,7 @@ func TestTextExpr_Right(t *testing.T) {
 	result := expr.Right(4)
 
 	e := result.Eq("1234")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_Length(t *testing.T) {
@@ -369,9 +343,7 @@ func TestTextExpr_Length(t *testing.T) {
 
 	// Length 返回 IntExpr
 	e := result.Gt(10)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? > ?", exprResult.SQL)
+	assert.Equal(t, "? > ?", e.SQL)
 }
 
 func TestTextExpr_CharLength(t *testing.T) {
@@ -379,9 +351,7 @@ func TestTextExpr_CharLength(t *testing.T) {
 	result := expr.CharLength()
 
 	e := result.Lte(50)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? <= ?", exprResult.SQL)
+	assert.Equal(t, "? <= ?", e.SQL)
 }
 
 func TestTextExpr_Concat(t *testing.T) {
@@ -390,8 +360,9 @@ func TestTextExpr_Concat(t *testing.T) {
 	result := expr.Concat(lastName)
 
 	e := result.Like("John%")
-	_, ok := e.(clause.Expr)
+	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
+	assert.Equal(t, "? LIKE ?", exprResult.SQL)
 }
 
 func TestTextExpr_Replace(t *testing.T) {
@@ -399,8 +370,7 @@ func TestTextExpr_Replace(t *testing.T) {
 	result := expr.Replace("-", "")
 
 	e := result.Eq("1234567890")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_Locate(t *testing.T) {
@@ -409,9 +379,7 @@ func TestTextExpr_Locate(t *testing.T) {
 
 	// Locate 返回 IntExpr
 	e := result.Gt(0)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? > ?", exprResult.SQL)
+	assert.Equal(t, "? > ?", e.SQL)
 }
 
 func TestTextExpr_Reverse(t *testing.T) {
@@ -419,8 +387,7 @@ func TestTextExpr_Reverse(t *testing.T) {
 	result := expr.Reverse()
 
 	e := result.Eq("nhoJ")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_Repeat(t *testing.T) {
@@ -428,8 +395,7 @@ func TestTextExpr_Repeat(t *testing.T) {
 	result := expr.Repeat(5)
 
 	e := result.Eq("*****")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_LPad(t *testing.T) {
@@ -437,8 +403,7 @@ func TestTextExpr_LPad(t *testing.T) {
 	result := expr.LPad(5, "0")
 
 	e := result.Eq("00001")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestTextExpr_RPad(t *testing.T) {
@@ -446,8 +411,9 @@ func TestTextExpr_RPad(t *testing.T) {
 	result := expr.RPad(20, " ")
 
 	e := result.Like("John%")
-	_, ok := e.(clause.Expr)
+	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
+	assert.Equal(t, "? LIKE ?", exprResult.SQL)
 }
 
 // 测试链式调用
@@ -457,13 +423,13 @@ func TestTextExpr_Chaining(t *testing.T) {
 	// 链式调用: UPPER(TRIM(name))
 	result := expr.Trim().Upper()
 	e := result.Eq("JOHN")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	assert.Equal(t, "? = ?", e.SQL)
 
 	// 链式调用: LEFT(LOWER(email), 10)
 	email := String(clause.Expr{SQL: "email", Vars: nil})
 	result2 := email.Lower().Left(10)
 	e2 := result2.Contains("@")
-	_, ok = e2.(clause.Expr)
+	exprResult2, ok := e2.(clause.Expr)
 	assert.True(t, ok)
+	assert.Equal(t, "? LIKE ?", exprResult2.SQL)
 }

@@ -604,7 +604,7 @@ func writeGeneratedFiles(types []TypeInfo, generated map[string][]GeneratedMetho
 			if strings.Contains(m.Params, "clause.") || strings.Contains(m.ReturnType, "clause.") {
 				needClauseImport = true
 			}
-			if strings.Contains(m.Params, "field.") || strings.Contains(m.ReturnType, "field.") {
+			if strings.Contains(m.Params, "fieldi.") || strings.Contains(m.ReturnType, "fieldi.") {
 				needFieldImport = true
 			}
 		}
@@ -617,7 +617,7 @@ func writeGeneratedFiles(types []TypeInfo, generated map[string][]GeneratedMetho
 				buf.WriteString("\t\"github.com/donutnomad/gsql/clause\"\n")
 			}
 			if needFieldImport {
-				buf.WriteString("\t\"github.com/donutnomad/gsql/field\"\n")
+				buf.WriteString("\t\"github.com/donutnomad/gsql/internal/fieldi\"\n")
 			}
 			buf.WriteString(")\n")
 		}

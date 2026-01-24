@@ -1,9 +1,8 @@
-package field
+package fieldi
 
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/clauses"
-	"github.com/samber/lo"
 )
 
 var emptyExpression = clause.Expr{}
@@ -29,10 +28,4 @@ func NewColumnClause(f Base) clauses.ColumnClause {
 			Raw:   f.columnName == "*",
 		},
 	}
-}
-
-func notNilExpr(input ...clause.Expression) []clause.Expression {
-	return lo.Filter(input, func(item clause.Expression, index int) bool {
-		return item != nil
-	})
 }

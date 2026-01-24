@@ -100,10 +100,8 @@ func (b *QueryBuilderG[T]) Where(exprs ...field.Expression) *QueryBuilderG[T] {
 		if lo.IsNil(expr) {
 			continue
 		}
-		if v, ok := expr.(clause.Expr); ok {
-			if len(v.SQL) == 0 {
-				continue
-			}
+		if v, ok := expr.(types.SQLChecker); ok && v.IsEmptySQL() {
+			continue
 		}
 		b.wheres = append(b.wheres, expr)
 	}

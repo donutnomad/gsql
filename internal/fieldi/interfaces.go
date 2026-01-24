@@ -1,8 +1,7 @@
-package field
+package fieldi
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/mo"
 )
 
@@ -84,112 +83,6 @@ type IComparable[T any] interface {
 
 type IFieldType[T any] interface {
 	FieldType() T
-}
-
-type Pattern[T any] struct {
-	Base
-	comparableImpl[T]
-	patternImpl[T]
-	pointerImpl
-}
-
-func NewPattern[T any](tableName, name string, flags ...FieldFlag) Pattern[T] {
-	b := NewBase(tableName, name, flags...)
-	return NewPatternFrom[T](*b)
-}
-
-func NewPatternFrom[T any](field IField) Pattern[T] {
-	base := ifieldToBase(field)
-	return Pattern[T]{
-		Base:           base,
-		comparableImpl: comparableImpl[T]{IField: base},
-		patternImpl:    patternImpl[T]{IField: base},
-		pointerImpl:    pointerImpl{IField: base},
-	}
-}
-
-func (f Pattern[T]) WithTable(tableName interface{ TableName() string }, fieldName ...string) Pattern[T] {
-	var name = f.Base.columnName
-	if len(fieldName) > 0 {
-		name = fieldName[0]
-	}
-	return NewPattern[T](tableName.TableName(), name)
-}
-
-func (f Pattern[T]) WithName(name string) Pattern[T] {
-	return NewPattern[T](f.Base.tableName, name)
-}
-
-func (f Pattern[T]) WithAlias(alias string) Pattern[T] {
-	b := f.Base
-	b.alias = alias
-	return NewPatternFrom[T](b)
-}
-
-func (f Pattern[T]) FieldType() T {
-	var def T
-	return def
-}
-
-func (f Pattern[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
-}
-
-type Comparable[T any] struct {
-	Base
-	comparableImpl[T]
-	pointerImpl
-}
-
-func NewComparable[T any](tableName, name string, flags ...FieldFlag) Comparable[T] {
-	b := NewBase(tableName, name, flags...)
-	return NewComparableFrom[T](b)
-}
-
-// Deprecated: 使用 NewComparableFrom 替代。
-func NewComparableWithField[T any](field IField) Comparable[T] {
-	return NewComparableFrom[T](field)
-}
-
-func NewComparableFrom[T any](field IField) Comparable[T] {
-	base := ifieldToBase(field)
-	return Comparable[T]{
-		Base:           base,
-		comparableImpl: comparableImpl[T]{IField: base},
-		pointerImpl:    pointerImpl{IField: base},
-	}
-}
-
-func (f Comparable[T]) FieldType() T {
-	var def T
-	return def
-}
-
-func (f Comparable[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
-}
-
-func (f Comparable[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) Comparable[T] {
-	return NewComparable[T](tableName.TableName(), utils.Optional(fieldNames, f.Base.Name()))
-}
-
-func (f Comparable[T]) WithName(fieldName string) Comparable[T] {
-	return NewComparable[T](f.Base.tableName, fieldName)
-}
-
-func (f Comparable[T]) WithAlias(alias string) Comparable[T] {
-	b := f.Base
-	b.alias = alias
-	return NewComparableFrom[T](b)
-}
-
-// FromUnixTime 将Unix时间戳转换为DATETIME类型
-func (f Comparable[T]) FromUnixTime() Comparable[T] {
-	b := NewBaseFromSql(clause.Expr{
-		SQL:  "FROM_UNIXTIME(?)",
-		Vars: []any{f},
-	}, "")
-	return NewComparableFrom[T](*b)
 }
 
 func ifieldToBase(field IField) Base {

@@ -40,7 +40,7 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
 )
 
@@ -48,17 +48,17 @@ import (
 // ==================== {{.Name}} ====================
 
 type {{.Name}}[T any] struct {
-	field.Base
+	fieldi.Base
 	{{.InnerName}}[T]
 }
 
-func New{{.Name}}[T any](tableName, name string, flags ...field.FieldFlag) {{.Name}}[T] {
-	b := field.NewBase(tableName, name, flags...)
+func New{{.Name}}[T any](tableName, name string, flags ...fieldi.FieldFlag) {{.Name}}[T] {
+	b := fieldi.NewBase(tableName, name, flags...)
 	return New{{.Name}}From[T](b)
 }
 
-func New{{.Name}}From[T any](f field.IField) {{.Name}}[T] {
-	base := field.IFieldToBase(f)
+func New{{.Name}}From[T any](f fieldi.IField) {{.Name}}[T] {
+	base := fieldi.IFieldToBase(f)
 	expr := base.ToExpr()
 	return {{.Name}}[T]{
 		Base:      base,
@@ -74,7 +74,7 @@ func (f {{.Name}}[T]) ToExpr() clause.Expression {
 	return f.Base.ToExpr()
 }
 
-func (f {{.Name}}[T]) As(alias string) field.IField {
+func (f {{.Name}}[T]) As(alias string) fieldi.IField {
 	return f.Base.As(alias)
 }
 

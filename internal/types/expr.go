@@ -6,6 +6,16 @@ import (
 	"github.com/donutnomad/gsql/internal/utils"
 )
 
+var EmptyExpression = clause.Expr{}
+
+type SQLVars interface {
+	SQLVars() (string, []any)
+}
+
+type SQLChecker interface {
+	IsEmptySQL() bool
+}
+
 var _ field.ExpressionTo = (*LitExpr)(nil)
 
 type LitExpr struct {

@@ -1,167 +1,73 @@
 package field
 
 import (
-	"fmt"
-
-	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/utils"
+	"github.com/donutnomad/gsql/internal/clauses"
+	"github.com/donutnomad/gsql/internal/fieldi"
+	"github.com/donutnomad/gsql/internal/fieldii"
+	"github.com/donutnomad/gsql/internal/types"
 )
-
-// FieldFlag 字段标志位
-type FieldFlag uint32
 
 const (
-	FlagNone          FieldFlag = 0
-	FlagPrimaryKey    FieldFlag = 1 << 0 // 主键
-	FlagUniqueIndex   FieldFlag = 1 << 1 // 唯一索引
-	FlagIndex         FieldFlag = 1 << 2 // 普通索引
-	FlagAutoIncrement FieldFlag = 1 << 3 // 自增
+	FlagNone          FieldFlag = fieldi.FlagNone
+	FlagPrimaryKey    FieldFlag = fieldi.FlagPrimaryKey
+	FlagUniqueIndex   FieldFlag = fieldi.FlagUniqueIndex
+	FlagIndex         FieldFlag = fieldi.FlagIndex
+	FlagAutoIncrement FieldFlag = fieldi.FlagAutoIncrement
 )
 
-type Base struct {
-	tableName  string
-	columnName string
-	alias      string // 别名
-	sql        Expression
-	flags      FieldFlag // 字段标志
-}
+type (
+	FieldFlag          = fieldi.FieldFlag
+	IToExpr            = fieldi.IToExpr
+	IField             = fieldi.IField
+	IPointer           = fieldi.IPointer
+	IPattern[T any]    = fieldi.IPattern[T]
+	IComparable[T any] = fieldi.IComparable[T]
+	Range[T any]       = fieldi.Range[T]
+	Expression         = fieldi.Expression
+	Comparable[T any]  = fieldii.Comparable[T]
+	ExpressionTo       = fieldi.ExpressionTo
+	IFieldType[T any]  = fieldi.IFieldType[T]
+	Base               = fieldi.Base
+	BaseFields         = fieldi.BaseFields
+	PatternImpl[T any] = fieldii.PatternImpl[T]
+	PointerImpl        = fieldii.PointerImpl
+	Pattern[T any]     = fieldii.Pattern[T]
+)
 
-// ColumnName 返回列名
-func (f Base) ColumnName() string {
-	return f.columnName
-}
-
-// TableName 返回表名
-func (f Base) TableName() string {
-	return f.tableName
-}
-
-// SetAlias 设置别名并返回新的 Base
-func (f Base) SetAlias(alias string) Base {
-	f.alias = alias
-	return f
-}
+// EmptyExpression 空表达式，用于跳过条件
+var EmptyExpression = types.EmptyExpression
 
 func NewBase(tableName, name string, flags ...FieldFlag) *Base {
-	var flag = FlagNone
-	if len(flags) > 0 {
-		flag = flags[0]
-	}
-	return &Base{
-		tableName:  tableName,
-		columnName: name,
-		flags:      flag,
-	}
-}
-
-// Flags 返回字段标志
-func (f Base) Flags() FieldFlag {
-	return f.flags
-}
-
-// HasFlag 判断是否有某个标志
-func (f Base) HasFlag(flag FieldFlag) bool {
-	return f.flags&flag != 0
-}
-
-// IsPrimaryKey 是否为主键
-func (f Base) IsPrimaryKey() bool {
-	return f.HasFlag(FlagPrimaryKey)
-}
-
-// IsUniqueIndex 是否为唯一索引
-func (f Base) IsUniqueIndex() bool {
-	return f.HasFlag(FlagUniqueIndex)
+	return fieldi.NewBase(tableName, name, flags...)
 }
 
 func NewBaseFromSql(expr Expression, alias string) *Base {
-	return &Base{
-		sql:   expr,
-		alias: alias,
-	}
+	return fieldi.NewBaseFromSql(expr, alias)
 }
 
-// IsExpr 是否是一个表达式字段
-func (f Base) IsExpr() bool {
-	return f.sql != nil
+// Deprecated: 移除
+func NewColumnClause(f Base) clauses.ColumnClause {
+	return fieldi.NewColumnClause(f)
 }
 
-// ToColumn 转换为clause.Column对象，只有函数和窗口函数才可以导出
-// 使用在=,!=,>,<,等场景
-func (f Base) ToColumn() clause.Column {
-	if f.sql != nil {
-		var mb = utils.NewMemoryBuilder()
-		f.sql.Build(mb)
-		var sql = mb.SQL.String()
-		if utils.IsLiteralFunctionName(sql) { // like: FROM_UNIXTIME OR JSON_EXTRACT
-			if len(mb.Vars) > 0 {
-				sql = utils.Dialector.Explain(sql, mb.Vars...)
-			}
-			return clause.Column{
-				Table: "",
-				Name:  sql,
-				Alias: "",
-				Raw:   true,
-			}
-		}
-		panic("expr field cannot to column")
-	}
-	//		if utils.IsLiteralFunctionName(sql) || utils.IsWindowFunction(sql) {
-	//			if len(mb.Vars) > 0 {
-	//				sql = utils.Dialector.Explain(sql, mb.Vars...)
-	//			}
-	//		}
-	return NewColumnClause(f).Column
+func NewPattern[T any](tableName, name string, flags ...FieldFlag) Pattern[T] {
+	return fieldii.NewPattern[T](tableName, name, flags...)
 }
 
-// ToExpr 转换为表达式
-func (f Base) ToExpr() Expression {
-	return NewColumnClause(f)
+func NewPatternFrom[T any](field IField) Pattern[T] {
+	return fieldii.NewPatternFrom[T](field)
 }
 
-// Name 返回字段名称
-// 对于expr，返回别名
-// 对于普通字段，有别名的返回别名，否则返回真实名字
-func (f Base) Name() string {
-	if f.sql != nil {
-		return f.alias
-	}
-	if len(f.alias) > 0 {
-		return f.alias
-	}
-	return f.columnName
+func NewComparable[T any](tableName, name string, flags ...FieldFlag) Comparable[T] {
+	return fieldii.NewComparable[T](tableName, name, flags...)
 }
 
-func (f Base) FullName() string {
-	if f.tableName == "" {
-		return fmt.Sprintf("`%s`", f.columnName)
-	}
-	return fmt.Sprintf("`%s`.`%s`", f.tableName, f.columnName)
+func NewComparableFrom[T any](field IField) Comparable[T] {
+	return fieldii.NewComparableFrom[T](field)
 }
 
-func (f Base) Alias() string {
-	return f.alias
-}
-
-// As 创建一个别名字段
-func (f Base) As(alias string) IField {
-	if f.sql != nil {
-		return NewBaseFromSql(f.sql, alias)
-	}
-	b := NewBase(f.tableName, f.columnName)
-	b.alias = alias
-	return b
-}
-
-func (f Base) AsPrefix(prefix string) IField {
-	return f.As(prefix + f.columnName)
-}
-
-func (f Base) AsSuffix(suffix string) IField {
-	return f.As(f.columnName + suffix)
-}
-
-// Build Implements clause.Expression
-func (f Base) Build(builder clause.Builder) {
-	f.ToExpr().Build(builder)
+// IFieldToBase 将 IField 转换为 Base
+// 用于 internal/fields 包中创建类型化字段
+func IFieldToBase(f IField) Base {
+	return fieldi.IFieldToBase(f)
 }

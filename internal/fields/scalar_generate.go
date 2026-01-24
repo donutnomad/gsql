@@ -4,7 +4,7 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 )
 
 // ==================== ScalarExpr 生成的方法 ====================
@@ -20,7 +20,7 @@ func (e ScalarExpr[T]) ToExpr() clause.Expression {
 }
 
 // asExpr 创建一个别名字段
-func (e ScalarExpr[T]) As(alias string) field.IField {
+func (e ScalarExpr[T]) As(alias string) fieldi.IField {
 	return e.asExpr(alias)
 }
 

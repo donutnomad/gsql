@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,30 +14,26 @@ func TestIntExprT_Eq(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "count", Vars: nil})
 	result := expr.Eq(10)
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? = ?", e.SQL)
-	assert.Equal(t, 10, e.Vars[1])
+	assert.Equal(t, int64(10), e.Vars[1])
 }
 
 func TestIntExprT_EqOpt(t *testing.T) {
 	expr := IntOf[int](clause.Expr{SQL: "count", Vars: nil})
 
 	result := expr.EqOpt(mo.Some(10))
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", e.SQL)
+	assert.Equal(t, "? = ?", result.SQL)
 
 	result2 := expr.EqOpt(mo.None[int]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, emptyCondition, result2)
 }
 
 func TestIntExprT_Gt(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.Gt(60)
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? > ?", e.SQL)
 }
 
@@ -46,21 +41,19 @@ func TestIntExprT_In(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.In(1, 2, 3)
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? IN ?", e.SQL)
 
 	// 空列表返回空表达式
 	result2 := expr.In()
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, emptyCondition, result2)
 }
 
 func TestIntExprT_Between(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "age", Vars: nil})
 	result := expr.Between(18, 65)
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
 }
 
@@ -70,37 +63,33 @@ func TestIntExprT_BetweenPtr(t *testing.T) {
 	// 两个值都有
 	from, to := 18, 65
 	result := expr.BetweenPtr(&from, &to)
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
 
 	// 只有 from
 	result2 := expr.BetweenPtr(&from, nil)
-	e2, ok := result2.(clause.Expr)
-	assert.True(t, ok)
+	e2 := result2
 	assert.Equal(t, "? >= ?", e2.SQL)
 
 	// 只有 to
 	result3 := expr.BetweenPtr(nil, &to)
-	e3, ok := result3.(clause.Expr)
-	assert.True(t, ok)
+	e3 := result3
 	assert.Equal(t, "? <= ?", e3.SQL)
 
 	// 都为 nil
 	result4 := expr.BetweenPtr(nil, nil)
-	assert.Equal(t, field.EmptyExpression, result4)
+	assert.Equal(t, emptyCondition, result4)
 }
 
 func TestIntExprT_BetweenOpt(t *testing.T) {
 	expr := IntOf[int](clause.Expr{SQL: "age", Vars: nil})
 
 	result := expr.BetweenOpt(mo.Some(18), mo.Some(65))
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
 
 	result2 := expr.BetweenOpt(mo.None[int](), mo.None[int]())
-	assert.Equal(t, field.EmptyExpression, result2)
+	assert.Equal(t, emptyCondition, result2)
 }
 
 func TestIntExprT_BetweenF(t *testing.T) {
@@ -109,8 +98,7 @@ func TestIntExprT_BetweenF(t *testing.T) {
 	to := clause.Expr{SQL: "max_age", Vars: nil}
 
 	result := expr.BetweenF(from, to)
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result
 	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
 }
 
@@ -121,63 +109,53 @@ func TestIntExprT_Add(t *testing.T) {
 	result := expr.Add(100)
 
 	e := result.Eq(200)
-	exprResult, ok := e.(clause.Expr)
-	assert.True(t, ok)
-	assert.Equal(t, "? = ?", exprResult.SQL)
+	assert.Equal(t, "? = ?", e.SQL)
 }
 
 func TestIntExprT_Sub(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "price", Vars: nil})
 	result := expr.Sub(50)
 
-	e := result.Gt(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gt(0)
 }
 
 func TestIntExprT_Mul(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "quantity", Vars: nil})
 	result := expr.Mul(10)
 
-	e := result.Lte(1000)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Lte(1000)
+
 }
 
 func TestIntExprT_Div(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "total", Vars: nil})
 	result := expr.Div(2)
 
-	e := result.Gte(50)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(50)
 }
 
 func TestIntExprT_IntDiv(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.IntDiv(3)
 
-	e := result.Eq(3)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(3)
+
 }
 
 func TestIntExprT_Mod(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.Mod(3)
 
-	e := result.Eq(1)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(1)
+
 }
 
 func TestIntExprT_Neg(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "balance", Vars: nil})
 	result := expr.Neg()
 
-	e := result.Lt(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Lt(0)
+
 }
 
 // ==================== 位运算测试 ====================
@@ -186,54 +164,48 @@ func TestIntExprT_BitAnd(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "flags", Vars: nil})
 	result := expr.BitAnd(0x01)
 
-	e := result.Eq(1)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(1)
+
 }
 
 func TestIntExprT_BitOr(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "flags", Vars: nil})
 	result := expr.BitOr(0x02)
 
-	e := result.Gt(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gt(0)
+
 }
 
 func TestIntExprT_BitXor(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "flags", Vars: nil})
 	result := expr.BitXor(0xFF)
 
-	e := result.Not(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Not(0)
+
 }
 
 func TestIntExprT_BitNot(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "flags", Vars: nil})
 	result := expr.BitNot()
 
-	e := result.Lt(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Lt(0)
+
 }
 
 func TestIntExprT_LeftShift(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.LeftShift(2)
 
-	e := result.Eq(40)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(40)
+
 }
 
 func TestIntExprT_RightShift(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.RightShift(2)
 
-	e := result.Eq(2)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(2)
+
 }
 
 // ==================== 数学函数测试 ====================
@@ -242,36 +214,32 @@ func TestIntExprT_Abs(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "balance", Vars: nil})
 	result := expr.Abs()
 
-	e := result.Gte(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(0)
+
 }
 
 func TestIntExprT_Sign(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "balance", Vars: nil})
 	result := expr.Sign()
 
-	e := result.In(-1, 0, 1)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.In(-1, 0, 1)
+
 }
 
 func TestIntExprT_Ceil(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.Ceil()
 
-	e := result.Gte(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(0)
+
 }
 
 func TestIntExprT_Floor(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.Floor()
 
-	e := result.Gte(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(0)
+
 }
 
 func TestIntExprT_Pow(t *testing.T) {
@@ -279,9 +247,8 @@ func TestIntExprT_Pow(t *testing.T) {
 	result := expr.Pow(2)
 
 	// Pow 返回 FloatExpr
-	e := result.Gt(0.0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gt(0.0)
+
 }
 
 func TestIntExprT_Sqrt(t *testing.T) {
@@ -289,9 +256,8 @@ func TestIntExprT_Sqrt(t *testing.T) {
 	result := expr.Sqrt()
 
 	// Sqrt 返回 FloatExpr
-	e := result.Gte(0.0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(0.0)
+
 }
 
 // ==================== 类型转换测试 ====================
@@ -300,8 +266,7 @@ func TestIntExprT_Cast(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "id", Vars: nil})
 	result := expr.Cast("CHAR")
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result.(clause.Expr)
 	assert.Equal(t, "CAST(? AS CHAR)", e.SQL)
 }
 
@@ -309,36 +274,32 @@ func TestIntExprT_CastFloat(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "price", Vars: nil})
 	result := expr.CastFloat(10, 2)
 
-	e := result.Gt(0.0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gt(0.0)
+
 }
 
 func TestIntExprT_CastChar(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "id", Vars: nil})
 	result := expr.CastChar()
 
-	e := result.Like("1%")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Like("1%")
+
 }
 
 func TestIntExprT_CastSigned(t *testing.T) {
 	expr := IntOf[uint](clause.Expr{SQL: "value", Vars: nil})
 	result := expr.CastSigned()
 
-	e := result.Lt(int64(0))
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Lt(int64(0))
+
 }
 
 func TestIntExprT_CastUnsigned(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.CastUnsigned()
 
-	e := result.Gte(uint64(0))
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(uint64(0))
+
 }
 
 // ==================== 字符串转换测试 ====================
@@ -347,27 +308,24 @@ func TestIntExprT_Hex(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.Hex()
 
-	e := result.Eq("FF")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq("FF")
+
 }
 
 func TestIntExprT_Bin(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.Bin()
 
-	e := result.Like("1%")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Like("1%")
+
 }
 
 func TestIntExprT_Oct(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "value", Vars: nil})
 	result := expr.Oct()
 
-	e := result.Eq("12")
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq("12")
+
 }
 
 // ==================== 条件函数测试 ====================
@@ -376,45 +334,40 @@ func TestIntExprT_IfNull(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.IfNull(0)
 
-	e := result.Gte(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(0)
+
 }
 
 func TestIntExprT_Coalesce(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.Coalesce(0)
 
-	e := result.Gte(0)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gte(0)
+
 }
 
 func TestIntExprT_NullIf(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.NullIf(0)
 
-	e := result.IsNull()
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.IsNull()
+
 }
 
 func TestIntExprT_Greatest(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "a", Vars: nil})
 	result := expr.Greatest(10, 20)
 
-	e := result.Eq(20)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(20)
+
 }
 
 func TestIntExprT_Least(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "a", Vars: nil})
 	result := expr.Least(10, 20)
 
-	e := result.Eq(10)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Eq(10)
+
 }
 
 // ==================== 空值判断测试 ====================
@@ -423,8 +376,7 @@ func TestIntExprT_IsNull(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.IsNull()
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result.(clause.Expr)
 	assert.Equal(t, "? IS NULL", e.SQL)
 }
 
@@ -432,8 +384,7 @@ func TestIntExprT_IsNotNull(t *testing.T) {
 	expr := Int(clause.Expr{SQL: "score", Vars: nil})
 	result := expr.IsNotNull()
 
-	e, ok := result.(clause.Expr)
-	assert.True(t, ok)
+	e := result.(clause.Expr)
 	assert.Equal(t, "? IS NOT NULL", e.SQL)
 }
 
@@ -444,16 +395,12 @@ func TestIntExprT_Chaining(t *testing.T) {
 
 	// 链式调用: (price + 100) * 2
 	result := expr.Add(100).Mul(2)
-	e := result.Gt(200)
-	_, ok := e.(clause.Expr)
-	assert.True(t, ok)
+	_ = result.Gt(200)
 
 	// 链式调用: ABS(balance) > 0
 	balance := Int(clause.Expr{SQL: "balance", Vars: nil})
 	result2 := balance.Abs()
-	e2 := result2.Gte(0)
-	_, ok = e2.(clause.Expr)
-	assert.True(t, ok)
+	_ = result2.Gte(0)
 }
 
 // ==================== 泛型类型安全性测试 ====================

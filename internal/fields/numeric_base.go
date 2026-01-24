@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/samber/mo"
 )
 
@@ -45,10 +46,10 @@ func (b baseExprSql) toExprExpr() clause.Expression {
 	return b.Expr
 }
 
-// @gen public=As return=field.IField direct=true
+// @gen public=As return=fieldi.IField direct=true
 // asExpr 创建一个别名字段
-func (b baseExprSql) asExpr(alias string) field.IField {
-	return field.NewBaseFromSql(b.Expr, alias)
+func (b baseExprSql) asExpr(alias string) fieldi.IField {
+	return fieldi.NewBaseFromSql(b.Expr, alias)
 }
 
 // ==================== 基础比较操作实现（等于/不等于/In/NotIn）====================
@@ -106,7 +107,7 @@ func (f baseComparableImpl[T]) NotIn(values ...T) Condition {
 // ==================== 数值比较操作的通用实现 ====================
 
 type Condition struct {
-	clause.Expression
+	clause.Expr
 }
 
 func cond(sql string, vars ...any) Condition {
@@ -1096,7 +1097,7 @@ func (f patternExprImpl[T]) Like(value T, escape ...byte) clause.Expression {
 
 func (f patternExprImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
 	if value.IsAbsent() {
-		return field.EmptyExpression
+		return types.EmptyExpression
 	}
 	return f.Like(value.MustGet(), escape...)
 }
@@ -1113,7 +1114,7 @@ func (f patternExprImpl[T]) NotLike(value T, escape ...byte) clause.Expression {
 
 func (f patternExprImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
 	if value.IsAbsent() {
-		return field.EmptyExpression
+		return types.EmptyExpression
 	}
 	return f.NotLike(value.MustGet(), escape...)
 }
@@ -1124,7 +1125,7 @@ func (f patternExprImpl[T]) Contains(value string) clause.Expression {
 
 func (f patternExprImpl[T]) ContainsOpt(value mo.Option[string]) clause.Expression {
 	if value.IsAbsent() {
-		return field.EmptyExpression
+		return types.EmptyExpression
 	}
 	return f.Contains(value.MustGet())
 }
@@ -1135,7 +1136,7 @@ func (f patternExprImpl[T]) HasPrefix(value string) clause.Expression {
 
 func (f patternExprImpl[T]) HasPrefixOpt(value mo.Option[string]) clause.Expression {
 	if value.IsAbsent() {
-		return field.EmptyExpression
+		return types.EmptyExpression
 	}
 	return f.HasPrefix(value.MustGet())
 }
@@ -1146,7 +1147,7 @@ func (f patternExprImpl[T]) HasSuffix(value string) clause.Expression {
 
 func (f patternExprImpl[T]) HasSuffixOpt(value mo.Option[string]) clause.Expression {
 	if value.IsAbsent() {
-		return field.EmptyExpression
+		return types.EmptyExpression
 	}
 	return f.HasSuffix(value.MustGet())
 }

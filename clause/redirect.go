@@ -37,6 +37,14 @@ func (expr Expr) Compat() clause.Expr {
 	}
 }
 
+func (expr Expr) SQLVars() (string, []any) {
+	return expr.SQL, expr.Vars
+}
+
+func (expr Expr) IsEmptySQL() bool {
+	return len(expr.SQL) == 0
+}
+
 // Build build raw expression
 func (expr Expr) Build(builder Builder) {
 	var (
