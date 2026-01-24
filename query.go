@@ -89,8 +89,19 @@ func (b *QueryBuilder) build(db IDB) *GormDB {
 	return b.as().build(db)
 }
 
-func (b *QueryBuilder) Order(column field.IField, asc ...bool) *QueryBuilder {
-	b.as().Order(column, asc...)
+func (b *QueryBuilder) Order(column clause.Expression, asc ...bool) *QueryBuilder {
+	var c clause.Expression
+	switch v := column.(type) {
+	case field.IField:
+		if v.Alias() != "" {
+			c = field.NewBase("", v.Alias()).ToExpr()
+		} else {
+			c = v.ToExpr()
+		}
+	default:
+		c = v
+	}
+	b.as().Order(c, asc...)
 	return b
 }
 

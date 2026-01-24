@@ -143,8 +143,8 @@ func (b *QueryBuilderG[T]) Clone() *QueryBuilderG[T] {
 	}
 }
 
-func (b *QueryBuilderG[T]) Order(column field.IField, asc ...bool) *QueryBuilderG[T] {
-	b.orders = append(b.orders, order{column.ToExpr(), utils.Optional(asc, true)})
+func (b *QueryBuilderG[T]) Order(column clause.Expression, asc ...bool) *QueryBuilderG[T] {
+	b.orders = append(b.orders, order{column, utils.Optional(asc, true)})
 	return b
 }
 

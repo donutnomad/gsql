@@ -7,6 +7,40 @@ import (
 	"github.com/samber/lo"
 )
 
+var Cases = struct {
+	String    func() *SearchCaseBuilder[fields.StringExpr[string], string]
+	Int       func() *SearchCaseBuilder[fields.IntExpr[int], int]
+	Int8      func() *SearchCaseBuilder[fields.IntExpr[int8], int8]
+	Int16     func() *SearchCaseBuilder[fields.IntExpr[int16], int16]
+	Int32     func() *SearchCaseBuilder[fields.IntExpr[int32], int32]
+	Int64     func() *SearchCaseBuilder[fields.IntExpr[int64], int64]
+	Uint      func() *SearchCaseBuilder[fields.IntExpr[uint64], uint64]
+	Uint8     func() *SearchCaseBuilder[fields.IntExpr[uint8], uint8]
+	Uint16    func() *SearchCaseBuilder[fields.IntExpr[uint16], uint16]
+	Uint32    func() *SearchCaseBuilder[fields.IntExpr[uint32], uint32]
+	Uint64    func() *SearchCaseBuilder[fields.IntExpr[uint64], uint64]
+	Float     func() *SearchCaseBuilder[fields.FloatExpr[float64], float64]
+	Float32   func() *SearchCaseBuilder[fields.FloatExpr[float32], float32]
+	Decimal   func() *SearchCaseBuilder[fields.DecimalExpr[float64], float64]
+	Decimal32 func() *SearchCaseBuilder[fields.DecimalExpr[float32], float32]
+}{
+	String:    Case[string, fields.StringExpr[string]],
+	Int:       Case[int, fields.IntExpr[int]],
+	Uint:      Case[uint64, fields.IntExpr[uint64]],
+	Int8:      Case[int8, fields.IntExpr[int8]],
+	Int16:     Case[int16, fields.IntExpr[int16]],
+	Int32:     Case[int32, fields.IntExpr[int32]],
+	Int64:     Case[int64, fields.IntExpr[int64]],
+	Uint8:     Case[uint8, fields.IntExpr[uint8]],
+	Uint16:    Case[uint16, fields.IntExpr[uint16]],
+	Uint32:    Case[uint32, fields.IntExpr[uint32]],
+	Uint64:    Case[uint64, fields.IntExpr[uint64]],
+	Float:     Case[float64, fields.FloatExpr[float64]],
+	Float32:   Case[float32, fields.FloatExpr[float32]],
+	Decimal:   Case[float64, fields.DecimalExpr[float64]],
+	Decimal32: Case[float32, fields.DecimalExpr[float32]],
+}
+
 // Case 创建搜索式 CASE 表达式构建器
 //
 // 搜索式 CASE 语法:
@@ -25,12 +59,6 @@ import (
 //	    Else(gsql.IntVal(-1))
 func Case[R any, ResultExpr fields.Expressions[R]]() *SearchCaseBuilder[ResultExpr, R] {
 	return &SearchCaseBuilder[ResultExpr, R]{}
-}
-
-// CaseString 创建返回字符串类型的搜索式 CASE 表达式构建器
-// 这是 Case[string, fields.StringExpr[string]]() 的便捷方法
-func CaseString() *SearchCaseBuilder[fields.StringExpr[string], string] {
-	return Case[string, fields.StringExpr[string]]()
 }
 
 // CaseValue 创建简单 CASE 表达式构建器（简单 CASE）

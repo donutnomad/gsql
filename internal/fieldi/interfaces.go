@@ -47,6 +47,7 @@ type IField interface {
 	// As 创建一个别名字段
 	As(alias string) IField
 	Alias() string
+	Expression
 }
 
 type IPointer interface {

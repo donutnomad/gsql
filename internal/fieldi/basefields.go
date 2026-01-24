@@ -90,6 +90,12 @@ func (b BaseFields) Include(f ...IField) BaseFields {
 	return ret
 }
 
+func (b BaseFields) Build(builder clause.Builder) {
+	for _, item := range b {
+		item.Build(builder)
+	}
+}
+
 func (b BaseFields) ToExpr() Expression {
 	panic("BaseFields cannot ToExpr")
 }

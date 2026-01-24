@@ -5,6 +5,7 @@
 //
 //	go run ./cmd/export-types -src ./internal/fields -dst ./typed_field.go -pkg gsql
 //	go run ./cmd/export-types -src ./internal/fields -dst ./typed_field.go -pkg gsql -exclude "helper,internal"
+//	go run ./cmd/export-types -src ./internal/clauses/casewhen.go -dst ./clause_case.go -pkg gsql
 package main
 
 import (
@@ -52,6 +53,13 @@ type FuncInfo struct {
 	Doc            string   // 文档注释
 }
 
+// VarInfo 存储变量信息
+type VarInfo struct {
+	Name   string
+	SrcPkg string // 源包名
+	Doc    string // 文档注释
+}
+
 func main() {
 	cfg := parseFlags()
 	if err := run(cfg); err != nil {
@@ -64,7 +72,7 @@ func parseFlags() Config {
 	var cfg Config
 	var excludeStr string
 
-	flag.StringVar(&cfg.SrcDir, "src", "", "Source directory containing Go files")
+	flag.StringVar(&cfg.SrcDir, "src", "", "Source file or directory containing Go files")
 	flag.StringVar(&cfg.DstFile, "dst", "", "Destination file for generated code")
 	flag.StringVar(&cfg.PkgName, "pkg", "", "Package name for generated file")
 	flag.StringVar(&excludeStr, "exclude", "", "Comma-separated list of names to exclude")
@@ -72,7 +80,7 @@ func parseFlags() Config {
 	flag.Parse()
 
 	if cfg.SrcDir == "" || cfg.DstFile == "" || cfg.PkgName == "" {
-		fmt.Println("Usage: export-types -src <dir> -dst <file> -pkg <package> [-exclude <names>]")
+		fmt.Println("Usage: export-types -src <file-or-dir> -dst <file> -pkg <package> [-exclude <names>]")
 		fmt.Println()
 		fmt.Println("Flags:")
 		flag.PrintDefaults()
@@ -90,32 +98,58 @@ func parseFlags() Config {
 }
 
 func run(cfg Config) error {
-	// 解析源目录
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, cfg.SrcDir, func(fi os.FileInfo) bool {
-		return !strings.HasSuffix(fi.Name(), "_test.go")
-	}, parser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("failed to parse source directory: %w", err)
-	}
 
-	// 收集类型和函数
+	// 收集类型、函数和变量
 	var types []TypeInfo
 	var funcs []FuncInfo
+	var vars []VarInfo
 	var srcPkgName string
+	var srcPath string                 // 用于计算导入路径的路径（目录）
 	imports := make(map[string]string) // path -> alias
 
-	for pkgName, pkg := range pkgs {
-		// 跳过 main 包（通常是代码生成器）
-		if pkgName == "main" {
-			continue
+	// 检查源路径是文件还是目录
+	info, err := os.Stat(cfg.SrcDir)
+	if err != nil {
+		return fmt.Errorf("failed to stat source path: %w", err)
+	}
+
+	if info.IsDir() {
+		// 解析目录
+		srcPath = cfg.SrcDir
+		pkgs, err := parser.ParseDir(fset, cfg.SrcDir, func(fi os.FileInfo) bool {
+			return !strings.HasSuffix(fi.Name(), "_test.go")
+		}, parser.ParseComments)
+		if err != nil {
+			return fmt.Errorf("failed to parse source directory: %w", err)
 		}
-		srcPkgName = pkgName
-		for _, file := range pkg.Files {
-			collectImports(file, imports)
-			types = append(types, collectTypes(file, pkgName, cfg.ExcludeList)...)
-			funcs = append(funcs, collectFuncs(file, pkgName, cfg.ExcludeList)...)
+
+		for pkgName, pkg := range pkgs {
+			// 跳过 main 包（通常是代码生成器）
+			if pkgName == "main" {
+				continue
+			}
+			srcPkgName = pkgName
+			for _, file := range pkg.Files {
+				collectImports(file, imports)
+				types = append(types, collectTypes(file, pkgName, cfg.ExcludeList)...)
+				funcs = append(funcs, collectFuncs(file, pkgName, cfg.ExcludeList)...)
+				vars = append(vars, collectVars(file, pkgName, cfg.ExcludeList)...)
+			}
 		}
+	} else {
+		// 解析单个文件
+		srcPath = filepath.Dir(cfg.SrcDir)
+		file, err := parser.ParseFile(fset, cfg.SrcDir, nil, parser.ParseComments)
+		if err != nil {
+			return fmt.Errorf("failed to parse source file: %w", err)
+		}
+
+		srcPkgName = file.Name.Name
+		collectImports(file, imports)
+		types = append(types, collectTypes(file, srcPkgName, cfg.ExcludeList)...)
+		funcs = append(funcs, collectFuncs(file, srcPkgName, cfg.ExcludeList)...)
+		vars = append(vars, collectVars(file, srcPkgName, cfg.ExcludeList)...)
 	}
 
 	// 排序以确保稳定输出
@@ -129,15 +163,16 @@ func run(cfg Config) error {
 		}
 		return funcs[i].Name < funcs[j].Name
 	})
+	sort.Slice(vars, func(i, j int) bool { return vars[i].Name < vars[j].Name })
 
 	// 计算导入路径
-	srcImportPath, err := getImportPath(cfg.SrcDir)
+	srcImportPath, err := getImportPath(srcPath)
 	if err != nil {
 		return fmt.Errorf("failed to get import path: %w", err)
 	}
 
 	// 生成代码
-	code := generateCode(cfg, srcPkgName, srcImportPath, types, funcs)
+	code := generateCode(cfg, srcPkgName, srcImportPath, types, funcs, vars)
 
 	// 格式化代码
 	formatted, err := format.Source([]byte(code))
@@ -153,7 +188,7 @@ func run(cfg Config) error {
 		return fmt.Errorf("failed to write output file: %w", err)
 	}
 
-	fmt.Printf("Generated %s with %d types and %d functions\n", cfg.DstFile, len(types), len(funcs))
+	fmt.Printf("Generated %s with %d types, %d functions and %d variables\n", cfg.DstFile, len(types), len(funcs), len(vars))
 	return nil
 }
 
@@ -270,6 +305,52 @@ func collectFuncs(file *ast.File, pkgName string, excludeList []string) []FuncIn
 	}
 
 	return funcs
+}
+
+func collectVars(file *ast.File, pkgName string, excludeList []string) []VarInfo {
+	var vars []VarInfo
+
+	for _, decl := range file.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR {
+			continue
+		}
+
+		for _, spec := range genDecl.Specs {
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+
+			for _, name := range valueSpec.Names {
+				// 只导出公共变量
+				if !ast.IsExported(name.Name) {
+					continue
+				}
+
+				// 检查排除列表
+				if isExcluded(name.Name, excludeList) {
+					continue
+				}
+
+				info := VarInfo{
+					Name:   name.Name,
+					SrcPkg: pkgName,
+				}
+
+				// 收集文档注释
+				if genDecl.Doc != nil {
+					info.Doc = genDecl.Doc.Text()
+				} else if valueSpec.Doc != nil {
+					info.Doc = valueSpec.Doc.Text()
+				}
+
+				vars = append(vars, info)
+			}
+		}
+	}
+
+	return vars
 }
 
 func formatTypeParams(params *ast.FieldList) string {
@@ -552,7 +633,7 @@ func getImportPath(dir string) (string, error) {
 	return "", fmt.Errorf("could not find go.mod file")
 }
 
-func generateCode(cfg Config, srcPkgName, srcImportPath string, types []TypeInfo, funcs []FuncInfo) string {
+func generateCode(cfg Config, srcPkgName, srcImportPath string, types []TypeInfo, funcs []FuncInfo, vars []VarInfo) string {
 	var buf bytes.Buffer
 
 	// 头部注释
@@ -573,20 +654,44 @@ func generateCode(cfg Config, srcPkgName, srcImportPath string, types []TypeInfo
 
 	// 检查所需要的包
 	needFieldPkg := false
+	needFieldsPkg := false
 	needClausePkg := false
+
+	// 检查函数参数和返回值
 	for _, f := range funcs {
-		if strings.Contains(f.Params, "field.") || strings.Contains(f.Results, "field.") {
+		all := f.Params + f.Results + f.TypeParams
+		if strings.Contains(all, "field.") {
 			needFieldPkg = true
 		}
-		if strings.Contains(f.Params, "clause.") || strings.Contains(f.Results, "clause.") {
+		if strings.Contains(all, "fields.") {
+			needFieldsPkg = true
+		}
+		if strings.Contains(all, "clause.") {
 			needClausePkg = true
 		}
 	}
+
+	// 检查类型定义
+	for _, t := range types {
+		if strings.Contains(t.TypeParams, "field.") {
+			needFieldPkg = true
+		}
+		if strings.Contains(t.TypeParams, "fields.") {
+			needFieldsPkg = true
+		}
+		if strings.Contains(t.TypeParams, "clause.") {
+			needClausePkg = true
+		}
+	}
+
 	if needClausePkg {
 		buf.WriteString("\t\"github.com/donutnomad/gsql/clause\"\n")
 	}
 	if needFieldPkg {
 		buf.WriteString("\t\"github.com/donutnomad/gsql/field\"\n")
+	}
+	if needFieldsPkg {
+		buf.WriteString("\t\"github.com/donutnomad/gsql/internal/fields\"\n")
 	}
 	buf.WriteString(")\n\n")
 
@@ -628,6 +733,22 @@ func generateCode(cfg Config, srcPkgName, srcImportPath string, types []TypeInfo
 				buf.WriteString(fmt.Sprintf("\t%s = %s.%s\n",
 					t.Name, srcPkgName, t.Name))
 			}
+		}
+		buf.WriteString(")\n")
+	}
+
+	// 变量别名
+	if len(vars) > 0 {
+		buf.WriteString("\n// ==================== Variables ====================\n\n")
+		buf.WriteString("var (\n")
+		for _, v := range vars {
+			// 输出文档注释
+			if v.Doc != "" {
+				for _, line := range strings.Split(strings.TrimSuffix(v.Doc, "\n"), "\n") {
+					buf.WriteString("\t// " + line + "\n")
+				}
+			}
+			buf.WriteString(fmt.Sprintf("\t%s = %s.%s\n", v.Name, srcPkgName, v.Name))
 		}
 		buf.WriteString(")\n")
 	}

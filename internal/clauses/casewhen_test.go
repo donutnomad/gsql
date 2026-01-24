@@ -10,17 +10,16 @@ import (
 
 func TestT(t *testing.T) {
 	var a = fields.IntColumn("age").From(TN("test"))
-	var str = Case[string, fields.StringExpr[string]]().
-		When(a.Gt(20), fields.StringV("C")).
-		When(a.Gt(60), fields.StringV("B")).
-		When(a.Gt(90), fields.StringV("A")).
-		End().
-		ToString()
+	var str = Cases.String().
+		When(a.Gt(20), fields.StringVal("C")).
+		When(a.Gt(60), fields.StringVal("B")).
+		When(a.Gt(90), fields.StringVal("A")).
+		End()
 
-	var score = Case[int, fields.IntExpr[int]]().
-		When(str.Eq("C"), fields.IntV(30)).
-		When(str.Eq("B"), fields.IntV(70)).
-		When(str.Eq("A"), fields.IntV(100)).
+	var score = Cases.Int().
+		When(str.Eq("C"), fields.IntVal(30)).
+		When(str.Eq("B"), fields.IntVal(70)).
+		When(str.Eq("A"), fields.IntVal(100)).
 		End()
 
 	b := utils.NewMemoryBuilder()

@@ -32,8 +32,8 @@ func YearE(sql string, vars ...any) YearExpr[int64] {
 	return Year(clause.Expr{SQL: sql, Vars: vars})
 }
 
-// YearV creates a YearExpr from an integer literal value.
-func YearV[T ~int | ~int16 | ~int32 | ~int64](val T) YearExpr[T] {
+// YearVal creates a YearExpr from an integer literal value.
+func YearVal[T ~int | ~int16 | ~int32 | ~int64](val T) YearExpr[T] {
 	return YearOf[T](cgg2.NewLitExpr(val))
 }
 

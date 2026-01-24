@@ -30,26 +30,16 @@ type IntExpr[T any] struct {
 	baseExprSql
 }
 
-//
-//type IntConstraint interface {
-//	clause.Expr | clauses2.CaseWhenExpr |
-//		~int | ~int8 | ~int16 | ~int32 | ~int64 |
-//		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
-//}
+type IntConstraint interface {
+	clause.Expr |
+		IntExpr[int] | IntExpr[uint] |
+		~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+}
 
 // Int creates an IntExpr[int64] from a clause expression.
 func Int(expr clause.Expression) IntExpr[int64] {
 	return IntOf[int64](expr)
-}
-
-// IntE creates an IntExpr[int64] from raw SQL with optional variables.
-func IntE(sql string, vars ...any) IntExpr[int64] {
-	return Int(clause.Expr{SQL: sql, Vars: vars})
-}
-
-// IntV creates an IntExpr from a signed integer literal value.
-func IntV[T ~int | ~int8 | ~int16 | ~int32 | ~int64](val T) IntExpr[T] {
-	return IntOf[T](cgg2.NewLitExpr(val))
 }
 
 // Uint creates an IntExpr[uint64] from a clause expression.
@@ -57,13 +47,8 @@ func Uint(expr clause.Expression) IntExpr[uint64] {
 	return IntOf[uint64](expr)
 }
 
-// UintE creates an IntExpr[uint64] from raw SQL with optional variables.
-func UintE(sql string, vars ...any) IntExpr[uint64] {
-	return Uint(clause.Expr{SQL: sql, Vars: vars})
-}
-
-// UintV creates an IntExpr from an unsigned integer literal value.
-func UintV[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](val T) IntExpr[T] {
+// IntVal creates an IntExpr from a signed integer literal value.
+func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](val T) IntExpr[T] {
 	return IntOf[T](cgg2.NewLitExpr(val))
 }
 

@@ -8,14 +8,14 @@ import (
 
 var empty = clause.Expr{}
 
-func And(exprs ...field.Expression) field.Expression {
+func And(exprs ...field.Expression) Condition {
 	exprs = filterExpr(exprs...)
 	if len(exprs) == 0 {
-		return empty
+		return Condition{Expression: empty}
 	}
 	if len(exprs) == 1 {
 		if _, ok := exprs[0].(clause.OrConditions); !ok {
-			return exprs[0]
+			return Condition{Expression: exprs[0]}
 		}
 	}
 
@@ -28,13 +28,13 @@ func And(exprs ...field.Expression) field.Expression {
 		}
 	}
 
-	return and
+	return Condition{Expression: and}
 }
 
-func Or(exprs ...field.Expression) field.Expression {
+func Or(exprs ...field.Expression) Condition {
 	exprs = filterExpr(exprs...)
 	if len(exprs) == 0 {
-		return empty
+		return Condition{Expression: empty}
 	}
 	var or clause.OrConditions
 	for _, expr := range exprs {
@@ -44,7 +44,7 @@ func Or(exprs ...field.Expression) field.Expression {
 			or.Exprs = append(or.Exprs, expr)
 		}
 	}
-	return or
+	return Condition{Expression: or}
 }
 
 func filterExpr(input ...field.Expression) []field.Expression {

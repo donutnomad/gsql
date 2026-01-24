@@ -7,7 +7,6 @@ import (
 
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== CTE Tests ====================

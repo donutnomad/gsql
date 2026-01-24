@@ -107,7 +107,7 @@ func (f baseComparableImpl[T]) NotIn(values ...T) Condition {
 // ==================== 数值比较操作的通用实现 ====================
 
 type Condition struct {
-	clause.Expr
+	clause.Expression
 }
 
 func cond(sql string, vars ...any) Condition {

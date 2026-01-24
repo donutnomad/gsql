@@ -36,8 +36,8 @@ func StringE(sql string, vars ...any) StringExpr[string] {
 	return String(clause.Expr{SQL: sql, Vars: vars})
 }
 
-// StringV creates a StringExpr from a string literal value.
-func StringV[T ~string](val T) StringExpr[T] {
+// StringVal creates a StringExpr from a string literal value.
+func StringVal[T ~string](val T) StringExpr[T] {
 	return StringOf[T](cgg2.NewLitExpr(val))
 }
 

@@ -5,49 +5,50 @@ package gsql
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/fields"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 // ==================== Constructors ====================
 
-func NewDateField[T any](tableName, name string, flags ...field.FieldFlag) fields.DateField[T] {
+func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) fields.DateField[T] {
 	return fields.NewDateField[T](tableName, name, flags...)
 }
 
-func NewDateFieldFrom[T any](f field.IField) fields.DateField[T] {
+func NewDateFieldFrom[T any](f fieldi.IField) fields.DateField[T] {
 	return fields.NewDateFieldFrom[T](f)
 }
 
-func NewDateTimeField[T any](tableName, name string, flags ...field.FieldFlag) fields.DateTimeField[T] {
+func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) fields.DateTimeField[T] {
 	return fields.NewDateTimeField[T](tableName, name, flags...)
 }
 
-func NewDateTimeFieldFrom[T any](f field.IField) fields.DateTimeField[T] {
+func NewDateTimeFieldFrom[T any](f fieldi.IField) fields.DateTimeField[T] {
 	return fields.NewDateTimeFieldFrom[T](f)
 }
 
-func NewDecimalField[T any](tableName, name string, flags ...field.FieldFlag) fields.DecimalField[T] {
+func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) fields.DecimalField[T] {
 	return fields.NewDecimalField[T](tableName, name, flags...)
 }
 
-func NewDecimalFieldFrom[T any](f field.IField) fields.DecimalField[T] {
+func NewDecimalFieldFrom[T any](f fieldi.IField) fields.DecimalField[T] {
 	return fields.NewDecimalFieldFrom[T](f)
 }
 
-func NewFloatField[T any](tableName, name string, flags ...field.FieldFlag) fields.FloatField[T] {
+func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) fields.FloatField[T] {
 	return fields.NewFloatField[T](tableName, name, flags...)
 }
 
-func NewFloatFieldFrom[T any](f field.IField) fields.FloatField[T] {
+func NewFloatFieldFrom[T any](f fieldi.IField) fields.FloatField[T] {
 	return fields.NewFloatFieldFrom[T](f)
 }
 
-func NewIntField[T any](tableName, name string, flags ...field.FieldFlag) fields.IntField[T] {
+func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) fields.IntField[T] {
 	return fields.NewIntField[T](tableName, name, flags...)
 }
 
-func NewIntFieldFrom[T any](f field.IField) fields.IntField[T] {
+func NewIntFieldFrom[T any](f fieldi.IField) fields.IntField[T] {
 	return fields.NewIntFieldFrom[T](f)
 }
 
@@ -55,27 +56,27 @@ func NewJson(expr clause.Expression) fields.Json {
 	return fields.NewJson(expr)
 }
 
-func NewScalarField[T any](tableName, name string, flags ...field.FieldFlag) fields.ScalarField[T] {
+func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) fields.ScalarField[T] {
 	return fields.NewScalarField[T](tableName, name, flags...)
 }
 
-func NewScalarFieldFrom[T any](f field.IField) fields.ScalarField[T] {
+func NewScalarFieldFrom[T any](f fieldi.IField) fields.ScalarField[T] {
 	return fields.NewScalarFieldFrom[T](f)
 }
 
-func NewStringField[T any](tableName, name string, flags ...field.FieldFlag) fields.StringField[T] {
+func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) fields.StringField[T] {
 	return fields.NewStringField[T](tableName, name, flags...)
 }
 
-func NewStringFieldFrom[T any](f field.IField) fields.StringField[T] {
+func NewStringFieldFrom[T any](f fieldi.IField) fields.StringField[T] {
 	return fields.NewStringFieldFrom[T](f)
 }
 
-func NewTimeField[T any](tableName, name string, flags ...field.FieldFlag) fields.TimeField[T] {
+func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) fields.TimeField[T] {
 	return fields.NewTimeField[T](tableName, name, flags...)
 }
 
-func NewTimeFieldFrom[T any](f field.IField) fields.TimeField[T] {
+func NewTimeFieldFrom[T any](f fieldi.IField) fields.TimeField[T] {
 	return fields.NewTimeFieldFrom[T](f)
 }
 
@@ -144,9 +145,9 @@ func DecimalOf[T any](expr clause.Expression) fields.DecimalExpr[T] {
 	return fields.DecimalOf[T](expr)
 }
 
-// DecimalV creates a DecimalExpr from a floating-point literal value.
-func DecimalV[T ~float32 | ~float64](val T) fields.DecimalExpr[T] {
-	return fields.DecimalV[T](val)
+// DecimalVal creates a DecimalExpr from a floating-point literal value.
+func DecimalVal[T ~float32 | ~float64](val T) fields.DecimalExpr[T] {
+	return fields.DecimalVal[T](val)
 }
 
 // Float creates a FloatExpr[float64] from a clause expression.
@@ -168,9 +169,9 @@ func FloatOf[T any](expr clause.Expression) fields.FloatExpr[T] {
 	return fields.FloatOf[T](expr)
 }
 
-// FloatV creates a FloatExpr from a floating-point literal value.
-func FloatV[T ~float32 | ~float64](val T) fields.FloatExpr[T] {
-	return fields.FloatV[T](val)
+// FloatVal creates a FloatExpr from a floating-point literal value.
+func FloatVal[T ~float32 | ~float64](val T) fields.FloatExpr[T] {
+	return fields.FloatVal[T](val)
 }
 
 // Int creates an IntExpr[int64] from a clause expression.
@@ -182,25 +183,20 @@ func IntColumn(name string) fields.IntColumnBuilder {
 	return fields.IntColumn(name)
 }
 
-// IntE creates an IntExpr[int64] from raw SQL with optional variables.
-func IntE(sql string, vars ...any) fields.IntExpr[int64] {
-	return fields.IntE(sql, vars...)
-}
-
 // IntOf creates a generic IntExpr[T] from a clause expression.
 func IntOf[T any](expr clause.Expression) fields.IntExpr[T] {
 	return fields.IntOf[T](expr)
 }
 
-// IntV creates an IntExpr from a signed integer literal value.
-func IntV[T ~int | ~int8 | ~int16 | ~int32 | ~int64](val T) fields.IntExpr[T] {
-	return fields.IntV[T](val)
+// IntVal creates an IntExpr from a signed integer literal value.
+func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](val T) fields.IntExpr[T] {
+	return fields.IntVal[T](val)
 }
 
 // JsonArrayAgg 将列值聚合为 JSON 数组 (JSON_ARRAYAGG, MySQL 8.0+)
 // SELECT JSON_ARRAYAGG(name) FROM users;
 // SELECT department, JSON_ARRAYAGG(name) FROM users GROUP BY department;
-// 示例: field.JsonArrayAgg(u.Name)
+// 示例: fields.JsonArrayAgg(u.Name)
 func JsonArrayAgg(expr clause.Expression) fields.Json {
 	return fields.JsonArrayAgg(expr)
 }
@@ -208,7 +204,7 @@ func JsonArrayAgg(expr clause.Expression) fields.Json {
 // JsonObjectAgg 将键值对聚合为 JSON 对象 (JSON_OBJECTAGG, MySQL 8.0+)
 // SELECT JSON_OBJECTAGG(name, age) FROM users;
 // SELECT department, JSON_OBJECTAGG(name, salary) FROM users GROUP BY department;
-// 示例: field.JsonObjectAgg(u.Name, u.Age)
+// 示例: fields.JsonObjectAgg(u.Name, u.Age)
 //  1. 键必须唯一 - 如果同一组内有重复的键，后面的值会覆盖前面的
 //  2. 键必须是字符串 - MySQL 会自动将非字符串键转换为字符串
 //  3. NULL 值 - 如果键为 NULL，该行会被忽略
@@ -243,9 +239,9 @@ func StringOf[T any](expr clause.Expression) fields.StringExpr[T] {
 	return fields.StringOf[T](expr)
 }
 
-// StringV creates a StringExpr from a string literal value.
-func StringV[T ~string](val T) fields.StringExpr[T] {
-	return fields.StringV[T](val)
+// StringVal creates a StringExpr from a string literal value.
+func StringVal[T ~string](val T) fields.StringExpr[T] {
+	return fields.StringVal[T](val)
 }
 
 // Time creates a TimeExpr[string] from a clause expression.
@@ -272,16 +268,6 @@ func Uint(expr clause.Expression) fields.IntExpr[uint64] {
 	return fields.Uint(expr)
 }
 
-// UintE creates an IntExpr[uint64] from raw SQL with optional variables.
-func UintE(sql string, vars ...any) fields.IntExpr[uint64] {
-	return fields.UintE(sql, vars...)
-}
-
-// UintV creates an IntExpr from an unsigned integer literal value.
-func UintV[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](val T) fields.IntExpr[T] {
-	return fields.UintV[T](val)
-}
-
 // Year creates a YearExpr[int64] from a clause expression.
 func Year(expr clause.Expression) fields.YearExpr[int64] {
 	return fields.Year(expr)
@@ -297,9 +283,9 @@ func YearOf[T any](expr clause.Expression) fields.YearExpr[T] {
 	return fields.YearOf[T](expr)
 }
 
-// YearV creates a YearExpr from an integer literal value.
-func YearV[T ~int | ~int16 | ~int32 | ~int64](val T) fields.YearExpr[T] {
-	return fields.YearV[T](val)
+// YearVal creates a YearExpr from an integer literal value.
+func YearVal[T ~int | ~int16 | ~int32 | ~int64](val T) fields.YearExpr[T] {
+	return fields.YearVal[T](val)
 }
 
 // ==================== Type Aliases ====================
@@ -308,7 +294,6 @@ type (
 	BoolColumnBuilder          = fields.BoolColumnBuilder
 	ColumnBuilder[T any]       = fields.ColumnBuilder[T]
 	Condition                  = fields.Condition
-	Cont[T any]                = fields.Expressions[T]
 	DateColumnBuilder          = fields.DateColumnBuilder
 	DateExpr[T any]            = fields.DateExpr[T]
 	DateField[T any]           = fields.DateField[T]
@@ -318,10 +303,12 @@ type (
 	DecimalColumnBuilder       = fields.DecimalColumnBuilder
 	DecimalExpr[T any]         = fields.DecimalExpr[T]
 	DecimalField[T any]        = fields.DecimalField[T]
+	Expressions[T any]         = fields.Expressions[T]
 	FloatColumnBuilder         = fields.FloatColumnBuilder
 	FloatExpr[T any]           = fields.FloatExpr[T]
 	FloatField[T any]          = fields.FloatField[T]
 	IntColumnBuilder           = fields.IntColumnBuilder
+	IntConstraint              = fields.IntConstraint
 	IntExpr[T any]             = fields.IntExpr[T]
 	IntField[T any]            = fields.IntField[T]
 	Json                       = fields.Json

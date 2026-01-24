@@ -39,8 +39,8 @@ func DecimalE(sql string, vars ...any) DecimalExpr[float64] {
 	return Decimal(clause.Expr{SQL: sql, Vars: vars})
 }
 
-// DecimalV creates a DecimalExpr from a floating-point literal value.
-func DecimalV[T ~float32 | ~float64](val T) DecimalExpr[T] {
+// DecimalVal creates a DecimalExpr from a floating-point literal value.
+func DecimalVal[T ~float32 | ~float64](val T) DecimalExpr[T] {
 	return DecimalOf[T](cgg2.NewLitExpr(val))
 }
 

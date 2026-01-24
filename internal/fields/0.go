@@ -1,5 +1,5 @@
 package fields
 
 type Expressions[T any] interface {
-	IntExpr[T] | FloatExpr[T] | StringExpr[T] | DecimalExpr[T] | TimeExpr[T] | DateTimeExpr[T] | DateExpr[T]
+	IntField[T] | IntExpr[T] | FloatExpr[T] | StringExpr[T] | DecimalExpr[T] | TimeExpr[T] | DateTimeExpr[T] | DateExpr[T]
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	gsql "github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== JOIN Tests ====================
@@ -745,12 +744,12 @@ func TestInter_CaseWhen(t *testing.T) {
 		//          WHEN orders.total_price < 1000 THEN 'Large'
 		//          ELSE 'VIP'
 		//        END AS price_tier
-		priceTier := gsql.Case().
-			When(o.TotalPrice.Lt(100), gsql.Lit("Small")).
-			When(o.TotalPrice.Lt(500), gsql.Lit("Medium")).
-			When(o.TotalPrice.Lt(1000), gsql.Lit("Large")).
-			Else(gsql.Lit("VIP")).
-			End().AsF("price_tier")
+		priceTier := gsql.Cases.String().
+			When(o.TotalPrice.Lt(100), gsql.StringVal("Small")).
+			When(o.TotalPrice.Lt(500), gsql.StringVal("Medium")).
+			When(o.TotalPrice.Lt(1000), gsql.StringVal("Large")).
+			Else(gsql.StringVal("VIP")).
+			As("price_tier")
 
 		var results []struct {
 			ID        uint64  `gorm:"column:id"`
@@ -789,12 +788,12 @@ func TestInter_CaseWhen(t *testing.T) {
 		//          WHEN 'shipped' THEN 'On the way'
 		//          ELSE 'Unknown'
 		//        END AS status_desc
-		statusDesc := gsql.CaseValue(o.Status).
-			When(gsql.Lit("pending"), gsql.Lit("Waiting")).
-			When(gsql.Lit("completed"), gsql.Lit("Done")).
-			When(gsql.Lit("shipped"), gsql.Lit("On the way")).
-			Else(gsql.Lit("Unknown")).
-			End().AsF("status_desc")
+		statusDesc := gsql.CaseValue[string, gsql.StringExpr[string], string, gsql.StringExpr[string]](o.Status.StringExpr).
+			When(gsql.StringVal("pending"), gsql.StringVal("Waiting")).
+			When(gsql.StringVal("completed"), gsql.StringVal("Done")).
+			When(gsql.StringVal("shipped"), gsql.StringVal("On the way")).
+			Else(gsql.StringVal("Unknown")).
+			As("status_desc")
 
 		var results []struct {
 			Status     string `gorm:"column:status"`
@@ -834,18 +833,16 @@ func TestInter_CaseWhen(t *testing.T) {
 		// MySQL: SUM(CASE WHEN orders.total_price < 100 THEN 1 ELSE 0 END) AS small_count
 
 		smallOrderSum := gsql.Int(
-			gsql.Case().
-				When(o.TotalPrice.Lt(100), gsql.Lit(1)).
-				Else(gsql.Lit(0)).
-				End(),
+			gsql.Cases.Int().
+				When(o.TotalPrice.Lt(100), gsql.IntVal(1)).
+				Else(gsql.IntVal(0)),
 		).Sum().As("small_count")
 
 		// MySQL: SUM(CASE WHEN orders.total_price >= 100 AND orders.total_price < 500 THEN 1 ELSE 0 END) AS medium_count
 		mediumOrderSum := gsql.Int(
-			gsql.Case().
-				When(gsql.And(o.TotalPrice.Gte(100), o.TotalPrice.Lt(500)), gsql.Lit(1)).
-				Else(gsql.Lit(0)).
-				End(),
+			gsql.Cases.Int().
+				When(gsql.And(o.TotalPrice.Gte(100), o.TotalPrice.Lt(500)), gsql.IntVal(1)).
+				Else(gsql.IntVal(0)),
 		).Sum().As("medium_count")
 
 		var result struct {

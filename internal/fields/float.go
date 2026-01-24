@@ -40,8 +40,8 @@ func FloatE(sql string, vars ...any) FloatExpr[float64] {
 	return Float(clause.Expr{SQL: sql, Vars: vars})
 }
 
-// FloatV creates a FloatExpr from a floating-point literal value.
-func FloatV[T ~float32 | ~float64](val T) FloatExpr[T] {
+// FloatVal creates a FloatExpr from a floating-point literal value.
+func FloatVal[T ~float32 | ~float64](val T) FloatExpr[T] {
 	return FloatOf[T](cgg2.NewLitExpr(val))
 }
 

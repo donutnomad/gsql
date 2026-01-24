@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== CRUD Tests ====================
@@ -724,7 +723,7 @@ func TestFunc_Numeric(t *testing.T) {
 		}
 		err := gsql.
 			Select(
-				gsql.FloatV(-99.5).Abs().As("abs_val"),
+				gsql.FloatVal(-99.5).Abs().As("abs_val"),
 			).
 			From(&p).
 			Limit(1).
@@ -829,7 +828,7 @@ func TestFunc_Numeric(t *testing.T) {
 		}
 		err := gsql.
 			Select(
-				gsql.IntV(16).Sqrt().As("sqrt_val"),
+				gsql.IntVal(16).Sqrt().As("sqrt_val"),
 			).
 			From(&p).
 			Limit(1).

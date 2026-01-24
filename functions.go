@@ -23,8 +23,6 @@ func Lit[T primitive](value T) *cgg2.LitExpr {
 	return cgg2.NewLitExpr(value)
 }
 
-var _ field.ExpressionTo = (*litExpr)(nil)
-
 type litExpr struct {
 	ExprTo
 }
