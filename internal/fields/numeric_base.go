@@ -7,6 +7,7 @@ import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
+	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
@@ -55,7 +56,11 @@ type baseExprSql struct {
 // @gen public=Build void=true
 // buildExpr 实现 clause.Expression 接口的 Build 方法
 func (b baseExprSql) buildExpr(builder clause.Builder) {
-	b.Expr.Build(builder)
+	if lo.IsNil(b.Expr) {
+		builder.WriteString("NULL")
+	} else {
+		b.Expr.Build(builder)
+	}
 }
 
 // @gen public=ToExpr return=clause.Expression direct=true

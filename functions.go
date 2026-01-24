@@ -28,7 +28,7 @@ type litExpr struct {
 }
 
 func Val[T any](value T) field.ExpressionTo {
-	return ExprTo{Expr("?", value)}
+	return ExprTo{Expression: Expr("?", value)}
 }
 
 func Slice[T any](value ...T) field.ExpressionTo {
@@ -61,7 +61,7 @@ func (q quoteClause) Build(builder clause.Builder) {
 // SELECT FALSE;
 // SELECT FALSE = 0;
 // SELECT users.* FROM users WHERE users.is_active = FALSE;
-var False field.ExpressionTo = ExprTo{clause.Expr{
+var False field.ExpressionTo = ExprTo{Expression: clause.Expr{
 	SQL: "FALSE",
 }}
 
@@ -69,7 +69,7 @@ var False field.ExpressionTo = ExprTo{clause.Expr{
 // SELECT NULL;
 // SELECT IFNULL(users.nickname, NULL) FROM users;
 // UPDATE users SET deleted_at = NULL WHERE id = 1;
-var Null field.ExpressionTo = ExprTo{clause.Expr{
+var Null field.ExpressionTo = ExprTo{Expression: clause.Expr{
 	SQL: "NULL",
 }}
 
@@ -93,13 +93,13 @@ func RAND() fields.FloatExpr[float64] {
 //	COUNT()           // COUNT(*)
 //	COUNT(id)         // COUNT(id)
 //	COUNT().Gt(5)     // COUNT(*) > 5
-func COUNT(expr ...field.IField) fields.IntExpr[int64] {
+func COUNT(expr ...clause.Expression) fields.IntExpr[int64] {
 	if len(expr) == 0 {
 		return fields.IntOf[int64](clause.Expr{SQL: "COUNT(*)"})
 	}
 	return fields.IntOf[int64](clause.Expr{
 		SQL:  "COUNT(?)",
-		Vars: []any{expr[0].ToExpr()},
+		Vars: []any{expr[0]},
 	})
 }
 
@@ -145,11 +145,17 @@ func GROUP_CONCAT(expr field.Expression, separator ...string) fields.StringExpr[
 // SELECT IF(stock > 0, 'In Stock', 'Out of Stock') FROM products;
 // SELECT name, IF(age >= 18, '成年', '未成年') FROM users;
 // SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
-func IF(condition, valueIfTrue, valueIfFalse field.Expression) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+func IF[V any, ValueExpr Expressions[V]](condition Condition, valueIfTrue, valueIfFalse ValueExpr) ScalarExpr[V] {
+	return fields.ScalarOf[V](clause.Expr{
 		SQL:  "IF(?, ?, ?)",
 		Vars: []any{condition, valueIfTrue, valueIfFalse},
-	}}
+	})
+}
+
+func COUNT_IF(condition Condition) IntExpr[int64] {
+	return COUNT(
+		IF[int](condition, IntVal(1), IntOf[int](nil)),
+	)
 }
 
 // ==================== 类型转换函数 ====================
@@ -168,7 +174,7 @@ func IF(condition, valueIfTrue, valueIfFalse field.Expression) field.ExpressionT
 //	CONVERT(field, CastTypeDate)
 //	CONVERT(field, "DECIMAL(10,2)") // 对于需要指定精度的类型，可以直接传字符串
 func CONVERT(expr field.Expression, dataType string) field.ExpressionTo {
-	return ExprTo{clause.Expr{
+	return ExprTo{Expression: clause.Expr{
 		SQL:  fmt.Sprintf("CONVERT(?, %s)", dataType),
 		Vars: []any{expr},
 	}}
@@ -188,7 +194,7 @@ func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
 		panic(fmt.Sprintf("CONVERT_CHARSET: invalid or unsupported charset: %s", charset))
 	}
 
-	return ExprTo{clause.Expr{
+	return ExprTo{Expression: clause.Expr{
 		SQL:  fmt.Sprintf("CONVERT(? USING %s)", charset),
 		Vars: []any{expr},
 	}}

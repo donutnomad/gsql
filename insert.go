@@ -495,7 +495,7 @@ func (valuesWhere) Name() string {
 
 // Build from clause
 func (values valuesWhere) Build(builder clause.Builder) {
-	writer := &types.SafeWriter{builder}
+	writer := &types.SafeWriter{Builder: builder}
 	if len(values.Columns) > 0 {
 		writer.WriteByte('(')
 		for idx, column := range values.Columns {

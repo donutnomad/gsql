@@ -70,7 +70,7 @@ func (j JoinClause) Or(expr field.Expression) JoinClause {
 }
 
 func (j JoinClause) Build(builder clause.Builder) {
-	writer := &types.SafeWriter{builder}
+	writer := &types.SafeWriter{Builder: builder}
 
 	writer.WriteString(j.JoinType)
 	writer.WriteByte(' ')

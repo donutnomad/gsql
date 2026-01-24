@@ -29,7 +29,7 @@ func (c CTEClause) Build(builder clause.Builder) {
 		return
 	}
 
-	writer := &types.SafeWriter{builder}
+	writer := &types.SafeWriter{Builder: builder}
 
 	// WITH [RECURSIVE]
 	writer.WriteString("WITH ")

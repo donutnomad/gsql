@@ -24,13 +24,13 @@ import (
 func RowValue(f field.IField) field.ExpressionTo {
 	if GetMySQLVersion() >= MySQLVersion8020 {
 		// MySQL 8.0.20+ 新语法: _new.column
-		return ExprTo{clause.Expr{
+		return ExprTo{Expression: clause.Expr{
 			SQL:  "?",
 			Vars: []any{rowValueExpr{field: f}},
 		}}
 	}
 	// 旧语法: VALUES(column)
-	return ExprTo{clause.Expr{
+	return ExprTo{Expression: clause.Expr{
 		SQL:  "VALUES(?)",
 		Vars: []any{f.ToExpr()},
 	}}

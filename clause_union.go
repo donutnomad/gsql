@@ -12,7 +12,7 @@ func UnionAll(builder ...*QueryBuilder) field.IToExpr {
 	exprs := lo.Map(builder, func(item *QueryBuilder, index int) field.Expression {
 		return item.ToExpr()
 	})
-	return ExprTo{unionClause{
+	return ExprTo{Expression: unionClause{
 		Exprs:    exprs,
 		Distinct: false,
 	}}
@@ -23,7 +23,7 @@ func Union(builder ...*QueryBuilder) field.IToExpr {
 	exprs := lo.Map(builder, func(item *QueryBuilder, index int) field.Expression {
 		return item.ToExpr()
 	})
-	return ExprTo{unionClause{
+	return ExprTo{Expression: unionClause{
 		Exprs:    exprs,
 		Distinct: true,
 	}}
@@ -35,7 +35,7 @@ type unionClause struct {
 }
 
 func (u unionClause) Build(builder clause.Builder) {
-	writer := &types.SafeWriter{builder}
+	writer := &types.SafeWriter{Builder: builder}
 
 	if len(u.Exprs) == 0 {
 		return
