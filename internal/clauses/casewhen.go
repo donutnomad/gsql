@@ -1,4 +1,4 @@
-package gsql
+package clauses
 
 import (
 	"github.com/donutnomad/gsql/clause"

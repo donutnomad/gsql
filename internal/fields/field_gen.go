@@ -15,7 +15,7 @@ type IntField[T any] struct {
 	IntExpr[T]
 }
 
-func NewIntField[T any](tableName, name string, flags ...fieldi.FieldFlag) IntField[T] {
+func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) IntField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewIntFieldFrom[T](b)
 }
@@ -74,7 +74,7 @@ type FloatField[T any] struct {
 	FloatExpr[T]
 }
 
-func NewFloatField[T any](tableName, name string, flags ...fieldi.FieldFlag) FloatField[T] {
+func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) FloatField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewFloatFieldFrom[T](b)
 }
@@ -133,7 +133,7 @@ type DecimalField[T any] struct {
 	DecimalExpr[T]
 }
 
-func NewDecimalField[T any](tableName, name string, flags ...fieldi.FieldFlag) DecimalField[T] {
+func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) DecimalField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewDecimalFieldFrom[T](b)
 }
@@ -192,7 +192,7 @@ type StringField[T any] struct {
 	StringExpr[T]
 }
 
-func NewStringField[T any](tableName, name string, flags ...fieldi.FieldFlag) StringField[T] {
+func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) StringField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewStringFieldFrom[T](b)
 }
@@ -251,7 +251,7 @@ type DateTimeField[T any] struct {
 	DateTimeExpr[T]
 }
 
-func NewDateTimeField[T any](tableName, name string, flags ...fieldi.FieldFlag) DateTimeField[T] {
+func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) DateTimeField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewDateTimeFieldFrom[T](b)
 }
@@ -310,7 +310,7 @@ type DateField[T any] struct {
 	DateExpr[T]
 }
 
-func NewDateField[T any](tableName, name string, flags ...fieldi.FieldFlag) DateField[T] {
+func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) DateField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewDateFieldFrom[T](b)
 }
@@ -369,7 +369,7 @@ type TimeField[T any] struct {
 	TimeExpr[T]
 }
 
-func NewTimeField[T any](tableName, name string, flags ...fieldi.FieldFlag) TimeField[T] {
+func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) TimeField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewTimeFieldFrom[T](b)
 }
@@ -428,7 +428,7 @@ type ScalarField[T any] struct {
 	ScalarExpr[T]
 }
 
-func NewScalarField[T any](tableName, name string, flags ...fieldi.FieldFlag) ScalarField[T] {
+func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) ScalarField[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewScalarFieldFrom[T](b)
 }

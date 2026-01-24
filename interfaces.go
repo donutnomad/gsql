@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/types"
+	"github.com/donutnomad/gsql/internal/cgg2"
 	"gorm.io/gorm"
 )
 
-type ExprTo = types.ExprTo
+type ExprTo = cgg2.ExprTo
 
 type primitive interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~float32 | ~float64 | ~string | time.Time | *time.Time

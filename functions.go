@@ -6,8 +6,8 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/cgg2"
 	"github.com/donutnomad/gsql/internal/fields"
-	"github.com/donutnomad/gsql/internal/types"
 )
 
 // 白名单：允许的字符集
@@ -19,8 +19,8 @@ var allowedCharsets = map[string]bool{
 
 var Star field.IField = field.NewBase("", "*")
 
-func Lit[T primitive](value T) *types.LitExpr {
-	return types.NewLitExpr(value)
+func Lit[T primitive](value T) *cgg2.LitExpr {
+	return cgg2.NewLitExpr(value)
 }
 
 var _ field.ExpressionTo = (*litExpr)(nil)

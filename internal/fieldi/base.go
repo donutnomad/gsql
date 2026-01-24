@@ -4,18 +4,8 @@ import (
 	"fmt"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/donutnomad/gsql/internal/utils"
-)
-
-// FieldFlag 字段标志位
-type FieldFlag uint32
-
-const (
-	FlagNone          FieldFlag = 0
-	FlagPrimaryKey    FieldFlag = 1 << 0 // 主键
-	FlagUniqueIndex   FieldFlag = 1 << 1 // 唯一索引
-	FlagIndex         FieldFlag = 1 << 2 // 普通索引
-	FlagAutoIncrement FieldFlag = 1 << 3 // 自增
 )
 
 type Base struct {
@@ -23,7 +13,7 @@ type Base struct {
 	columnName string
 	alias      string // 别名
 	sql        Expression
-	flags      FieldFlag // 字段标志
+	flags      types.FieldFlag // 字段标志
 }
 
 // ColumnName 返回列名
@@ -42,8 +32,8 @@ func (f Base) SetAlias(alias string) Base {
 	return f
 }
 
-func NewBase(tableName, name string, flags ...FieldFlag) *Base {
-	var flag = FlagNone
+func NewBase(tableName, name string, flags ...types.FieldFlag) *Base {
+	var flag = types.FlagNone
 	if len(flags) > 0 {
 		flag = flags[0]
 	}
@@ -55,23 +45,23 @@ func NewBase(tableName, name string, flags ...FieldFlag) *Base {
 }
 
 // Flags 返回字段标志
-func (f Base) Flags() FieldFlag {
+func (f Base) Flags() types.FieldFlag {
 	return f.flags
 }
 
 // HasFlag 判断是否有某个标志
-func (f Base) HasFlag(flag FieldFlag) bool {
+func (f Base) HasFlag(flag types.FieldFlag) bool {
 	return f.flags&flag != 0
 }
 
 // IsPrimaryKey 是否为主键
 func (f Base) IsPrimaryKey() bool {
-	return f.HasFlag(FlagPrimaryKey)
+	return f.HasFlag(types.FlagPrimaryKey)
 }
 
 // IsUniqueIndex 是否为唯一索引
 func (f Base) IsUniqueIndex() bool {
-	return f.HasFlag(FlagUniqueIndex)
+	return f.HasFlag(types.FlagUniqueIndex)
 }
 
 func NewBaseFromSql(expr Expression, alias string) *Base {

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 )
 
 // ==================== JSON 类型系统 ====================
@@ -368,8 +368,8 @@ func (e Json) Value(path string) StringExpr[string] {
 	})
 }
 
-func (e Json) As(alias string) field.IField {
-	return field.NewBaseFromSql(e.Expression, alias)
+func (e Json) As(alias string) fieldi.IField {
+	return fieldi.NewBaseFromSql(e.Expression, alias)
 }
 
 // ==================== JSON 聚合函数 ====================
@@ -377,7 +377,7 @@ func (e Json) As(alias string) field.IField {
 // JsonArrayAgg 将列值聚合为 JSON 数组 (JSON_ARRAYAGG, MySQL 8.0+)
 // SELECT JSON_ARRAYAGG(name) FROM users;
 // SELECT department, JSON_ARRAYAGG(name) FROM users GROUP BY department;
-// 示例: field.JsonArrayAgg(u.Name)
+// 示例: fields.JsonArrayAgg(u.Name)
 func JsonArrayAgg(expr clause.Expression) Json {
 	return NewJson(clause.Expr{
 		SQL:  "JSON_ARRAYAGG(?)",
@@ -388,7 +388,7 @@ func JsonArrayAgg(expr clause.Expression) Json {
 // JsonObjectAgg 将键值对聚合为 JSON 对象 (JSON_OBJECTAGG, MySQL 8.0+)
 // SELECT JSON_OBJECTAGG(name, age) FROM users;
 // SELECT department, JSON_OBJECTAGG(name, salary) FROM users GROUP BY department;
-// 示例: field.JsonObjectAgg(u.Name, u.Age)
+// 示例: fields.JsonObjectAgg(u.Name, u.Age)
 //  1. 键必须唯一 - 如果同一组内有重复的键，后面的值会覆盖前面的
 //  2. 键必须是字符串 - MySQL 会自动将非字符串键转换为字符串
 //  3. NULL 值 - 如果键为 NULL，该行会被忽略

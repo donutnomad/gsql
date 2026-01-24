@@ -52,7 +52,7 @@ type {{.Name}}[T any] struct {
 	{{.InnerName}}[T]
 }
 
-func New{{.Name}}[T any](tableName, name string, flags ...fieldi.FieldFlag) {{.Name}}[T] {
+func New{{.Name}}[T any](tableName, name string, flags ...types.FieldFlag) {{.Name}}[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return New{{.Name}}From[T](b)
 }

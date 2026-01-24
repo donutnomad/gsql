@@ -1,4 +1,4 @@
-package clauses
+package cgg1
 
 import (
 	"github.com/donutnomad/gsql/clause"

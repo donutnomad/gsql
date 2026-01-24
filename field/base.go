@@ -1,22 +1,22 @@
 package field
 
 import (
-	"github.com/donutnomad/gsql/internal/clauses"
+	"github.com/donutnomad/gsql/internal/cgg1"
 	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/fieldii"
 	"github.com/donutnomad/gsql/internal/types"
 )
 
 const (
-	FlagNone          FieldFlag = fieldi.FlagNone
-	FlagPrimaryKey    FieldFlag = fieldi.FlagPrimaryKey
-	FlagUniqueIndex   FieldFlag = fieldi.FlagUniqueIndex
-	FlagIndex         FieldFlag = fieldi.FlagIndex
-	FlagAutoIncrement FieldFlag = fieldi.FlagAutoIncrement
+	FlagNone          FieldFlag = types.FlagNone
+	FlagPrimaryKey    FieldFlag = types.FlagPrimaryKey
+	FlagUniqueIndex   FieldFlag = types.FlagUniqueIndex
+	FlagIndex         FieldFlag = types.FlagIndex
+	FlagAutoIncrement FieldFlag = types.FlagAutoIncrement
 )
 
 type (
-	FieldFlag          = fieldi.FieldFlag
+	FieldFlag          = types.FieldFlag
 	IToExpr            = fieldi.IToExpr
 	IField             = fieldi.IField
 	IPointer           = fieldi.IPointer
@@ -46,7 +46,7 @@ func NewBaseFromSql(expr Expression, alias string) *Base {
 }
 
 // Deprecated: 移除
-func NewColumnClause(f Base) clauses.ColumnClause {
+func NewColumnClause(f Base) cgg1.ColumnClause {
 	return fieldi.NewColumnClause(f)
 }
 

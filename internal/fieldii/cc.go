@@ -3,6 +3,7 @@ package fieldii
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/fieldi"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/donutnomad/gsql/internal/utils"
 )
 
@@ -12,7 +13,7 @@ type Comparable[T any] struct {
 	pointerImpl
 }
 
-func NewComparable[T any](tableName, name string, flags ...fieldi.FieldFlag) Comparable[T] {
+func NewComparable[T any](tableName, name string, flags ...types.FieldFlag) Comparable[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewComparableFrom[T](b)
 }

@@ -3,6 +3,7 @@ package fieldii
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/fieldi"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 type Pattern[T any] struct {
@@ -12,7 +13,7 @@ type Pattern[T any] struct {
 	pointerImpl
 }
 
-func NewPattern[T any](tableName, name string, flags ...fieldi.FieldFlag) Pattern[T] {
+func NewPattern[T any](tableName, name string, flags ...types.FieldFlag) Pattern[T] {
 	b := fieldi.NewBase(tableName, name, flags...)
 	return NewPatternFrom[T](*b)
 }
