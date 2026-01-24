@@ -24,14 +24,14 @@ func (s sysFunction) Use(db DbType) sysFunction {
 // - MySQL: 1769153092
 // - SQLite: 1769153092
 // - PostgresSQL: 1769153092
-func (s sysFunction) UnixTimestamp() fields.Int[int64] {
+func (s sysFunction) UnixTimestamp() fields.IntExpr[int64] {
 	switch s.dbType {
 	case PostgresSQL:
-		return fields.NewInt[int64](expr("EXTRACT(EPOCH FROM NOW())::BIGINT"))
+		return fields.IntOf[int64](expr("EXTRACT(EPOCH FROM NOW())::BIGINT"))
 	case SQLite:
-		return fields.NewInt[int64](expr("strftime('%s', 'now')"))
+		return fields.IntOf[int64](expr("strftime('%s', 'now')"))
 	default:
-		return fields.NewInt[int64](expr("UNIX_TIMESTAMP()"))
+		return fields.IntOf[int64](expr("UNIX_TIMESTAMP()"))
 	}
 }
 
@@ -41,8 +41,8 @@ func (s sysFunction) UnixTimestamp() fields.Int[int64] {
 // - MySQL: 2026-01-23 07:17:18
 // - SQLite: 2026-01-23 07:17:18
 // - PostgresSQL: 2026-01-23 07:17:18.039624+00 (TIMESTAMP WITH TIME ZONE, Use NOW()::TIMESTAMP->2026-01-23 07:18:34.039624)
-func (sysFunction) CurrentTimestamp() fields.DateTime[string] {
-	return fields.NewDateTime[string](expr("CURRENT_TIMESTAMP"))
+func (sysFunction) CurrentTimestamp() fields.DateTimeExpr[string] {
+	return fields.DateTimeOf[string](expr("CURRENT_TIMESTAMP"))
 }
 
 // Now 获取系统时区 日期和时间 等于 CurrentTimestamp()
@@ -51,11 +51,11 @@ func (sysFunction) CurrentTimestamp() fields.DateTime[string] {
 // - MySQL: 2026-01-23 07:17:18
 // - SQLite: 2026-01-23 07:17:18
 // - PostgresSQL: 2026-01-23 07:17:18.039624+00 (TIMESTAMP WITH TIME ZONE, Use NOW()::TIMESTAMP->2026-01-23 07:18:34.039624)
-func (s sysFunction) Now() fields.DateTime[string] {
+func (s sysFunction) Now() fields.DateTimeExpr[string] {
 	if s.dbType == SQLite {
-		return fields.NewDateTime[string](expr("datetime('now')"))
+		return fields.DateTimeOf[string](expr("datetime('now')"))
 	}
-	return fields.NewDateTime[string](expr("NOW()"))
+	return fields.DateTimeOf[string](expr("NOW()"))
 }
 
 // UtcTimestamp 获取UTC时区 日期和时间
@@ -64,14 +64,14 @@ func (s sysFunction) Now() fields.DateTime[string] {
 // - MySQL: 2026-01-23 07:39:41
 // - SQLite: 2026-01-23 07:39:41
 // - PostgresSQL: 2026-01-23 07:39:41.13382
-func (s sysFunction) UtcTimestamp() fields.DateTime[string] {
+func (s sysFunction) UtcTimestamp() fields.DateTimeExpr[string] {
 	switch s.dbType {
 	case PostgresSQL:
-		return fields.NewDateTime[string](expr("(NOW() AT TIME ZONE 'UTC')"))
+		return fields.DateTimeOf[string](expr("(NOW() AT TIME ZONE 'UTC')"))
 	case SQLite:
-		return fields.NewDateTime[string](expr("datetime('now')"))
+		return fields.DateTimeOf[string](expr("datetime('now')"))
 	default:
-		return fields.NewDateTime[string](expr("UTC_TIMESTAMP()"))
+		return fields.DateTimeOf[string](expr("UTC_TIMESTAMP()"))
 	}
 }
 
@@ -81,8 +81,8 @@ func (s sysFunction) UtcTimestamp() fields.DateTime[string] {
 // - MySQL: 2026-01-23
 // - SQLite: 2026-01-23
 // - PostgresSQL: 2026-01-23
-func (sysFunction) CurrentDate() fields.Date[string] {
-	return fields.NewDate[string](expr("CURRENT_DATE"))
+func (sysFunction) CurrentDate() fields.DateExpr[string] {
+	return fields.DateOf[string](expr("CURRENT_DATE"))
 }
 
 // CurrentTime 获取系统时区 时分秒 (HH:MM:SS)
@@ -91,8 +91,8 @@ func (sysFunction) CurrentDate() fields.Date[string] {
 // - MySQL: 07:35:39
 // - SQLite: 07:35:39
 // - PostgresSQL: 07:35:39.589506+00
-func (sysFunction) CurrentTime() fields.Time[string] {
-	return fields.NewTime[string](expr("CURRENT_TIME"))
+func (sysFunction) CurrentTime() fields.TimeExpr[string] {
+	return fields.TimeOf[string](expr("CURRENT_TIME"))
 }
 
 // ==================== 系统信息函数 ====================
@@ -102,33 +102,33 @@ func (sysFunction) CurrentTime() fields.Time[string] {
 // Example:
 // - MySQL: my_database
 // - PostgresSQL: postgres
-func (s sysFunction) Database() fields.String[string] {
+func (s sysFunction) Database() fields.StringExpr[string] {
 	if s.dbType == PostgresSQL {
-		return fields.NewString[string](expr("current_database()"))
+		return fields.StringOf[string](expr("current_database()"))
 	}
-	return fields.NewString[string](expr("DATABASE()"))
+	return fields.StringOf[string](expr("DATABASE()"))
 }
 
 // User 返回当前用户名 (USER)
 // 数据库支持: MySQL, PostgresSQL
 // - MySQL: root@127.0.0.1
 // - PostgresSQL: postgres
-func (s sysFunction) User() fields.String[string] {
+func (s sysFunction) User() fields.StringExpr[string] {
 	if s.dbType == PostgresSQL {
-		return fields.NewString[string](expr("USER"))
+		return fields.StringOf[string](expr("USER"))
 	}
-	return fields.NewString[string](expr("USER()"))
+	return fields.StringOf[string](expr("USER()"))
 }
 
 // CurrentUser 返回当前用户名 (CURRENT_USER)
 // 数据库支持: MySQL, PostgresSQL
 // - MySQL: root@%
 // - PostgresSQL: postgres
-func (s sysFunction) CurrentUser() fields.String[string] {
+func (s sysFunction) CurrentUser() fields.StringExpr[string] {
 	if s.dbType == PostgresSQL {
-		return fields.NewString[string](expr("CURRENT_USER"))
+		return fields.StringOf[string](expr("CURRENT_USER"))
 	}
-	return fields.NewString[string](expr("CURRENT_USER()"))
+	return fields.StringOf[string](expr("CURRENT_USER()"))
 }
 
 // Version 返回数据库服务器的版本号 (VERSION)
@@ -137,19 +137,19 @@ func (s sysFunction) CurrentUser() fields.String[string] {
 // - PostgresSQL: PostgresSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
 // - MySQL: 8.0.41
 // - SQLite: 3.37.2
-func (s sysFunction) Version() fields.String[string] {
+func (s sysFunction) Version() fields.StringExpr[string] {
 	if s.dbType == SQLite {
-		return fields.NewString[string](expr("SQLITE_VERSION()"))
+		return fields.StringOf[string](expr("SQLITE_VERSION()"))
 	}
-	return fields.NewString[string](expr("VERSION()"))
+	return fields.StringOf[string](expr("VERSION()"))
 }
 
 // UUID 生成一个符合RFC 4122标准的通用唯一标识符（36字符的字符串）(UUID)
 // 数据库支持: MySQL, PostgresSQL (PostgresSQL 需要 uuid-ossp 扩展或使用 gen_random_uuid())
 // Example:
 // - MySQL: 5e881457-f82a-11f0-a148-ee233f69b7a1
-func (sysFunction) UUID() fields.String[string] {
-	return fields.NewString[string](expr("UUID()"))
+func (sysFunction) UUID() fields.StringExpr[string] {
+	return fields.StringOf[string](expr("UUID()"))
 }
 
 // ==================== 已过时的方法 ====================
@@ -157,15 +157,15 @@ func (sysFunction) UUID() fields.String[string] {
 // CurDate
 // 数据库支持: MySQL
 // Deprecated: 请使用 CurrentDate 代替，以获得更好的跨数据库兼容性
-func (sysFunction) CurDate() fields.Date[string] {
-	return fields.NewDate[string](expr("CURDATE()"))
+func (sysFunction) CurDate() fields.DateExpr[string] {
+	return fields.DateOf[string](expr("CURDATE()"))
 }
 
 // CurTime
 // 数据库支持: MySQL
 // Deprecated: 请使用 CurrentTime 代替，以获得更好的跨数据库兼容性
-func (sysFunction) CurTime() fields.Time[string] {
-	return fields.NewTime[string](expr("CURTIME()"))
+func (sysFunction) CurTime() fields.TimeExpr[string] {
+	return fields.TimeOf[string](expr("CURTIME()"))
 }
 
 func expr(sql string, vars ...any) clause.Expr {

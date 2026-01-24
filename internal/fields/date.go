@@ -4,16 +4,16 @@ import (
 	"github.com/donutnomad/gsql/clause"
 )
 
-var _ clause.Expression = (*Date[string])(nil)
+var _ clause.Expression = (*DateExpr[string])(nil)
 
-// Date 日期类型表达式，用于 DATE 类型字段 (YYYY-MM-DD)
+// DateExpr 日期类型表达式，用于 DATE 类型字段 (YYYY-MM-DD)
 // @gentype default=[string]
 // 支持日期比较、日期运算和日期函数
 // 使用场景：
 //   - DATE 类型字段
 //   - CURDATE(), CURRENT_DATE() 等函数的返回值
 //   - DATE() 函数提取日期部分的结果
-type Date[T any] struct {
+type DateExpr[T any] struct {
 	numericComparableImpl[T]
 	pointerExprImpl
 	nullCondFuncSql
@@ -27,8 +27,19 @@ type Date[T any] struct {
 	baseExprSql
 }
 
-func NewDate[T any](expr clause.Expression) Date[T] {
-	return Date[T]{
+// Date creates a DateExpr[string] from a clause expression.
+func Date(expr clause.Expression) DateExpr[string] {
+	return DateOf[string](expr)
+}
+
+// DateE creates a DateExpr[string] from raw SQL with optional variables.
+func DateE(sql string, vars ...any) DateExpr[string] {
+	return Date(clause.Expr{SQL: sql, Vars: vars})
+}
+
+// DateOf creates a generic DateExpr[T] from a clause expression.
+func DateOf[T any](expr clause.Expression) DateExpr[T] {
+	return DateExpr[T]{
 		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		nullCondFuncSql:       nullCondFuncSql{Expression: expr},
@@ -46,16 +57,16 @@ func NewDate[T any](expr clause.Expression) Date[T] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e Date[T]) Cast(targetType string) clause.Expression {
+func (e DateExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
 // CastDatetime 转换为 DATETIME 类型 (CAST AS DATETIME)
-func (e Date[T]) CastDatetime() DateTime[string] {
-	return NewDateTime[string](e.castDatetimeExpr())
+func (e DateExpr[T]) CastDatetime() DateTimeExpr[string] {
+	return DateTimeOf[string](e.castDatetimeExpr())
 }
 
 // CastChar 转换为字符串 (CAST AS CHAR)
-func (e Date[T]) CastChar(length ...int) String[string] {
-	return NewString[string](e.castCharExpr(length...))
+func (e DateExpr[T]) CastChar(length ...int) StringExpr[string] {
+	return StringOf[string](e.castCharExpr(length...))
 }

@@ -49,6 +49,7 @@ type FuncInfo struct {
 	SrcPkg         string   // 源包名
 	CallArgs       string   // 调用参数
 	TypeArgs       string   // 泛型类型参数，如 "[T]"
+	Doc            string   // 文档注释
 }
 
 func main() {
@@ -227,10 +228,6 @@ func collectFuncs(file *ast.File, pkgName string, excludeList []string) []FuncIn
 		}
 
 		name := funcDecl.Name.Name
-		// 只导出以 New 开头的构造函数
-		if !strings.HasPrefix(name, "New") && !isColumnFunc(name) {
-			continue
-		}
 
 		// 只导出公共函数
 		if !ast.IsExported(name) {
@@ -245,6 +242,11 @@ func collectFuncs(file *ast.File, pkgName string, excludeList []string) []FuncIn
 		info := FuncInfo{
 			Name:   name,
 			SrcPkg: pkgName,
+		}
+
+		// 收集文档注释
+		if funcDecl.Doc != nil {
+			info.Doc = funcDecl.Doc.Text()
 		}
 
 		// 检查泛型参数
@@ -268,17 +270,6 @@ func collectFuncs(file *ast.File, pkgName string, excludeList []string) []FuncIn
 	}
 
 	return funcs
-}
-
-// isColumnFunc 检查是否是列构造函数
-func isColumnFunc(name string) bool {
-	columnFuncs := []string{"IntColumn", "FloatColumn", "StringColumn", "BoolColumn", "TimeColumn", "Column"}
-	for _, f := range columnFuncs {
-		if name == f {
-			return true
-		}
-	}
-	return false
 }
 
 func formatTypeParams(params *ast.FieldList) string {
@@ -490,6 +481,15 @@ func writeExpr(buf *bytes.Buffer, expr ast.Expr, srcPkg string, excludeNames []s
 				buf.WriteString(")")
 			}
 		}
+	case *ast.BinaryExpr:
+		// 处理联合类型约束，如 ~int | ~int8 | ~int16
+		writeExpr(buf, e.X, srcPkg, excludeNames)
+		buf.WriteString(" " + e.Op.String() + " ")
+		writeExpr(buf, e.Y, srcPkg, excludeNames)
+	case *ast.UnaryExpr:
+		// 处理类型约束前缀，如 ~int
+		buf.WriteString(e.Op.String())
+		writeExpr(buf, e.X, srcPkg, excludeNames)
 	default:
 		buf.WriteString(fmt.Sprintf("%T", expr))
 	}
@@ -594,6 +594,12 @@ func generateCode(cfg Config, srcPkgName, srcImportPath string, types []TypeInfo
 	if len(funcs) > 0 {
 		buf.WriteString("// ==================== Constructors ====================\n\n")
 		for _, f := range funcs {
+			// 输出文档注释
+			if f.Doc != "" {
+				for _, line := range strings.Split(strings.TrimSuffix(f.Doc, "\n"), "\n") {
+					buf.WriteString("// " + line + "\n")
+				}
+			}
 			if f.IsGeneric {
 				buf.WriteString(fmt.Sprintf("func %s%s(%s) %s {\n",
 					f.Name, f.TypeParams, f.Params, f.Results))

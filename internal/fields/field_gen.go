@@ -12,7 +12,7 @@ import (
 
 type IntField[T any] struct {
 	field.Base
-	Int[T]
+	IntExpr[T]
 }
 
 func NewIntField[T any](tableName, name string, flags ...field.FieldFlag) IntField[T] {
@@ -24,8 +24,8 @@ func NewIntFieldFrom[T any](f field.IField) IntField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return IntField[T]{
-		Base: base,
-		Int:  NewInt[T](expr),
+		Base:    base,
+		IntExpr: IntOf[T](expr),
 	}
 }
 
@@ -71,7 +71,7 @@ func (f IntField[T]) Desc() types.OrderItem {
 
 type FloatField[T any] struct {
 	field.Base
-	Float[T]
+	FloatExpr[T]
 }
 
 func NewFloatField[T any](tableName, name string, flags ...field.FieldFlag) FloatField[T] {
@@ -83,8 +83,8 @@ func NewFloatFieldFrom[T any](f field.IField) FloatField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return FloatField[T]{
-		Base:  base,
-		Float: NewFloat[T](expr),
+		Base:      base,
+		FloatExpr: FloatOf[T](expr),
 	}
 }
 
@@ -130,7 +130,7 @@ func (f FloatField[T]) Desc() types.OrderItem {
 
 type DecimalField[T any] struct {
 	field.Base
-	Decimal[T]
+	DecimalExpr[T]
 }
 
 func NewDecimalField[T any](tableName, name string, flags ...field.FieldFlag) DecimalField[T] {
@@ -142,8 +142,8 @@ func NewDecimalFieldFrom[T any](f field.IField) DecimalField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return DecimalField[T]{
-		Base:    base,
-		Decimal: NewDecimal[T](expr),
+		Base:        base,
+		DecimalExpr: DecimalOf[T](expr),
 	}
 }
 
@@ -189,7 +189,7 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 
 type StringField[T any] struct {
 	field.Base
-	String[T]
+	StringExpr[T]
 }
 
 func NewStringField[T any](tableName, name string, flags ...field.FieldFlag) StringField[T] {
@@ -201,8 +201,8 @@ func NewStringFieldFrom[T any](f field.IField) StringField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return StringField[T]{
-		Base:   base,
-		String: NewString[T](expr),
+		Base:       base,
+		StringExpr: StringOf[T](expr),
 	}
 }
 
@@ -248,7 +248,7 @@ func (f StringField[T]) Desc() types.OrderItem {
 
 type DateTimeField[T any] struct {
 	field.Base
-	DateTime[T]
+	DateTimeExpr[T]
 }
 
 func NewDateTimeField[T any](tableName, name string, flags ...field.FieldFlag) DateTimeField[T] {
@@ -260,8 +260,8 @@ func NewDateTimeFieldFrom[T any](f field.IField) DateTimeField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return DateTimeField[T]{
-		Base:     base,
-		DateTime: NewDateTime[T](expr),
+		Base:         base,
+		DateTimeExpr: DateTimeOf[T](expr),
 	}
 }
 
@@ -307,7 +307,7 @@ func (f DateTimeField[T]) Desc() types.OrderItem {
 
 type DateField[T any] struct {
 	field.Base
-	Date[T]
+	DateExpr[T]
 }
 
 func NewDateField[T any](tableName, name string, flags ...field.FieldFlag) DateField[T] {
@@ -319,8 +319,8 @@ func NewDateFieldFrom[T any](f field.IField) DateField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return DateField[T]{
-		Base: base,
-		Date: NewDate[T](expr),
+		Base:     base,
+		DateExpr: DateOf[T](expr),
 	}
 }
 
@@ -366,7 +366,7 @@ func (f DateField[T]) Desc() types.OrderItem {
 
 type TimeField[T any] struct {
 	field.Base
-	Time[T]
+	TimeExpr[T]
 }
 
 func NewTimeField[T any](tableName, name string, flags ...field.FieldFlag) TimeField[T] {
@@ -378,8 +378,8 @@ func NewTimeFieldFrom[T any](f field.IField) TimeField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return TimeField[T]{
-		Base: base,
-		Time: NewTime[T](expr),
+		Base:     base,
+		TimeExpr: TimeOf[T](expr),
 	}
 }
 
@@ -425,7 +425,7 @@ func (f TimeField[T]) Desc() types.OrderItem {
 
 type ScalarField[T any] struct {
 	field.Base
-	Scalar[T]
+	ScalarExpr[T]
 }
 
 func NewScalarField[T any](tableName, name string, flags ...field.FieldFlag) ScalarField[T] {
@@ -437,8 +437,8 @@ func NewScalarFieldFrom[T any](f field.IField) ScalarField[T] {
 	base := field.IFieldToBase(f)
 	expr := base.ToExpr()
 	return ScalarField[T]{
-		Base:   base,
-		Scalar: NewScalar[T](expr),
+		Base:       base,
+		ScalarExpr: ScalarOf[T](expr),
 	}
 }
 

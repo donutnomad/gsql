@@ -7,6 +7,7 @@ import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/fields"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 // 白名单：允许的字符集
@@ -18,8 +19,14 @@ var allowedCharsets = map[string]bool{
 
 var Star field.IField = field.NewBase("", "*")
 
-func Lit[T primitive](value T) field.ExpressionTo {
-	return Val(value)
+func Lit[T primitive](value T) *types.LitExpr {
+	return types.NewLitExpr(value)
+}
+
+var _ field.ExpressionTo = (*litExpr)(nil)
+
+type litExpr struct {
+	ExprTo
 }
 
 func Val[T any](value T) field.ExpressionTo {
@@ -74,8 +81,8 @@ var Null field.ExpressionTo = ExprTo{clause.Expr{
 // SELECT RAND() * 100;
 // SELECT RAND(123);
 // SELECT * FROM users ORDER BY RAND() LIMIT 10;
-func RAND() fields.Float[float64] {
-	return fields.NewFloat[float64](clause.Expr{SQL: "RAND()"})
+func RAND() fields.FloatExpr[float64] {
+	return fields.FloatOf[float64](clause.Expr{SQL: "RAND()"})
 }
 
 // ==================== 聚合函数 ====================
@@ -88,11 +95,11 @@ func RAND() fields.Float[float64] {
 //	COUNT()           // COUNT(*)
 //	COUNT(id)         // COUNT(id)
 //	COUNT().Gt(5)     // COUNT(*) > 5
-func COUNT(expr ...field.IField) fields.Int[int64] {
+func COUNT(expr ...field.IField) fields.IntExpr[int64] {
 	if len(expr) == 0 {
-		return fields.NewInt[int64](clause.Expr{SQL: "COUNT(*)"})
+		return fields.IntOf[int64](clause.Expr{SQL: "COUNT(*)"})
 	}
-	return fields.NewInt[int64](clause.Expr{
+	return fields.IntOf[int64](clause.Expr{
 		SQL:  "COUNT(?)",
 		Vars: []any{expr[0].ToExpr()},
 	})
@@ -105,8 +112,8 @@ func COUNT(expr ...field.IField) fields.Int[int64] {
 //
 //	COUNT_DISTINCT(city)       // COUNT(DISTINCT city)
 //	COUNT_DISTINCT(id).Gt(10)  // COUNT(DISTINCT id) > 10
-func COUNT_DISTINCT(expr field.IField) fields.Int[int64] {
-	return fields.NewInt[int64](clause.Expr{
+func COUNT_DISTINCT(expr field.IField) fields.IntExpr[int64] {
+	return fields.IntOf[int64](clause.Expr{
 		SQL:  "COUNT(DISTINCT ?)",
 		Vars: []any{expr.ToExpr()},
 	})
@@ -118,15 +125,15 @@ func COUNT_DISTINCT(expr field.IField) fields.Int[int64] {
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
 // SELECT user_id, GROUP_CONCAT(product_name) FROM orders GROUP BY user_id;
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
-func GROUP_CONCAT(expr field.Expression, separator ...string) fields.String[string] {
+func GROUP_CONCAT(expr field.Expression, separator ...string) fields.StringExpr[string] {
 	if len(separator) > 0 {
 		// 使用参数化查询代替字符串拼接
-		return fields.NewString[string](clause.Expr{
+		return fields.StringOf[string](clause.Expr{
 			SQL:  "GROUP_CONCAT(? SEPARATOR ?)",
 			Vars: []any{expr, separator[0]},
 		})
 	}
-	return fields.NewString[string](clause.Expr{
+	return fields.StringOf[string](clause.Expr{
 		SQL:  "GROUP_CONCAT(?)",
 		Vars: []any{expr},
 	})

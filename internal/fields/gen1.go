@@ -28,7 +28,7 @@ type GenDirective struct {
 	Exclude     []string // 排除的表达式类型
 	Direct      bool     // 直接返回，不用构造函数包装
 	Void        bool     // 无返回值
-	Param       string   // 覆盖参数类型 (如 "int64", "Int[T]")
+	Param       string   // 覆盖参数类型 (如 "int64", "IntExpr[T]")
 	ParamName   string   // 参数名 (默认使用原始参数名)
 }
 
@@ -44,7 +44,7 @@ type MethodInfo struct {
 
 // TypeInfo 表达式类型信息
 type TypeInfo struct {
-	Name         string   // 类型名 (如 Int)
+	Name         string   // 类型名 (如 IntExpr)
 	TypeParam    string   // 泛型参数 (如 [T])
 	Constructor  string   // 构造函数名 (如 NewIntExpr)
 	FileName     string   // 源文件名 (不含 .go)
@@ -171,7 +171,7 @@ func scanAndParseTypes() []TypeInfo {
 				}
 
 				// 推导构造函数名
-				info.Constructor = "New" + info.Name
+				info.Constructor = getConstructorName(info.Name)
 
 				// 解析嵌入字段
 				for _, field := range structType.Fields.List {
@@ -190,6 +190,10 @@ func scanAndParseTypes() []TypeInfo {
 	}
 
 	return types
+}
+
+func getConstructorName(name string) string {
+	return strings.TrimSuffix(name, "Expr") + "Of"
 }
 
 // GentypeDirective @gentype 注解的解析结果
@@ -339,7 +343,7 @@ func parseGenDirective(text string) *GenDirective {
 		case "constructor":
 			d.Constructor = value
 		case "for":
-			// 去掉方括号后按逗号分隔，如 [Int,Float] -> ["Int", "Float"]
+			// 去掉方括号后按逗号分隔，如 [IntExpr,FloatExpr] -> ["IntExpr", "FloatExpr"]
 			d.For = strings.Split(strings.Trim(value, "[]"), ",")
 		case "exclude":
 			d.Exclude = strings.Split(strings.Trim(value, "[]"), ",")
@@ -553,13 +557,13 @@ func normalizeReturnType(ret string, callerTypeParam string, defaultTypeParams m
 
 func deriveConstructor(returnType string) string {
 	// 从返回类型推导构造函数
-	// Int[int8] -> NewIntExpr[int8]
+	// IntExpr[int8] -> NewIntExpr[int8]
 	if idx := strings.Index(returnType, "["); idx > 0 {
 		baseName := returnType[:idx]
 		typeParam := returnType[idx:]
-		return "New" + baseName + typeParam
+		return getConstructorName(baseName) + typeParam
 	}
-	return "New" + returnType
+	return getConstructorName(returnType)
 }
 
 // ==================== 文件写入 ====================

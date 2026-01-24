@@ -2,17 +2,18 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
-var _ clause.Expression = (*Year[int64])(nil)
+var _ clause.Expression = (*YearExpr[int64])(nil)
 
-// Year 年份类型表达式，用于 YEAR 类型字段
+// YearExpr 年份类型表达式，用于 YEAR 类型字段
 // @gentype default=[int]
 // YEAR 类型存储年份值，范围通常是 1901-2155
 // 使用场景：
 //   - YEAR 类型字段
 //   - YEAR() 函数提取年份的结果
-type Year[T any] struct {
+type YearExpr[T any] struct {
 	numericComparableImpl[T]
 	pointerExprImpl
 	nullCondFuncSql
@@ -21,8 +22,24 @@ type Year[T any] struct {
 	baseExprSql
 }
 
-func NewYear[T any](expr clause.Expression) Year[T] {
-	return Year[T]{
+// Year creates a YearExpr[int64] from a clause expression.
+func Year(expr clause.Expression) YearExpr[int64] {
+	return YearOf[int64](expr)
+}
+
+// YearE creates a YearExpr[int64] from raw SQL with optional variables.
+func YearE(sql string, vars ...any) YearExpr[int64] {
+	return Year(clause.Expr{SQL: sql, Vars: vars})
+}
+
+// YearV creates a YearExpr from an integer literal value.
+func YearV[T ~int | ~int16 | ~int32 | ~int64](val T) YearExpr[T] {
+	return YearOf[T](types.NewLitExpr(val))
+}
+
+// YearOf creates a generic YearExpr[T] from a clause expression.
+func YearOf[T any](expr clause.Expression) YearExpr[T] {
+	return YearExpr[T]{
 		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		nullCondFuncSql:       nullCondFuncSql{Expression: expr},
@@ -35,16 +52,16 @@ func NewYear[T any](expr clause.Expression) Year[T] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e Year[T]) Cast(targetType string) clause.Expression {
+func (e YearExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
 // CastSigned 转换为有符号整数 (CAST AS SIGNED)
-func (e Year[T]) CastSigned() Int[int64] {
-	return NewInt[int64](e.castSignedExpr())
+func (e YearExpr[T]) CastSigned() IntExpr[int64] {
+	return IntOf[int64](e.castSignedExpr())
 }
 
 // CastChar 转换为字符串 (CAST AS CHAR)
-func (e Year[T]) CastChar(length ...int) String[string] {
-	return NewString[string](e.castCharExpr(length...))
+func (e YearExpr[T]) CastChar(length ...int) StringExpr[string] {
+	return StringOf[string](e.castCharExpr(length...))
 }

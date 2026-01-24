@@ -391,7 +391,7 @@ func TestD(t *testing.T) {
 			gsql.Sys.UUID().As("uuid"),
 			gsql.Sys.Now().As("now"),
 			gsql.Sys.UnixTimestamp().As("now2"),
-			gsql.NewIntExpr[int64](gsql.Lit(1222222)).FromUnixTime().As("now3"),
+			gsql.Int(gsql.Lit(1222222)).FromUnixTime().As("now3"),
 		).From(u).Find(db),
 		)
 

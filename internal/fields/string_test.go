@@ -10,7 +10,7 @@ import (
 )
 
 func TestTextExpr_Like(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "UPPER(name)", Vars: nil})
+	expr := String(clause.Expr{SQL: "UPPER(name)", Vars: nil})
 	result := expr.Like("JOHN%")
 
 	e, ok := result.(clause.Expr)
@@ -21,7 +21,7 @@ func TestTextExpr_Like(t *testing.T) {
 }
 
 func TestTextExpr_LikeWithEscape(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Like("100%", '\\')
 
 	e, ok := result.(clause.Expr)
@@ -32,7 +32,7 @@ func TestTextExpr_LikeWithEscape(t *testing.T) {
 }
 
 func TestTextExpr_LikeOpt(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 
 	// 有值时
 	result := expr.LikeOpt(mo.Some("JOHN%"))
@@ -46,7 +46,7 @@ func TestTextExpr_LikeOpt(t *testing.T) {
 }
 
 func TestTextExpr_NotLike(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "LOWER(email)", Vars: nil})
+	expr := String(clause.Expr{SQL: "LOWER(email)", Vars: nil})
 	result := expr.NotLike("%test%")
 
 	e, ok := result.(clause.Expr)
@@ -56,7 +56,7 @@ func TestTextExpr_NotLike(t *testing.T) {
 }
 
 func TestTextExpr_Contains(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "description", Vars: nil})
+	expr := String(clause.Expr{SQL: "description", Vars: nil})
 	result := expr.Contains("keyword")
 
 	e, ok := result.(clause.Expr)
@@ -66,7 +66,7 @@ func TestTextExpr_Contains(t *testing.T) {
 }
 
 func TestTextExpr_ContainsOpt(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "description", Vars: nil})
+	expr := String(clause.Expr{SQL: "description", Vars: nil})
 
 	result := expr.ContainsOpt(mo.Some("test"))
 	e, ok := result.(clause.Expr)
@@ -78,7 +78,7 @@ func TestTextExpr_ContainsOpt(t *testing.T) {
 }
 
 func TestTextExpr_HasPrefix(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "code", Vars: nil})
+	expr := String(clause.Expr{SQL: "code", Vars: nil})
 	result := expr.HasPrefix("PRE_")
 
 	e, ok := result.(clause.Expr)
@@ -88,7 +88,7 @@ func TestTextExpr_HasPrefix(t *testing.T) {
 }
 
 func TestTextExpr_HasPrefixOpt(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "code", Vars: nil})
+	expr := String(clause.Expr{SQL: "code", Vars: nil})
 
 	result := expr.HasPrefixOpt(mo.Some("PRE_"))
 	e, ok := result.(clause.Expr)
@@ -100,7 +100,7 @@ func TestTextExpr_HasPrefixOpt(t *testing.T) {
 }
 
 func TestTextExpr_HasSuffix(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "filename", Vars: nil})
+	expr := String(clause.Expr{SQL: "filename", Vars: nil})
 	result := expr.HasSuffix(".txt")
 
 	e, ok := result.(clause.Expr)
@@ -110,7 +110,7 @@ func TestTextExpr_HasSuffix(t *testing.T) {
 }
 
 func TestTextExpr_HasSuffixOpt(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "filename", Vars: nil})
+	expr := String(clause.Expr{SQL: "filename", Vars: nil})
 
 	result := expr.HasSuffixOpt(mo.Some(".txt"))
 	e, ok := result.(clause.Expr)
@@ -122,7 +122,7 @@ func TestTextExpr_HasSuffixOpt(t *testing.T) {
 }
 
 func TestTextExpr_Eq(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "UPPER(name)", Vars: nil})
+	expr := String(clause.Expr{SQL: "UPPER(name)", Vars: nil})
 	result := expr.Eq("JOHN")
 
 	e, ok := result.(clause.Expr)
@@ -132,7 +132,7 @@ func TestTextExpr_Eq(t *testing.T) {
 }
 
 func TestTextExpr_EqOpt(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 
 	result := expr.EqOpt(mo.Some("test"))
 	e, ok := result.(clause.Expr)
@@ -144,7 +144,7 @@ func TestTextExpr_EqOpt(t *testing.T) {
 }
 
 func TestTextExpr_Not(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "status", Vars: nil})
+	expr := String(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.Not("deleted")
 
 	e, ok := result.(clause.Expr)
@@ -154,7 +154,7 @@ func TestTextExpr_Not(t *testing.T) {
 }
 
 func TestTextExpr_In(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "status", Vars: nil})
+	expr := String(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.In("active", "pending")
 
 	e, ok := result.(clause.Expr)
@@ -167,7 +167,7 @@ func TestTextExpr_In(t *testing.T) {
 }
 
 func TestTextExpr_NotIn(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "status", Vars: nil})
+	expr := String(clause.Expr{SQL: "status", Vars: nil})
 	result := expr.NotIn("deleted", "archived")
 
 	e, ok := result.(clause.Expr)
@@ -180,7 +180,7 @@ func TestTextExpr_NotIn(t *testing.T) {
 }
 
 func TestTextExpr_IsNull(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.IsNull()
 
 	e, ok := result.(clause.Expr)
@@ -189,7 +189,7 @@ func TestTextExpr_IsNull(t *testing.T) {
 }
 
 func TestTextExpr_IsNotNull(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.IsNotNull()
 
 	e, ok := result.(clause.Expr)
@@ -198,13 +198,13 @@ func TestTextExpr_IsNotNull(t *testing.T) {
 }
 
 func TestTextExpr_As(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "CONCAT(first, last)", Vars: nil})
+	expr := String(clause.Expr{SQL: "CONCAT(first, last)", Vars: nil})
 	field := expr.As("full_name")
 	assert.Equal(t, "full_name", field.Name())
 }
 
 func TestTextExpr_Cast(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "price_str", Vars: nil})
+	expr := String(clause.Expr{SQL: "price_str", Vars: nil})
 	result := expr.Cast("SIGNED")
 
 	e, ok := result.(clause.Expr)
@@ -213,10 +213,10 @@ func TestTextExpr_Cast(t *testing.T) {
 }
 
 func TestTextExpr_CastSigned(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "amount_str", Vars: nil})
+	expr := String(clause.Expr{SQL: "amount_str", Vars: nil})
 	result := expr.CastSigned()
 
-	// CastSigned 返回 Int
+	// CastSigned 返回 IntExpr
 	e := result.Gt(100)
 	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
@@ -224,10 +224,10 @@ func TestTextExpr_CastSigned(t *testing.T) {
 }
 
 func TestTextExpr_CastUnsigned(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "count_str", Vars: nil})
+	expr := String(clause.Expr{SQL: "count_str", Vars: nil})
 	result := expr.CastUnsigned()
 
-	// CastUnsigned 返回 Int
+	// CastUnsigned 返回 IntExpr
 	e := result.Gte(0)
 	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
@@ -235,10 +235,10 @@ func TestTextExpr_CastUnsigned(t *testing.T) {
 }
 
 func TestTextExpr_CastDecimal(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "price_str", Vars: nil})
+	expr := String(clause.Expr{SQL: "price_str", Vars: nil})
 	result := expr.CastDecimal(10, 2)
 
-	// CastDecimal 返回 Float
+	// CastDecimal 返回 FloatExpr
 	e := result.Lt(100.50)
 	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
@@ -246,10 +246,10 @@ func TestTextExpr_CastDecimal(t *testing.T) {
 }
 
 func TestTextExpr_CastChar(t *testing.T) {
-	expr := NewString[int](clause.Expr{SQL: "user_id", Vars: nil})
+	expr := String(clause.Expr{SQL: "user_id", Vars: nil})
 	result := expr.CastChar(10)
 
-	// CastChar 返回 String[string]
+	// CastChar 返回 StringExpr[string]
 	e := result.Like("123%")
 	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
@@ -257,7 +257,7 @@ func TestTextExpr_CastChar(t *testing.T) {
 }
 
 func TestTextExpr_CastCharNoLength(t *testing.T) {
-	expr := NewString[int](clause.Expr{SQL: "user_id", Vars: nil})
+	expr := StringOf[int](clause.Expr{SQL: "user_id", Vars: nil})
 	result := expr.CastChar()
 
 	// 验证 SQL 生成
@@ -270,7 +270,7 @@ func TestTextExpr_CastCharNoLength(t *testing.T) {
 // 测试泛型类型安全性
 func TestTextExpr_TypeSafety(t *testing.T) {
 	// string 类型
-	strExpr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	strExpr := String(clause.Expr{SQL: "name", Vars: nil})
 	_ = strExpr.Eq("test")       // 只能传 string
 	_ = strExpr.In("a", "b")     // 只能传 string
 	_ = strExpr.Like("test%")    // 只能传 string
@@ -278,7 +278,7 @@ func TestTextExpr_TypeSafety(t *testing.T) {
 	_ = strExpr.HasPrefix("pre") // 只能传 string
 
 	// int 类型（用于数字字符串场景）
-	intExpr := NewString[int](clause.Expr{SQL: "code", Vars: nil})
+	intExpr := StringOf[int](clause.Expr{SQL: "code", Vars: nil})
 	_ = intExpr.Eq(123)     // 只能传 int
 	_ = intExpr.In(1, 2, 3) // 只能传 int
 	_ = intExpr.Like(100)   // 只能传 int
@@ -287,7 +287,7 @@ func TestTextExpr_TypeSafety(t *testing.T) {
 // ==================== 字符串函数测试 ====================
 
 func TestTextExpr_Upper(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Upper()
 
 	// 链式调用测试
@@ -298,7 +298,7 @@ func TestTextExpr_Upper(t *testing.T) {
 }
 
 func TestTextExpr_Lower(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "email", Vars: nil})
+	expr := String(clause.Expr{SQL: "email", Vars: nil})
 	result := expr.Lower()
 
 	e := result.Like("%@gmail.com")
@@ -308,7 +308,7 @@ func TestTextExpr_Lower(t *testing.T) {
 }
 
 func TestTextExpr_Trim(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Trim()
 
 	e := result.Eq("test")
@@ -318,7 +318,7 @@ func TestTextExpr_Trim(t *testing.T) {
 }
 
 func TestTextExpr_LTrim(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.LTrim()
 
 	e := result.Eq("test")
@@ -327,7 +327,7 @@ func TestTextExpr_LTrim(t *testing.T) {
 }
 
 func TestTextExpr_RTrim(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.RTrim()
 
 	e := result.Eq("test")
@@ -336,7 +336,7 @@ func TestTextExpr_RTrim(t *testing.T) {
 }
 
 func TestTextExpr_Substring(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Substring(1, 3)
 
 	e := result.Eq("JOH")
@@ -346,7 +346,7 @@ func TestTextExpr_Substring(t *testing.T) {
 }
 
 func TestTextExpr_Left(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Left(5)
 
 	e := result.Like("J%")
@@ -355,7 +355,7 @@ func TestTextExpr_Left(t *testing.T) {
 }
 
 func TestTextExpr_Right(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "phone", Vars: nil})
+	expr := String(clause.Expr{SQL: "phone", Vars: nil})
 	result := expr.Right(4)
 
 	e := result.Eq("1234")
@@ -364,10 +364,10 @@ func TestTextExpr_Right(t *testing.T) {
 }
 
 func TestTextExpr_Length(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Length()
 
-	// Length 返回 Int
+	// Length 返回 IntExpr
 	e := result.Gt(10)
 	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
@@ -375,7 +375,7 @@ func TestTextExpr_Length(t *testing.T) {
 }
 
 func TestTextExpr_CharLength(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.CharLength()
 
 	e := result.Lte(50)
@@ -385,7 +385,7 @@ func TestTextExpr_CharLength(t *testing.T) {
 }
 
 func TestTextExpr_Concat(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "first_name", Vars: nil})
+	expr := String(clause.Expr{SQL: "first_name", Vars: nil})
 	lastName := clause.Expr{SQL: "last_name", Vars: nil}
 	result := expr.Concat(lastName)
 
@@ -395,7 +395,7 @@ func TestTextExpr_Concat(t *testing.T) {
 }
 
 func TestTextExpr_Replace(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "phone", Vars: nil})
+	expr := String(clause.Expr{SQL: "phone", Vars: nil})
 	result := expr.Replace("-", "")
 
 	e := result.Eq("1234567890")
@@ -404,10 +404,10 @@ func TestTextExpr_Replace(t *testing.T) {
 }
 
 func TestTextExpr_Locate(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "email", Vars: nil})
+	expr := String(clause.Expr{SQL: "email", Vars: nil})
 	result := expr.Locate("@")
 
-	// Locate 返回 Int
+	// Locate 返回 IntExpr
 	e := result.Gt(0)
 	exprResult, ok := e.(clause.Expr)
 	assert.True(t, ok)
@@ -415,7 +415,7 @@ func TestTextExpr_Locate(t *testing.T) {
 }
 
 func TestTextExpr_Reverse(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.Reverse()
 
 	e := result.Eq("nhoJ")
@@ -424,7 +424,7 @@ func TestTextExpr_Reverse(t *testing.T) {
 }
 
 func TestTextExpr_Repeat(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "'*'", Vars: nil})
+	expr := String(clause.Expr{SQL: "'*'", Vars: nil})
 	result := expr.Repeat(5)
 
 	e := result.Eq("*****")
@@ -433,7 +433,7 @@ func TestTextExpr_Repeat(t *testing.T) {
 }
 
 func TestTextExpr_LPad(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "id", Vars: nil})
+	expr := String(clause.Expr{SQL: "id", Vars: nil})
 	result := expr.LPad(5, "0")
 
 	e := result.Eq("00001")
@@ -442,7 +442,7 @@ func TestTextExpr_LPad(t *testing.T) {
 }
 
 func TestTextExpr_RPad(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 	result := expr.RPad(20, " ")
 
 	e := result.Like("John%")
@@ -452,7 +452,7 @@ func TestTextExpr_RPad(t *testing.T) {
 
 // 测试链式调用
 func TestTextExpr_Chaining(t *testing.T) {
-	expr := NewString[string](clause.Expr{SQL: "name", Vars: nil})
+	expr := String(clause.Expr{SQL: "name", Vars: nil})
 
 	// 链式调用: UPPER(TRIM(name))
 	result := expr.Trim().Upper()
@@ -461,7 +461,7 @@ func TestTextExpr_Chaining(t *testing.T) {
 	assert.True(t, ok)
 
 	// 链式调用: LEFT(LOWER(email), 10)
-	email := NewString[string](clause.Expr{SQL: "email", Vars: nil})
+	email := String(clause.Expr{SQL: "email", Vars: nil})
 	result2 := email.Lower().Left(10)
 	e2 := result2.Contains("@")
 	_, ok = e2.(clause.Expr)

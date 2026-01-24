@@ -3,23 +3,12 @@ package gsql
 import (
 	"time"
 
-	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/utils"
+	"github.com/donutnomad/gsql/internal/types"
 	"gorm.io/gorm"
 )
 
-type ExprTo struct {
-	clause.Expression
-}
-
-func (e ExprTo) AsF(name ...string) field.IField {
-	return FieldExpr(e.Expression, utils.Optional(name, ""))
-}
-
-func (e ExprTo) ToExpr() field.Expression {
-	return e.Expression
-}
+type ExprTo = types.ExprTo
 
 type primitive interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~float32 | ~float64 | ~string | time.Time | *time.Time

@@ -7,20 +7,20 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// ==================== Time 生成的方法 ====================
+// ==================== TimeExpr 生成的方法 ====================
 
 // buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e Time[T]) Build(builder clause.Builder) {
+func (e TimeExpr[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
 }
 
 // toExprExpr 返回内部的 Expression
-func (e Time[T]) ToExpr() clause.Expression {
+func (e TimeExpr[T]) ToExpr() clause.Expression {
 	return e.toExprExpr()
 }
 
 // asExpr 创建一个别名字段
-func (e Time[T]) As(alias string) field.IField {
+func (e TimeExpr[T]) As(alias string) field.IField {
 	return e.asExpr(alias)
 }
 
@@ -28,81 +28,81 @@ func (e Time[T]) As(alias string) field.IField {
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
-func (e Time[T]) IfNull(defaultValue any) Time[T] {
-	return NewTime[T](e.ifNullExpr(defaultValue))
+func (e TimeExpr[T]) IfNull(defaultValue any) TimeExpr[T] {
+	return TimeOf[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (e Time[T]) Coalesce(values ...any) Time[T] {
-	return NewTime[T](e.coalesceExpr(values...))
+func (e TimeExpr[T]) Coalesce(values ...any) TimeExpr[T] {
+	return TimeOf[T](e.coalesceExpr(values...))
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (e Time[T]) NullIf(value any) Time[T] {
-	return NewTime[T](e.nullifExpr(value))
+func (e TimeExpr[T]) NullIf(value any) TimeExpr[T] {
+	return TimeOf[T](e.nullifExpr(value))
 }
 
 // Avg 计算数值的平均值 (AVG)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT AVG(score) FROM students;
 // SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
-func (e Time[T]) Avg() Float[float64] {
-	return NewFloat[float64](e.avgExpr())
+func (e TimeExpr[T]) Avg() FloatExpr[float64] {
+	return FloatOf[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MAX(price) FROM products;
 // SELECT category, MAX(stock) FROM inventory GROUP BY category;
-func (e Time[T]) Max() Time[T] {
-	return NewTime[T](e.maxExpr())
+func (e TimeExpr[T]) Max() TimeExpr[T] {
+	return TimeOf[T](e.maxExpr())
 }
 
 // Min 返回最小值 (MIN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MIN(price) FROM products;
 // SELECT category, MIN(stock) FROM inventory GROUP BY category;
-func (e Time[T]) Min() Time[T] {
-	return NewTime[T](e.minExpr())
+func (e TimeExpr[T]) Min() TimeExpr[T] {
+	return TimeOf[T](e.minExpr())
 }
 
 // Hour 提取小时部分 (HOUR)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-23
-func (e Time[T]) Hour() Int[int] {
-	return NewInt[int](e.hourExpr())
+func (e TimeExpr[T]) Hour() IntExpr[int] {
+	return IntOf[int](e.hourExpr())
 }
 
 // Minute 提取分钟部分 (MINUTE)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-59
-func (e Time[T]) Minute() Int[int] {
-	return NewInt[int](e.minuteExpr())
+func (e TimeExpr[T]) Minute() IntExpr[int] {
+	return IntOf[int](e.minuteExpr())
 }
 
 // Second 提取秒数部分 (SECOND)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-59
-func (e Time[T]) Second() Int[int] {
-	return NewInt[int](e.secondExpr())
+func (e TimeExpr[T]) Second() IntExpr[int] {
+	return IntOf[int](e.secondExpr())
 }
 
 // Microsecond 提取微秒部分 (MICROSECOND)
 // 数据库支持: MySQL
 // 范围: 0-999999
-func (e Time[T]) Microsecond() Int[int] {
-	return NewInt[int](e.microsecondExpr())
+func (e TimeExpr[T]) Microsecond() IntExpr[int] {
+	return IntOf[int](e.microsecondExpr())
 }
 
 // TimeToSec 将时间转换为秒数 (TIME_TO_SEC)
 // 数据库支持: MySQL
 // SELECT TIME_TO_SEC('01:30:00'); -- 返回 5400
-func (e Time[T]) TimeToSec() Int[int] {
-	return NewInt[int](e.timeToSecExpr())
+func (e TimeExpr[T]) TimeToSec() IntExpr[int] {
+	return IntOf[int](e.timeToSecExpr())
 }
 
 // AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)
@@ -110,29 +110,29 @@ func (e Time[T]) TimeToSec() Int[int] {
 // interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
 // 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
 // SELECT DATE_ADD(date_column, INTERVAL 1 DAY) FROM table;
-func (e Time[T]) AddInterval(interval string) Time[T] {
-	return NewTime[T](e.addIntervalExpr(interval))
+func (e TimeExpr[T]) AddInterval(interval string) TimeExpr[T] {
+	return TimeOf[T](e.addIntervalExpr(interval))
 }
 
 // SubInterval 从日期/时间中减去时间间隔 (DATE_SUB)
 // 数据库支持: MySQL
 // interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
 // SELECT DATE_SUB(date_column, INTERVAL 1 MONTH) FROM table;
-func (e Time[T]) SubInterval(interval string) Time[T] {
-	return NewTime[T](e.subIntervalExpr(interval))
+func (e TimeExpr[T]) SubInterval(interval string) TimeExpr[T] {
+	return TimeOf[T](e.subIntervalExpr(interval))
 }
 
 // TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
 // 数据库支持: MySQL
 // SELECT TIMEDIFF(end_time, start_time) FROM events;
-func (e Time[T]) TimeDiff(other clause.Expression) Time[T] {
-	return NewTime[T](e.timeDiffExpr(other))
+func (e TimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
+	return TimeOf[T](e.timeDiffExpr(other))
 }
 
 // TimeFormat 格式化时间为字符串 (TIME_FORMAT)
 // 数据库支持: MySQL
 // SELECT TIME_FORMAT(time_column, '%H:%i:%s') FROM table;
-func (e Time[T]) Format(format string) String[string] {
-	return NewString[string](e.timeFormatExpr(format))
+func (e TimeExpr[T]) Format(format string) StringExpr[string] {
+	return StringOf[string](e.timeFormatExpr(format))
 }
 

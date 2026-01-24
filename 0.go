@@ -2,7 +2,7 @@ package gsql
 
 import "sync/atomic"
 
-//go:generate go run ./cmd/export-types -src ./internal/fields -dst ./typed_field.go -pkg gsql
+//go:generate go run ./cmd/export-types -src ./internal/fields -dst ./typed_field.go -pkg gsql -exclude "AsJson"
 
 // DbType 表示 各个数据库版本
 type DbType int

@@ -176,8 +176,8 @@ func (b *jsonArrayBuilder) ToJson() fields.Json {
 // SELECT JSON_QUOTE(users.name) FROM users;
 //
 //goland:noinspection ALL
-func JSON_QUOTE(str field.Expression) fields.String[string] {
-	return fields.NewString[string](clause.Expr{
+func JSON_QUOTE(str field.Expression) fields.StringExpr[string] {
+	return fields.StringOf[string](clause.Expr{
 		SQL:  "JSON_QUOTE(?)",
 		Vars: []any{str},
 	})

@@ -7,20 +7,20 @@ import (
 	"github.com/donutnomad/gsql/field"
 )
 
-// ==================== DateTime 生成的方法 ====================
+// ==================== DateTimeExpr 生成的方法 ====================
 
 // buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e DateTime[T]) Build(builder clause.Builder) {
+func (e DateTimeExpr[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
 }
 
 // toExprExpr 返回内部的 Expression
-func (e DateTime[T]) ToExpr() clause.Expression {
+func (e DateTimeExpr[T]) ToExpr() clause.Expression {
 	return e.toExprExpr()
 }
 
 // asExpr 创建一个别名字段
-func (e DateTime[T]) As(alias string) field.IField {
+func (e DateTimeExpr[T]) As(alias string) field.IField {
 	return e.asExpr(alias)
 }
 
@@ -28,172 +28,172 @@ func (e DateTime[T]) As(alias string) field.IField {
 // 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
 // SELECT IFNULL(nickname, 'Anonymous') FROM users;
 // Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
-func (e DateTime[T]) IfNull(defaultValue any) DateTime[T] {
-	return NewDateTime[T](e.ifNullExpr(defaultValue))
+func (e DateTimeExpr[T]) IfNull(defaultValue any) DateTimeExpr[T] {
+	return DateTimeOf[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (e DateTime[T]) Coalesce(values ...any) DateTime[T] {
-	return NewDateTime[T](e.coalesceExpr(values...))
+func (e DateTimeExpr[T]) Coalesce(values ...any) DateTimeExpr[T] {
+	return DateTimeOf[T](e.coalesceExpr(values...))
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (e DateTime[T]) NullIf(value any) DateTime[T] {
-	return NewDateTime[T](e.nullifExpr(value))
+func (e DateTimeExpr[T]) NullIf(value any) DateTimeExpr[T] {
+	return DateTimeOf[T](e.nullifExpr(value))
 }
 
 // Avg 计算数值的平均值 (AVG)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT AVG(score) FROM students;
 // SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
-func (e DateTime[T]) Avg() Float[float64] {
-	return NewFloat[float64](e.avgExpr())
+func (e DateTimeExpr[T]) Avg() FloatExpr[float64] {
+	return FloatOf[float64](e.avgExpr())
 }
 
 // Max 返回最大值 (MAX)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MAX(price) FROM products;
 // SELECT category, MAX(stock) FROM inventory GROUP BY category;
-func (e DateTime[T]) Max() DateTime[T] {
-	return NewDateTime[T](e.maxExpr())
+func (e DateTimeExpr[T]) Max() DateTimeExpr[T] {
+	return DateTimeOf[T](e.maxExpr())
 }
 
 // Min 返回最小值 (MIN)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MIN(price) FROM products;
 // SELECT category, MIN(stock) FROM inventory GROUP BY category;
-func (e DateTime[T]) Min() DateTime[T] {
-	return NewDateTime[T](e.minExpr())
+func (e DateTimeExpr[T]) Min() DateTimeExpr[T] {
+	return DateTimeOf[T](e.minExpr())
 }
 
-// Year 提取年份部分 (YEAR)
+// YearExpr 提取年份部分 (YEAR)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT YEAR(date_column) FROM table;
-func (e DateTime[T]) Year() Int[int] {
-	return NewInt[int](e.yearExpr())
+func (e DateTimeExpr[T]) Year() IntExpr[int] {
+	return IntOf[int](e.yearExpr())
 }
 
 // Month 提取月份部分 (MONTH)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT MONTH(date_column) FROM table;
-func (e DateTime[T]) Month() Int[int] {
-	return NewInt[int](e.monthExpr())
+func (e DateTimeExpr[T]) Month() IntExpr[int] {
+	return IntOf[int](e.monthExpr())
 }
 
 // Day 提取天数部分 (DAY)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT DAY(date_column) FROM table;
-func (e DateTime[T]) Day() Int[int] {
-	return NewInt[int](e.dayExpr())
+func (e DateTimeExpr[T]) Day() IntExpr[int] {
+	return IntOf[int](e.dayExpr())
 }
 
 // DayOfMonth 提取一月中的天数 (DAYOFMONTH)
 // 数据库支持: MySQL
 // 与 DAY() 等价
-func (e DateTime[T]) DayOfMonth() Int[int] {
-	return NewInt[int](e.dayOfMonthExpr())
+func (e DateTimeExpr[T]) DayOfMonth() IntExpr[int] {
+	return IntOf[int](e.dayOfMonthExpr())
 }
 
 // DayOfWeek 返回一周中的索引 (DAYOFWEEK)
 // 数据库支持: MySQL
 // 1=周日, 2=周一, ..., 7=周六
-func (e DateTime[T]) DayOfWeek() Int[int] {
-	return NewInt[int](e.dayOfWeekExpr())
+func (e DateTimeExpr[T]) DayOfWeek() IntExpr[int] {
+	return IntOf[int](e.dayOfWeekExpr())
 }
 
 // DayOfYear 返回一年中的天数 (DAYOFYEAR)
 // 数据库支持: MySQL
 // 范围: 1-366
-func (e DateTime[T]) DayOfYear() Int[int] {
-	return NewInt[int](e.dayOfYearExpr())
+func (e DateTimeExpr[T]) DayOfYear() IntExpr[int] {
+	return IntOf[int](e.dayOfYearExpr())
 }
 
 // Week 提取周数 (WEEK)
 // 数据库支持: MySQL
 // 范围: 0-53
-func (e DateTime[T]) Week() Int[int] {
-	return NewInt[int](e.weekExpr())
+func (e DateTimeExpr[T]) Week() IntExpr[int] {
+	return IntOf[int](e.weekExpr())
 }
 
 // WeekOfYear 提取周数 (WEEKOFYEAR)
 // 数据库支持: MySQL
 // 范围: 1-53，相当于 WEEK(date, 3)
-func (e DateTime[T]) WeekOfYear() Int[int] {
-	return NewInt[int](e.weekOfYearExpr())
+func (e DateTimeExpr[T]) WeekOfYear() IntExpr[int] {
+	return IntOf[int](e.weekOfYearExpr())
 }
 
 // Quarter 提取季度 (QUARTER)
 // 数据库支持: MySQL
 // 范围: 1-4
-func (e DateTime[T]) Quarter() Int[int] {
-	return NewInt[int](e.quarterExpr())
+func (e DateTimeExpr[T]) Quarter() IntExpr[int] {
+	return IntOf[int](e.quarterExpr())
 }
 
 // LastDay 返回指定日期所在月份的最后一天 (LAST_DAY)
 // 数据库支持: MySQL
 // SELECT LAST_DAY('2024-02-15'); -- 返回 '2024-02-29'
-func (e DateTime[T]) LastDay() Date[string] {
-	return NewDate[string](e.lastDayExpr())
+func (e DateTimeExpr[T]) LastDay() DateExpr[string] {
+	return DateOf[string](e.lastDayExpr())
 }
 
 // DayName 返回日期的星期名称 (DAYNAME)
 // 数据库支持: MySQL
 // SELECT DAYNAME('2024-01-15'); -- 返回 'Monday'
-func (e DateTime[T]) DayName() String[string] {
-	return NewString[string](e.dayNameExpr())
+func (e DateTimeExpr[T]) DayName() StringExpr[string] {
+	return StringOf[string](e.dayNameExpr())
 }
 
 // MonthName 返回日期的月份名称 (MONTHNAME)
 // 数据库支持: MySQL
 // SELECT MONTHNAME('2024-01-15'); -- 返回 'January'
-func (e DateTime[T]) MonthName() String[string] {
-	return NewString[string](e.monthNameExpr())
+func (e DateTimeExpr[T]) MonthName() StringExpr[string] {
+	return StringOf[string](e.monthNameExpr())
 }
 
 // ToDays 将日期转换为天数（从公元0年开始）(TO_DAYS)
 // 数据库支持: MySQL
 // SELECT TO_DAYS('2024-01-15'); -- 返回 739259
-func (e DateTime[T]) ToDays() Int[int] {
-	return NewInt[int](e.toDaysExpr())
+func (e DateTimeExpr[T]) ToDays() IntExpr[int] {
+	return IntOf[int](e.toDaysExpr())
 }
 
 // Hour 提取小时部分 (HOUR)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-23
-func (e DateTime[T]) Hour() Int[int] {
-	return NewInt[int](e.hourExpr())
+func (e DateTimeExpr[T]) Hour() IntExpr[int] {
+	return IntOf[int](e.hourExpr())
 }
 
 // Minute 提取分钟部分 (MINUTE)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-59
-func (e DateTime[T]) Minute() Int[int] {
-	return NewInt[int](e.minuteExpr())
+func (e DateTimeExpr[T]) Minute() IntExpr[int] {
+	return IntOf[int](e.minuteExpr())
 }
 
 // Second 提取秒数部分 (SECOND)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // 范围: 0-59
-func (e DateTime[T]) Second() Int[int] {
-	return NewInt[int](e.secondExpr())
+func (e DateTimeExpr[T]) Second() IntExpr[int] {
+	return IntOf[int](e.secondExpr())
 }
 
 // Microsecond 提取微秒部分 (MICROSECOND)
 // 数据库支持: MySQL
 // 范围: 0-999999
-func (e DateTime[T]) Microsecond() Int[int] {
-	return NewInt[int](e.microsecondExpr())
+func (e DateTimeExpr[T]) Microsecond() IntExpr[int] {
+	return IntOf[int](e.microsecondExpr())
 }
 
 // TimeToSec 将时间转换为秒数 (TIME_TO_SEC)
 // 数据库支持: MySQL
 // SELECT TIME_TO_SEC('01:30:00'); -- 返回 5400
-func (e DateTime[T]) TimeToSec() Int[int] {
-	return NewInt[int](e.timeToSecExpr())
+func (e DateTimeExpr[T]) TimeToSec() IntExpr[int] {
+	return IntOf[int](e.timeToSecExpr())
 }
 
 // AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)
@@ -201,66 +201,66 @@ func (e DateTime[T]) TimeToSec() Int[int] {
 // interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
 // 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
 // SELECT DATE_ADD(date_column, INTERVAL 1 DAY) FROM table;
-func (e DateTime[T]) AddInterval(interval string) DateTime[T] {
-	return NewDateTime[T](e.addIntervalExpr(interval))
+func (e DateTimeExpr[T]) AddInterval(interval string) DateTimeExpr[T] {
+	return DateTimeOf[T](e.addIntervalExpr(interval))
 }
 
 // SubInterval 从日期/时间中减去时间间隔 (DATE_SUB)
 // 数据库支持: MySQL
 // interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
 // SELECT DATE_SUB(date_column, INTERVAL 1 MONTH) FROM table;
-func (e DateTime[T]) SubInterval(interval string) DateTime[T] {
-	return NewDateTime[T](e.subIntervalExpr(interval))
+func (e DateTimeExpr[T]) SubInterval(interval string) DateTimeExpr[T] {
+	return DateTimeOf[T](e.subIntervalExpr(interval))
 }
 
 // DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
 // 数据库支持: MySQL
 // 返回 this - other 的天数
 // SELECT DATEDIFF(end_date, start_date) FROM events;
-func (e DateTime[T]) DateDiff(other clause.Expression) Int[int] {
-	return NewInt[int](e.dateDiffExpr(other))
+func (e DateTimeExpr[T]) DateDiff(other clause.Expression) IntExpr[int] {
+	return IntOf[int](e.dateDiffExpr(other))
 }
 
 // TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
 // 数据库支持: MySQL
 // SELECT TIMEDIFF(end_time, start_time) FROM events;
-func (e DateTime[T]) TimeDiff(other clause.Expression) Time[T] {
-	return NewTime[T](e.timeDiffExpr(other))
+func (e DateTimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
+	return TimeOf[T](e.timeDiffExpr(other))
 }
 
 // TimestampDiff 计算与另一个日期时间的差值（指定单位）(TIMESTAMPDIFF)
 // 数据库支持: MySQL
 // unit: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
 // SELECT TIMESTAMPDIFF(DAY, start_date, end_date) FROM events;
-func (e DateTime[T]) TimestampDiff(unit string, other clause.Expression) Int[int64] {
-	return NewInt[int64](e.timestampDiffExpr(unit, other))
+func (e DateTimeExpr[T]) TimestampDiff(unit string, other clause.Expression) IntExpr[int64] {
+	return IntOf[int64](e.timestampDiffExpr(unit, other))
 }
 
 // DateFormat 格式化日期为字符串 (DATE_FORMAT)
 // 数据库支持: MySQL
 // SELECT DATE_FORMAT(date_column, '%Y年%m月%d日') FROM table;
-func (e DateTime[T]) Format(format string) String[string] {
-	return NewString[string](e.dateFormatExpr(format))
+func (e DateTimeExpr[T]) Format(format string) StringExpr[string] {
+	return StringOf[string](e.dateFormatExpr(format))
 }
 
-// Date 提取日期部分 (DATE)
+// DateExpr 提取日期部分 (DATE)
 // 数据库支持: MySQL
 // SELECT DATE(datetime_column) FROM table;
-func (e DateTime[T]) Date() Date[string] {
-	return NewDate[string](e.extractDateExpr())
+func (e DateTimeExpr[T]) Date() DateExpr[string] {
+	return DateOf[string](e.extractDateExpr())
 }
 
-// Time 提取时间部分 (TIME)
+// TimeExpr 提取时间部分 (TIME)
 // 数据库支持: MySQL
 // SELECT TIME(datetime_column) FROM table;
-func (e DateTime[T]) Time() Time[string] {
-	return NewTime[string](e.extractTimeExpr())
+func (e DateTimeExpr[T]) Time() TimeExpr[string] {
+	return TimeOf[string](e.extractTimeExpr())
 }
 
 // UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
 // 数据库支持: MySQL
 // SELECT UNIX_TIMESTAMP(date_column) FROM table;
-func (e DateTime[T]) UnixTimestamp() Int[int64] {
-	return NewInt[int64](e.unixTimestampExpr())
+func (e DateTimeExpr[T]) UnixTimestamp() IntExpr[int64] {
+	return IntOf[int64](e.unixTimestampExpr())
 }
 

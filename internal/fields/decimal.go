@@ -2,20 +2,21 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
-var _ clause.Expression = (*Decimal[float64])(nil)
+var _ clause.Expression = (*DecimalExpr[float64])(nil)
 
-// ==================== Decimal 定义 ====================
+// ==================== DecimalExpr 定义 ====================
 
-// Decimal 定点数类型表达式，用于精确的十进制数计算
+// DecimalExpr 定点数类型表达式，用于精确的十进制数计算
 // @gentype default=[float64]
-// 与 Float 不同，DECIMAL 是精确类型，适合金融计算
+// 与 FloatExpr 不同，DECIMAL 是精确类型，适合金融计算
 // 使用场景：
 //   - 价格、金额等需要精确计算的字段
 //   - SUM, AVG 等聚合函数处理 DECIMAL 字段的返回值
 //   - 派生表中的 DECIMAL 列
-type Decimal[T any] struct {
+type DecimalExpr[T any] struct {
 	numericComparableImpl[T]
 	pointerExprImpl
 	arithmeticSql
@@ -28,8 +29,24 @@ type Decimal[T any] struct {
 	baseExprSql
 }
 
-func NewDecimal[T any](expr clause.Expression) Decimal[T] {
-	return Decimal[T]{
+// Decimal creates a DecimalExpr[float64] from a clause expression.
+func Decimal(expr clause.Expression) DecimalExpr[float64] {
+	return DecimalOf[float64](expr)
+}
+
+// DecimalE creates a DecimalExpr[float64] from raw SQL with optional variables.
+func DecimalE(sql string, vars ...any) DecimalExpr[float64] {
+	return Decimal(clause.Expr{SQL: sql, Vars: vars})
+}
+
+// DecimalV creates a DecimalExpr from a floating-point literal value.
+func DecimalV[T ~float32 | ~float64](val T) DecimalExpr[T] {
+	return DecimalOf[T](types.NewLitExpr(val))
+}
+
+// DecimalOf creates a generic DecimalExpr[T] from a clause expression.
+func DecimalOf[T any](expr clause.Expression) DecimalExpr[T] {
+	return DecimalExpr[T]{
 		numericComparableImpl: numericComparableImpl[T]{baseComparableImpl[T]{expr}},
 		pointerExprImpl:       pointerExprImpl{Expression: expr},
 		arithmeticSql:         arithmeticSql{Expression: expr},
@@ -46,38 +63,38 @@ func NewDecimal[T any](expr clause.Expression) Decimal[T] {
 // ==================== 类型转换 ====================
 
 // Cast 类型转换 (CAST)
-func (e Decimal[T]) Cast(targetType string) clause.Expression {
+func (e DecimalExpr[T]) Cast(targetType string) clause.Expression {
 	return e.castExpr(targetType)
 }
 
 // CastSigned 转换为有符号整数 (CAST AS SIGNED)
-func (e Decimal[T]) CastSigned() Int[int64] {
-	return NewInt[int64](e.castSignedExpr())
+func (e DecimalExpr[T]) CastSigned() IntExpr[int64] {
+	return IntOf[int64](e.castSignedExpr())
 }
 
 // CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
-func (e Decimal[T]) CastUnsigned() Int[uint64] {
-	return NewInt[uint64](e.castUnsignedExpr())
+func (e DecimalExpr[T]) CastUnsigned() IntExpr[uint64] {
+	return IntOf[uint64](e.castUnsignedExpr())
 }
 
 // CastDecimal 转换为指定精度的 DECIMAL (CAST AS DECIMAL)
-func (e Decimal[T]) CastDecimal(precision, scale int) Decimal[T] {
-	return NewDecimal[T](e.castDecimalExpr(precision, scale))
+func (e DecimalExpr[T]) CastDecimal(precision, scale int) DecimalExpr[T] {
+	return DecimalOf[T](e.castDecimalExpr(precision, scale))
 }
 
 // CastFloat 转换为浮点数 (CAST AS DOUBLE)
-func (e Decimal[T]) CastFloat() Float[float64] {
-	return NewFloat[float64](e.castDoubleExpr())
+func (e DecimalExpr[T]) CastFloat() FloatExpr[float64] {
+	return FloatOf[float64](e.castDoubleExpr())
 }
 
 // CastChar 转换为字符串 (CAST AS CHAR)
-func (e Decimal[T]) CastChar(length ...int) String[string] {
-	return NewString[string](e.castCharExpr(length...))
+func (e DecimalExpr[T]) CastChar(length ...int) StringExpr[string] {
+	return StringOf[string](e.castCharExpr(length...))
 }
 
 // ==================== 格式化 ====================
 
 // Format 格式化数字 (FORMAT)
-func (e Decimal[T]) Format(decimals int) String[string] {
-	return NewString[string](e.formatExpr(decimals))
+func (e DecimalExpr[T]) Format(decimals int) StringExpr[string] {
+	return StringOf[string](e.formatExpr(decimals))
 }

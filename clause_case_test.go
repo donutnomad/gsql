@@ -13,20 +13,22 @@ import (
 
 func TestCaseExample_SearchedCase(t *testing.T) {
 	// 场景：根据订单金额分级
-	amount := field.NewComparable[int64]("", "amount")
+	amount := gsql.NewIntField[int64]("", "amount")
+	var strv = gsql.StringV[string]
 
-	amountLevel := gsql.Case().
-		When(amount.Gt(10000), gsql.Lit("VIP")).
-		When(amount.Gt(5000), gsql.Lit("Premium")).
-		When(amount.Gt(1000), gsql.Lit("Standard")).
-		Else(gsql.Lit("Basic")).
-		End().AsF("customer_level")
+	amountLevel := gsql.CaseString().
+		When(amount.Gt(10000), strv("VIP")).
+		When(amount.Gt(5000), strv("Premium")).
+		When(amount.Gt(1000), strv("Standard")).
+		Else(strv("Basic"))
 
-	sql := gsql.Select(
-		gsql.Field("id"),
-		gsql.Field("amount"),
-		amountLevel,
-	).From(gsql.TN("orders")).ToSQL()
+	sql := gsql.
+		Select(
+			gsql.Field("id"),
+			gsql.Field("amount"),
+			amountLevel.AsF("customer_level"),
+		).
+		From(gsql.TN("orders")).ToSQL()
 
 	t.Logf("搜索式 CASE SQL:\n%s", sql)
 }
@@ -151,7 +153,7 @@ func TestCaseExample_NestedCase(t *testing.T) {
 		Else(gsql.Lit(1.0)).
 		End()
 
-	seasonDiscount1 := fields.NewInt[float64](seasonDiscount)
+	seasonDiscount1 := fields.IntOf[float64](seasonDiscount)
 
 	// VIP 在季节性折扣基础上再打 95 折
 	finalDiscount := gsql.Case().

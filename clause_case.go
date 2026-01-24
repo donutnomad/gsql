@@ -3,12 +3,14 @@ package gsql
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
-type CaseBuilder struct {
+type CaseBuilder[Result fields.Cont[V], V any] struct {
 	value     field.Expression // CASE value WHEN ... (可选，简单 CASE 表达式)
 	whenPairs []whenPair
-	elseValue field.Expression
+	elseValue Result
 }
 
 type whenPair struct {
@@ -18,8 +20,12 @@ type whenPair struct {
 
 // Case 创建 CASE 表达式构建器（搜索式 CASE）
 // 用法: gsql.Case().When(cond1, val1).When(cond2, val2).Else(val3)
-func Case() *CaseBuilder {
-	return &CaseBuilder{}
+func Case[V any, Result fields.Cont[V]]() *CaseBuilder[Result, V] {
+	return &CaseBuilder[Result, V]{}
+}
+
+func CaseString() *CaseBuilder[fields.StringExpr[string], string] {
+	return Case[string, fields.StringExpr[string]]()
 }
 
 // CaseValue 创建简单 CASE 表达式构建器（简单 CASE）
@@ -31,7 +37,7 @@ func CaseValue(value field.Expression) *CaseBuilder {
 // When 添加 WHEN ... THEN ... 子句
 // 对于搜索式 CASE：condition 是布尔表达式
 // 对于简单 CASE：condition 是与 value 比较的值
-func (c *CaseBuilder) When(condition, result field.Expression) *CaseBuilder {
+func (c *CaseBuilder[Result, V]) When(condition fields.Condition, result Result) *CaseBuilder[Result, V] {
 	c.whenPairs = append(c.whenPairs, whenPair{
 		condition: condition,
 		result:    result,
@@ -40,14 +46,18 @@ func (c *CaseBuilder) When(condition, result field.Expression) *CaseBuilder {
 }
 
 // Else 设置 ELSE 子句（可选）
-func (c *CaseBuilder) Else(value field.Expression) *CaseBuilder {
+func (c *CaseBuilder[Result, V]) Else(value Result) *CaseExpr {
 	c.elseValue = value
-	return c
+	return &CaseExpr{ExprTo{Expression: caseClause{c}}}
 }
 
 // End 结束 CASE 表达式，返回可用作字段的表达式
-func (c *CaseBuilder) End() field.ExpressionTo {
-	return ExprTo{caseClause{c}}
+func (c *CaseBuilder[Result, V]) End() *CaseExpr {
+	return &CaseExpr{ExprTo{Expression: caseClause{c}}}
+}
+
+type CaseExpr struct {
+	types.ExprTo
 }
 
 var _ clause.Expression = (*caseClause)(nil)
