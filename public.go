@@ -216,23 +216,6 @@ type order struct {
 	asc   bool
 }
 
-type safeWriter struct {
-	builder clause.Builder
-}
-
-func (w *safeWriter) WriteByte(b byte) error {
-	return w.builder.WriteByte(b)
-}
-func (w *safeWriter) WriteString(b string) {
-	_, _ = w.builder.WriteString(b)
-}
-func (w *safeWriter) WriteQuoted(f any) {
-	w.builder.WriteQuoted(f)
-}
-func (w *safeWriter) AddVar(writer *safeWriter, args ...any) {
-	w.builder.AddVar(writer.builder, args...)
-}
-
 func tableNameFn(name string) tableNameImpl {
 	return tableNameImpl{name: name}
 }

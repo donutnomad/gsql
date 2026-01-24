@@ -8,6 +8,7 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
 	"gorm.io/gorm/callbacks"
@@ -494,7 +495,7 @@ func (valuesWhere) Name() string {
 
 // Build from clause
 func (values valuesWhere) Build(builder clause.Builder) {
-	writer := &safeWriter{builder}
+	writer := &types.SafeWriter{builder}
 	if len(values.Columns) > 0 {
 		writer.WriteByte('(')
 		for idx, column := range values.Columns {

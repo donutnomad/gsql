@@ -4,6 +4,7 @@ import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/cgg2"
 	"github.com/donutnomad/gsql/internal/fields"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 type CaseBuilder[Result fields.Cont[V], V any] struct {
@@ -66,7 +67,7 @@ type caseClause struct {
 }
 
 func (c caseClause) Build(builder clause.Builder) {
-	writer := &safeWriter{builder}
+	writer := &types.SafeWriter{Builder: builder}
 
 	writer.WriteString("CASE")
 

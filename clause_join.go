@@ -3,6 +3,7 @@ package gsql
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 func LeftJoin(table ITableName) joiner {
@@ -69,7 +70,7 @@ func (j JoinClause) Or(expr field.Expression) JoinClause {
 }
 
 func (j JoinClause) Build(builder clause.Builder) {
-	writer := &safeWriter{builder}
+	writer := &types.SafeWriter{builder}
 
 	writer.WriteString(j.JoinType)
 	writer.WriteByte(' ')

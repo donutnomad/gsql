@@ -3,6 +3,7 @@ package gsql
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 )
 
 type CTEDefinition struct {
@@ -28,7 +29,7 @@ func (c CTEClause) Build(builder clause.Builder) {
 		return
 	}
 
-	writer := &safeWriter{builder}
+	writer := &types.SafeWriter{builder}
 
 	// WITH [RECURSIVE]
 	writer.WriteString("WITH ")

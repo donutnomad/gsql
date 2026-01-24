@@ -3,6 +3,7 @@ package gsql
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/types"
 	"github.com/samber/lo"
 )
 
@@ -34,7 +35,7 @@ type unionClause struct {
 }
 
 func (u unionClause) Build(builder clause.Builder) {
-	writer := &safeWriter{builder}
+	writer := &types.SafeWriter{builder}
 
 	if len(u.Exprs) == 0 {
 		return
