@@ -30,6 +30,13 @@ type IntExpr[T any] struct {
 	baseExprSql
 }
 
+//
+//type IntConstraint interface {
+//	clause.Expr | clauses2.CaseWhenExpr |
+//		~int | ~int8 | ~int16 | ~int32 | ~int64 |
+//		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+//}
+
 // Int creates an IntExpr[int64] from a clause expression.
 func Int(expr clause.Expression) IntExpr[int64] {
 	return IntOf[int64](expr)

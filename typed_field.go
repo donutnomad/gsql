@@ -308,7 +308,7 @@ type (
 	BoolColumnBuilder          = fields.BoolColumnBuilder
 	ColumnBuilder[T any]       = fields.ColumnBuilder[T]
 	Condition                  = fields.Condition
-	Cont[T any]                = fields.Cont[T]
+	Cont[T any]                = fields.Expressions[T]
 	DateColumnBuilder          = fields.DateColumnBuilder
 	DateExpr[T any]            = fields.DateExpr[T]
 	DateField[T any]           = fields.DateField[T]

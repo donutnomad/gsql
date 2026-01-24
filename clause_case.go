@@ -7,7 +7,7 @@ import (
 	"github.com/donutnomad/gsql/internal/types"
 )
 
-type CaseBuilder[Result fields.Cont[V], V any] struct {
+type CaseBuilder[Result fields.Expressions[V], V any] struct {
 	value     clause.Expression // CASE value WHEN ... (可选，简单 CASE 表达式)
 	whenPairs []whenPair
 	elseValue Result
@@ -20,7 +20,7 @@ type whenPair struct {
 
 // Case 创建 CASE 表达式构建器（搜索式 CASE）
 // 用法: gsql.Case().When(cond1, val1).When(cond2, val2).Else(val3)
-func Case[V any, Result fields.Cont[V]]() *CaseBuilder[Result, V] {
+func Case[V any, Result fields.Expressions[V]]() *CaseBuilder[Result, V] {
 	return &CaseBuilder[Result, V]{}
 }
 

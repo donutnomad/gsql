@@ -30,3 +30,27 @@ func ScalarOf[T any](expr clause.Expression) ScalarExpr[T] {
 		baseExprSql:        baseExprSql{Expr: expr},
 	}
 }
+
+func (s ScalarExpr[T]) ToString() StringExpr[T] {
+	return StringOf[T](s)
+}
+
+func (s ScalarExpr[T]) ToInt() IntExpr[T] {
+	return IntOf[T](s)
+}
+
+func (s ScalarExpr[T]) ToFloat() FloatExpr[T] {
+	return FloatOf[T](s)
+}
+
+func (s ScalarExpr[T]) ToDecimal() DecimalExpr[T] {
+	return DecimalOf[T](s)
+}
+
+func (s ScalarExpr[T]) ToTime() TimeExpr[T] {
+	return TimeOf[T](s)
+}
+
+func (s ScalarExpr[T]) ToDate() DateExpr[T] {
+	return DateOf[T](s)
+}
