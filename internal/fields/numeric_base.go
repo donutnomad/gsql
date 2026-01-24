@@ -25,6 +25,24 @@ func (f pointerExprImpl) IsNotNull() clause.Expression {
 	return clause.Expr{SQL: "? IS NOT NULL", Vars: []any{f.Expression}}
 }
 
+// @gen public=Count return=IntExpr[int64]
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f pointerExprImpl) countExpr() clause.Expr {
+	return clause.Expr{SQL: "COUNT(?)", Vars: []any{f.Expression}}
+}
+
+// @gen public=CountDistinct return=IntExpr[int64]
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f pointerExprImpl) countDistinctExpr() clause.Expr {
+	return clause.Expr{SQL: "COUNT(DISTINCT ?)", Vars: []any{f.Expression}}
+}
+
 // ==================== 基础表达式方法实现 ====================
 
 // baseExprSql 提供基础表达式方法的实现
@@ -438,13 +456,10 @@ type nullCondFuncSql struct {
 }
 
 // @gen public=IfNull
-// IfNull 如果表达式为NULL则返回默认值 (IFNULL)
-// 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
-// SELECT IFNULL(nickname, 'Anonymous') FROM users;
-//
-// Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
 func (c nullCondFuncSql) ifNullExpr(defaultValue any) clause.Expr {
-	return clause.Expr{SQL: "IFNULL(?, ?)", Vars: []any{c.Expression, defaultValue}}
+	return c.coalesceExpr(defaultValue)
 }
 
 // @gen public=Coalesce

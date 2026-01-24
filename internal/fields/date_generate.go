@@ -9,6 +9,22 @@ import (
 
 // ==================== DateExpr 生成的方法 ====================
 
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (e DateExpr[T]) Count() IntExpr[int64] {
+	return IntOf[int64](e.countExpr())
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (e DateExpr[T]) CountDistinct() IntExpr[int64] {
+	return IntOf[int64](e.countDistinctExpr())
+}
+
 // buildExpr 实现 clause.Expression 接口的 Build 方法
 func (e DateExpr[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
@@ -24,10 +40,8 @@ func (e DateExpr[T]) As(alias string) fieldi.IField {
 	return e.asExpr(alias)
 }
 
-// IfNull 如果表达式为NULL则返回默认值 (IFNULL)
-// 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
-// SELECT IFNULL(nickname, 'Anonymous') FROM users;
-// Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
 func (e DateExpr[T]) IfNull(defaultValue any) DateExpr[T] {
 	return DateOf[T](e.ifNullExpr(defaultValue))
 }
@@ -199,4 +213,3 @@ func (e DateExpr[T]) Format(format string) StringExpr[string] {
 func (e DateExpr[T]) UnixTimestamp() IntExpr[int64] {
 	return IntOf[int64](e.unixTimestampExpr())
 }
-

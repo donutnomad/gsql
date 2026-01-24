@@ -9,6 +9,22 @@ import (
 
 // ==================== IntExpr 生成的方法 ====================
 
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (e IntExpr[T]) Count() IntExpr[int64] {
+	return IntOf[int64](e.countExpr())
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (e IntExpr[T]) CountDistinct() IntExpr[int64] {
+	return IntOf[int64](e.countDistinctExpr())
+}
+
 // buildExpr 实现 clause.Expression 接口的 Build 方法
 func (e IntExpr[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
@@ -149,10 +165,8 @@ func (e IntExpr[T]) Exp() FloatExpr[float64] {
 	return FloatOf[float64](e.expExpr())
 }
 
-// IfNull 如果表达式为NULL则返回默认值 (IFNULL)
-// 数据库支持: MySQL, SQLite (PostgreSQL 使用 COALESCE)
-// SELECT IFNULL(nickname, 'Anonymous') FROM users;
-// Deprecated: 建议使用 Coalesce 替代，以获得更好的跨数据库兼容性
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
 func (e IntExpr[T]) IfNull(defaultValue any) IntExpr[T] {
 	return IntOf[T](e.ifNullExpr(defaultValue))
 }
@@ -274,4 +288,3 @@ func (e IntExpr[T]) Max() IntExpr[T] {
 func (e IntExpr[T]) Min() IntExpr[T] {
 	return IntOf[T](e.minExpr())
 }
-
