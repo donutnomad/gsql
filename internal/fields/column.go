@@ -1,9 +1,5 @@
 package fields
 
-import (
-	"github.com/donutnomad/gsql/field"
-)
-
 func IntColumn(name string) IntColumnBuilder {
 	return IntColumnBuilder{name: name}
 }
@@ -48,8 +44,20 @@ type BoolColumnBuilder struct {
 	name string
 }
 
-func (b BoolColumnBuilder) From(source interface{ TableName() string }) field.Comparable[bool] {
-	return field.NewComparable[bool](source.TableName(), b.name)
+func (b BoolColumnBuilder) From(source interface{ TableName() string }) ScalarField[bool] {
+	return NewScalarField[bool](source.TableName(), b.name)
+}
+
+func ScalarColumn[T any](name string) ScalarColumnBuilder[T] {
+	return ScalarColumnBuilder[T]{name: name}
+}
+
+type ScalarColumnBuilder[T any] struct {
+	name string
+}
+
+func (b ScalarColumnBuilder[T]) From(source interface{ TableName() string }) ScalarField[T] {
+	return NewScalarField[T](source.TableName(), b.name)
 }
 
 func DateTimeColumn(name string) DateTimeColumnBuilder {
@@ -108,6 +116,6 @@ type ColumnBuilder[T any] struct {
 	name string
 }
 
-func (b ColumnBuilder[T]) From(source interface{ TableName() string }) field.Comparable[T] {
-	return field.NewComparable[T](source.TableName(), b.name)
+func (b ColumnBuilder[T]) From(source interface{ TableName() string }) ScalarField[T] {
+	return NewScalarField[T](source.TableName(), b.name)
 }

@@ -64,6 +64,56 @@ func TestIntExprT_Between(t *testing.T) {
 	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
 }
 
+func TestIntExprT_BetweenPtr(t *testing.T) {
+	expr := NewInt[int](clause.Expr{SQL: "age", Vars: nil})
+
+	// 两个值都有
+	from, to := 18, 65
+	result := expr.BetweenPtr(&from, &to)
+	e, ok := result.(clause.Expr)
+	assert.True(t, ok)
+	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
+
+	// 只有 from
+	result2 := expr.BetweenPtr(&from, nil)
+	e2, ok := result2.(clause.Expr)
+	assert.True(t, ok)
+	assert.Equal(t, "? >= ?", e2.SQL)
+
+	// 只有 to
+	result3 := expr.BetweenPtr(nil, &to)
+	e3, ok := result3.(clause.Expr)
+	assert.True(t, ok)
+	assert.Equal(t, "? <= ?", e3.SQL)
+
+	// 都为 nil
+	result4 := expr.BetweenPtr(nil, nil)
+	assert.Equal(t, field.EmptyExpression, result4)
+}
+
+func TestIntExprT_BetweenOpt(t *testing.T) {
+	expr := NewInt[int](clause.Expr{SQL: "age", Vars: nil})
+
+	result := expr.BetweenOpt(mo.Some(18), mo.Some(65))
+	e, ok := result.(clause.Expr)
+	assert.True(t, ok)
+	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
+
+	result2 := expr.BetweenOpt(mo.None[int](), mo.None[int]())
+	assert.Equal(t, field.EmptyExpression, result2)
+}
+
+func TestIntExprT_BetweenF(t *testing.T) {
+	expr := NewInt[int](clause.Expr{SQL: "age", Vars: nil})
+	from := clause.Expr{SQL: "min_age", Vars: nil}
+	to := clause.Expr{SQL: "max_age", Vars: nil}
+
+	result := expr.BetweenF(from, to)
+	e, ok := result.(clause.Expr)
+	assert.True(t, ok)
+	assert.Equal(t, "? BETWEEN ? AND ?", e.SQL)
+}
+
 // ==================== 算术运算测试 ====================
 
 func TestIntExprT_Add(t *testing.T) {

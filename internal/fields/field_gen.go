@@ -420,3 +420,62 @@ func (f TimeField[T]) Asc() types.OrderItem {
 func (f TimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
+
+// ==================== ScalarField ====================
+
+type ScalarField[T any] struct {
+	field.Base
+	Scalar[T]
+}
+
+func NewScalarField[T any](tableName, name string, flags ...field.FieldFlag) ScalarField[T] {
+	b := field.NewBase(tableName, name, flags...)
+	return NewScalarFieldFrom[T](b)
+}
+
+func NewScalarFieldFrom[T any](f field.IField) ScalarField[T] {
+	base := field.IFieldToBase(f)
+	expr := base.ToExpr()
+	return ScalarField[T]{
+		Base:   base,
+		Scalar: NewScalar[T](expr),
+	}
+}
+
+func (f ScalarField[T]) Build(builder clause.Builder) {
+	f.Base.ToExpr().Build(builder)
+}
+
+func (f ScalarField[T]) ToExpr() clause.Expression {
+	return f.Base.ToExpr()
+}
+
+func (f ScalarField[T]) As(alias string) field.IField {
+	return f.Base.As(alias)
+}
+
+func (f ScalarField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) ScalarField[T] {
+	name := f.Base.ColumnName()
+	if len(fieldNames) > 0 {
+		name = fieldNames[0]
+	}
+	return NewScalarField[T](tableName.TableName(), name)
+}
+
+func (f ScalarField[T]) WithAlias(alias string) ScalarField[T] {
+	b := f.Base.SetAlias(alias)
+	return NewScalarFieldFrom[T](b)
+}
+
+func (f ScalarField[T]) FieldType() T {
+	var def T
+	return def
+}
+
+func (f ScalarField[T]) Asc() types.OrderItem {
+	return types.NewOrder(f, true)
+}
+
+func (f ScalarField[T]) Desc() types.OrderItem {
+	return types.NewOrder(f, false)
+}

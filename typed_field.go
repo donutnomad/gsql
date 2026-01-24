@@ -75,6 +75,18 @@ func NewJson(expr clause.Expression) fields.Json {
 	return fields.NewJson(expr)
 }
 
+func NewScalar[T any](expr clause.Expression) fields.Scalar[T] {
+	return fields.NewScalar[T](expr)
+}
+
+func NewScalarField[T any](tableName, name string, flags ...field.FieldFlag) fields.ScalarField[T] {
+	return fields.NewScalarField[T](tableName, name, flags...)
+}
+
+func NewScalarFieldFrom[T any](f field.IField) fields.ScalarField[T] {
+	return fields.NewScalarFieldFrom[T](f)
+}
+
 func NewString[T any](expr clause.Expression) fields.String[T] {
 	return fields.NewString[T](expr)
 }
@@ -130,30 +142,33 @@ func TimeColumn(name string) fields.TimeColumnBuilder {
 // ==================== Type Aliases ====================
 
 type (
-	BoolColumnBuilder     = fields.BoolColumnBuilder
-	ColumnBuilder[T any]  = fields.ColumnBuilder[T]
-	Date[T any]           = fields.Date[T]
-	DateColumnBuilder     = fields.DateColumnBuilder
-	DateField[T any]      = fields.DateField[T]
-	DateTime[T any]       = fields.DateTime[T]
-	DateTimeColumnBuilder = fields.DateTimeColumnBuilder
-	DateTimeField[T any]  = fields.DateTimeField[T]
-	Decimal[T any]        = fields.Decimal[T]
-	DecimalColumnBuilder  = fields.DecimalColumnBuilder
-	DecimalField[T any]   = fields.DecimalField[T]
-	Float[T any]          = fields.Float[T]
-	FloatColumnBuilder    = fields.FloatColumnBuilder
-	FloatField[T any]     = fields.FloatField[T]
-	Int[T any]            = fields.Int[T]
-	IntColumnBuilder      = fields.IntColumnBuilder
-	IntField[T any]       = fields.IntField[T]
-	Json                  = fields.Json
-	JsonInput             = fields.JsonInput
-	String[T any]         = fields.String[T]
-	StringColumnBuilder   = fields.StringColumnBuilder
-	StringField[T any]    = fields.StringField[T]
-	Time[T any]           = fields.Time[T]
-	TimeColumnBuilder     = fields.TimeColumnBuilder
-	TimeField[T any]      = fields.TimeField[T]
-	Year[T any]           = fields.Year[T]
+	BoolColumnBuilder          = fields.BoolColumnBuilder
+	ColumnBuilder[T any]       = fields.ColumnBuilder[T]
+	Date[T any]                = fields.Date[T]
+	DateColumnBuilder          = fields.DateColumnBuilder
+	DateField[T any]           = fields.DateField[T]
+	DateTime[T any]            = fields.DateTime[T]
+	DateTimeColumnBuilder      = fields.DateTimeColumnBuilder
+	DateTimeField[T any]       = fields.DateTimeField[T]
+	Decimal[T any]             = fields.Decimal[T]
+	DecimalColumnBuilder       = fields.DecimalColumnBuilder
+	DecimalField[T any]        = fields.DecimalField[T]
+	Float[T any]               = fields.Float[T]
+	FloatColumnBuilder         = fields.FloatColumnBuilder
+	FloatField[T any]          = fields.FloatField[T]
+	Int[T any]                 = fields.Int[T]
+	IntColumnBuilder           = fields.IntColumnBuilder
+	IntField[T any]            = fields.IntField[T]
+	Json                       = fields.Json
+	JsonInput                  = fields.JsonInput
+	Scalar[T any]              = fields.Scalar[T]
+	ScalarColumnBuilder[T any] = fields.ScalarColumnBuilder[T]
+	ScalarField[T any]         = fields.ScalarField[T]
+	String[T any]              = fields.String[T]
+	StringColumnBuilder        = fields.StringColumnBuilder
+	StringField[T any]         = fields.StringField[T]
+	Time[T any]                = fields.Time[T]
+	TimeColumnBuilder          = fields.TimeColumnBuilder
+	TimeField[T any]           = fields.TimeField[T]
+	Year[T any]                = fields.Year[T]
 )

@@ -180,6 +180,59 @@ func (f numericComparableImpl[T]) NotBetween(from, to T) clause.Expression {
 	return clause.Expr{SQL: "? NOT BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}
 }
 
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f numericComparableImpl[T]) BetweenPtr(from, to *T) clause.Expression {
+	if from == nil && to == nil {
+		return field.EmptyExpression
+	}
+	if from == nil {
+		return f.Lte(*to)
+	}
+	if to == nil {
+		return f.Gte(*from)
+	}
+	return f.Between(*from, *to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f numericComparableImpl[T]) BetweenOpt(from, to mo.Option[T]) clause.Expression {
+	return f.BetweenPtr(from.ToPointer(), to.ToPointer())
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f numericComparableImpl[T]) BetweenF(from, to clause.Expression) clause.Expression {
+	if from == nil && to == nil {
+		return field.EmptyExpression
+	}
+	if from == nil {
+		return f.LteF(to)
+	}
+	if to == nil {
+		return f.GteF(from)
+	}
+	return clause.Expr{SQL: "? BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f numericComparableImpl[T]) NotBetweenPtr(from, to *T) clause.Expression {
+	if from == nil && to == nil {
+		return field.EmptyExpression
+	}
+	if from == nil {
+		return f.Gt(*to)
+	}
+	if to == nil {
+		return f.Lt(*from)
+	}
+	return f.NotBetween(*from, *to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f numericComparableImpl[T]) NotBetweenOpt(from, to mo.Option[T]) clause.Expression {
+	return f.NotBetweenPtr(from.ToPointer(), to.ToPointer())
+}
+
 // ==================== 算术运算的 SQL 生成 ====================
 
 // arithmeticSql 生成算术运算的 SQL 表达式

@@ -104,8 +104,8 @@ func TestGenericColumn_From(t *testing.T) {
 	}
 
 	// Verify comparison works with generic type
-	condition := custom.Gt(100)
+	condition := custom.Eq(100)
 	if condition == nil {
-		t.Error("Gt should return non-nil expression")
+		t.Error("Eq should return non-nil expression")
 	}
 }
