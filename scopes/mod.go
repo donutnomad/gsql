@@ -45,7 +45,9 @@ func OrderBy(name string, asc bool) SortOrder {
 // TimeBetween
 // opFrom: >=,>,=,<=,<, default: >=
 // opTo: >=,>,=,<=,<, default: <
-func TimeBetween[ValExpr interface{ ExprType() F }, Value TimestampRange | TimeRange, F any](
+func TimeBetween[ValExpr interface {
+	FieldType() F
+}, Value TimestampRange | TimeRange, F any](
 	fieldComparable ValExpr, value Value, op ...string,
 ) gsql.ScopeFunc {
 	var opFrom = ">="

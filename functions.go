@@ -130,10 +130,8 @@ func GROUP_CONCAT(expr Expression, separator ...string) fields.StringExpr[string
 // SELECT IF(stock > 0, 'In Stock', 'Out of Stock') FROM products;
 // SELECT name, IF(age >= 18, '成年', '未成年') FROM users;
 // SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
-func IF[V any, E interface {
-	ExprType() V
-}](condition Condition, valueIfTrue, valueIfFalse E) ScalarExpr[V] {
-	return fields.ScalarOf[V](clause.Expr{
+func IF[Result interface{ ExprType() R }, R any](condition Condition, valueIfTrue, valueIfFalse Result) Result {
+	return fields.CastExpr[Result](clause.Expr{
 		SQL:  "IF(?, ?, ?)",
 		Vars: []any{condition, valueIfTrue, valueIfFalse},
 	})
@@ -141,7 +139,7 @@ func IF[V any, E interface {
 
 func COUNT_IF(condition Condition) IntExpr[int64] {
 	return COUNT(
-		IF[int](condition, IntVal(1), IntOf[int](nil)),
+		IF(condition, IntVal(1), IntOf[int](nil)),
 	)
 }
 

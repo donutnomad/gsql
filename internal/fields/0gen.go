@@ -77,8 +77,8 @@ import (
 // ==================== {{.Name}} ====================
 
 type {{.Name}}[T any] struct {
-	{{.InnerName | camel}}[T]
-	flags types.FieldFlag
+	expr   {{.InnerName}}[T]
+	flags  types.FieldFlag
 	column *clauses2.ColumnQuote
 }
 
@@ -89,9 +89,9 @@ func {{.Name}}Of[T any](tableName, name string, flags ...types.FieldFlag) {{.Nam
 		Alias:      "",
 	}
 	ret := {{.Name}}[T]{
-		{{.InnerName | camel}}: {{.InnerExpr}}Of[T](q),
+		expr:   {{.InnerExpr}}Of[T](q),
 		column: q,
-		flags: 0,
+		flags:  0,
 	}
 	if len(flags) > 0 {
 		ret.flags = flags[0]
@@ -114,23 +114,23 @@ func (b {{.Column}}Builder[T]) From(source interface{ TableName() string }) {{.N
 /////////////// base ///////////////
 
 func (f {{.Name}}[T]) Build(builder clause.Builder) {
-	f.{{.InnerName | camel}}.Build(builder)
+	f.expr.Build(builder)
 }
 
 func (f {{.Name}}[T]) ToExpr() clause.Expression {
-	return f.{{.InnerName | camel}}
+	return f.expr
 }
 
 func (f {{.Name}}[T]) Unwrap() clause.Expression {
-	return f.{{.InnerName | camel}}
+	return f.expr
 }
 
 func (f {{.Name}}[T]) Expr() {{.InnerName}}[T] {
-	return f.{{.InnerName | camel}}
+	return f.expr
 }
 
 func (f {{.Name}}[T]) Apply(functionName FunctionName) {{.InnerName}}[T] {
-	var expr = f.{{.InnerName | camel}}.Unwrap()
+	var expr = f.expr.Unwrap()
 	if v, ok := expr.(*clauses2.ColumnQuote); ok {
 		v.NoAS()
 	}
@@ -224,7 +224,7 @@ func (f {{.Name}}[T]) Desc() types.OrderItem {
 {{$fieldType := .}}{{range .Methods}}
 {{range .Comments}}// {{.}}
 {{end}}func (f {{$fieldType.Name}}[T]) {{.Name}}({{formatParams .Params}}){{formatResults .Results}} {
-	return f.{{$fieldType.InnerName}}.{{.Name}}({{formatArgs .Params}})
+	return f.expr.{{.Name}}({{formatArgs .Params}})
 }
 
 {{end}}{{end}}
@@ -491,10 +491,11 @@ func parseMethodsFromFile(fileName, typeName string) []ExprMethod {
 // isSpecialMethod checks if a method should be skipped (already handled in template)
 func isSpecialMethod(name string) bool {
 	specialMethods := map[string]bool{
-		"Build":  true,
-		"ToExpr": true,
-		"Unwrap": true,
-		"As":     true,
+		"Build":    true,
+		"ToExpr":   true,
+		"Unwrap":   true,
+		"As":       true,
+		"ExprType": true,
 	}
 	return specialMethods[name]
 }
