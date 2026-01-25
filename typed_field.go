@@ -11,10 +11,6 @@ import (
 
 // ==================== Constructors ====================
 
-func NewJson(expr clause.Expression) fields.Json {
-	return fields.NewJson(expr)
-}
-
 func NewLitExpr[T any](value T) *fields.LitExpr {
 	return fields.NewLitExpr[T](value)
 }
@@ -152,11 +148,15 @@ func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16
 	return fields.IntVal[T](val)
 }
 
+func Json[T any](expr T) fields.JsonExpr {
+	return fields.Json[T](expr)
+}
+
 // JsonArrayAgg 将列值聚合为 JSON 数组 (JSON_ARRAYAGG, MySQL 8.0+)
 // SELECT JSON_ARRAYAGG(name) FROM users;
 // SELECT department, JSON_ARRAYAGG(name) FROM users GROUP BY department;
 // 示例: fields.JsonArrayAgg(u.Name)
-func JsonArrayAgg(expr clause.Expression) fields.Json {
+func JsonArrayAgg(expr clause.Expression) fields.JsonExpr {
 	return fields.JsonArrayAgg(expr)
 }
 
@@ -167,8 +167,16 @@ func JsonArrayAgg(expr clause.Expression) fields.Json {
 //  1. 键必须唯一 - 如果同一组内有重复的键，后面的值会覆盖前面的
 //  2. 键必须是字符串 - MySQL 会自动将非字符串键转换为字符串
 //  3. NULL 值 - 如果键为 NULL，该行会被忽略
-func JsonObjectAgg(key, value clause.Expression) fields.Json {
+func JsonObjectAgg(key, value clause.Expression) fields.JsonExpr {
 	return fields.JsonObjectAgg(key, value)
+}
+
+// JsonOf
+//
+//	gsql.JsonOf(u.Profile).Extract("$.name")
+//	gsql.JsonOf(u.Profile).Length("$.skills")
+func JsonOf(expr clause.Expression) fields.JsonExpr {
+	return fields.JsonOf(expr)
 }
 
 func ScalarColumn[T any](name string) fields.ScalarColumnBuilder[T] {
@@ -282,7 +290,7 @@ type (
 	IntConstraint                = fields.IntConstraint
 	IntExpr[T any]               = fields.IntExpr[T]
 	IntField[T any]              = fields.IntField[T]
-	Json                         = fields.Json
+	JsonExpr                     = fields.JsonExpr
 	JsonInput                    = fields.JsonInput
 	LitExpr                      = fields.LitExpr
 	ScalarColumnBuilder[T any]   = fields.ScalarColumnBuilder[T]

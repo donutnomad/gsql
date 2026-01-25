@@ -18,19 +18,6 @@ type PathValue struct {
 	Value any
 }
 
-// AsJson 将任意表达式包装为 JsonExpr
-// 用于将字段或其他表达式转换为可以使用 JSON 方法的类型
-// 示例:
-//
-//	gsql.AsJson(u.Profile).Extract("$.name")
-//	gsql.AsJson(u.Profile).Length("$.skills")
-//	gsql.AsJson(u.Profile).StorageSize()
-//
-//goland:noinspection ALL
-func AsJson(expr Expression) fields.Json {
-	return fields.AsJson(expr)
-}
-
 // JsonLit 创建一个 JSON 字面量表达式
 // 用于将 JSON 字符串转换为 JsonExpr，以便传递给 JSON 函数
 // 示例:
@@ -39,8 +26,8 @@ func AsJson(expr Expression) fields.Json {
 //	gsql.JsonLit(`[1, 2, 3]`)
 //
 //goland:noinspection ALL
-func JsonLit(jsonStr string) fields.Json {
-	return fields.NewJson(clause.Expr{
+func JsonLit(jsonStr string) fields.JsonExpr {
+	return fields.JsonOf(clause.Expr{
 		SQL:  "?",
 		Vars: []any{jsonStr},
 	})
@@ -72,14 +59,14 @@ func (j *jsonObjectBuilder) Add(key string, value Expression) *jsonObjectBuilder
 	return j
 }
 
-func (j *jsonObjectBuilder) toExpr() fields.Json {
+func (j *jsonObjectBuilder) toExpr() fields.JsonExpr {
 	placeholders := make([]string, 0, len(j.pairs)*2)
 	vars := make([]any, 0, len(j.pairs)*2)
 	for _, pair := range j.pairs {
 		placeholders = append(placeholders, "?", "?")
 		vars = append(vars, pair.Key, pair.Value)
 	}
-	return fields.NewJson(clause.Expr{
+	return fields.JsonOf(clause.Expr{
 		SQL:  fmt.Sprintf("JSON_OBJECT(%s)", strings.Join(placeholders, ", ")),
 		Vars: vars,
 	})
@@ -98,7 +85,7 @@ func (j *jsonObjectBuilder) ToExpr() Expression {
 }
 
 // ToJson 返回 JsonExpr，用于类型安全的链式调用
-func (j *jsonObjectBuilder) ToJson() fields.Json {
+func (j *jsonObjectBuilder) ToJson() fields.JsonExpr {
 	return j.toExpr()
 }
 
@@ -126,12 +113,12 @@ func (b *jsonArrayBuilder) Add(value Expression) *jsonArrayBuilder {
 	return b
 }
 
-func (b *jsonArrayBuilder) toExpr() fields.Json {
+func (b *jsonArrayBuilder) toExpr() fields.JsonExpr {
 	placeholders := make([]string, len(b.values))
 	for i := range b.values {
 		placeholders[i] = "?"
 	}
-	return fields.NewJson(clause.Expr{
+	return fields.JsonOf(clause.Expr{
 		SQL:  fmt.Sprintf("JSON_ARRAY(%s)", strings.Join(placeholders, ", ")),
 		Vars: lo.ToAnySlice(b.values),
 	})
@@ -150,7 +137,7 @@ func (b *jsonArrayBuilder) ToExpr() Expression {
 }
 
 // ToJson 返回 JsonExpr，用于类型安全的链式调用
-func (b *jsonArrayBuilder) ToJson() fields.Json {
+func (b *jsonArrayBuilder) ToJson() fields.JsonExpr {
 	return b.toExpr()
 }
 
@@ -214,12 +201,12 @@ func (b *jsonMergeBuilder) Merge(json fields.JsonInput) *jsonMergeBuilder {
 	return b
 }
 
-func (b *jsonMergeBuilder) toExpr() fields.Json {
+func (b *jsonMergeBuilder) toExpr() fields.JsonExpr {
 	placeholders := make([]string, len(b.jsons))
 	for i := range b.jsons {
 		placeholders[i] = "?"
 	}
-	return fields.NewJson(clause.Expr{
+	return fields.JsonOf(clause.Expr{
 		SQL:  fmt.Sprintf("%s(%s)", b.funcName, strings.Join(placeholders, ", ")),
 		Vars: lo.ToAnySlice(b.jsons),
 	})
@@ -238,6 +225,6 @@ func (b *jsonMergeBuilder) ToExpr() Expression {
 }
 
 // ToJson 返回 JsonExpr，用于类型安全的链式调用
-func (b *jsonMergeBuilder) ToJson() fields.Json {
+func (b *jsonMergeBuilder) ToJson() fields.JsonExpr {
 	return b.toExpr()
 }

@@ -82,6 +82,14 @@ func (e StringExpr[T]) CastUnsigned() IntExpr[uint64] {
 	})
 }
 
+// CastJson 转换为JSON (CAST AS JSON)
+func (e StringExpr[T]) CastJson() JsonExpr {
+	return JsonOf(clause.Expr{
+		SQL:  "CAST(? AS JSON)",
+		Vars: []any{e.Unwrap()},
+	})
+}
+
 // CastDecimal 转换为小数 (CAST AS DECIMAL)
 // precision: 总位数, scale: 小数位数
 func (e StringExpr[T]) CastDecimal(precision, scale int) DecimalExpr[float64] {
