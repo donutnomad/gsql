@@ -288,3 +288,4 @@ func (e IntExpr[T]) Max() IntExpr[T] {
 func (e IntExpr[T]) Min() IntExpr[T] {
 	return IntOf[T](e.minExpr())
 }
+

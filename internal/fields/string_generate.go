@@ -59,3 +59,4 @@ func (e StringExpr[T]) Coalesce(values ...any) StringExpr[T] {
 func (e StringExpr[T]) NullIf(value any) StringExpr[T] {
 	return StringOf[T](e.nullifExpr(value))
 }
+

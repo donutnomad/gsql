@@ -83,3 +83,4 @@ func (e YearExpr[T]) Max() YearExpr[T] {
 func (e YearExpr[T]) Min() YearExpr[T] {
 	return YearOf[T](e.minExpr())
 }
+

@@ -149,3 +149,4 @@ func (e TimeExpr[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
 func (e TimeExpr[T]) Format(format string) StringExpr[string] {
 	return StringOf[string](e.timeFormatExpr(format))
 }
+

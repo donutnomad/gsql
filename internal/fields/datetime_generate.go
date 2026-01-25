@@ -277,3 +277,4 @@ func (e DateTimeExpr[T]) Time() TimeExpr[string] {
 func (e DateTimeExpr[T]) UnixTimestamp() IntExpr[int64] {
 	return IntOf[int64](e.unixTimestampExpr())
 }
+

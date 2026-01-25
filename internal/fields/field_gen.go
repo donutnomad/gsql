@@ -67,6 +67,16 @@ func (f IntField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+func (f IntField[T]) Wrap(functionName FunctionName) IntField[T] {
+	return IntField[T]{
+		Base: f.Base,
+		IntExpr: IntOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.IntExpr},
+		}),
+	}
+}
+
 // ==================== FloatField ====================
 
 type FloatField[T any] struct {
@@ -124,6 +134,16 @@ func (f FloatField[T]) Asc() types.OrderItem {
 
 func (f FloatField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+func (f FloatField[T]) Wrap(functionName FunctionName) FloatField[T] {
+	return FloatField[T]{
+		Base: f.Base,
+		FloatExpr: FloatOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.FloatExpr},
+		}),
+	}
 }
 
 // ==================== DecimalField ====================
@@ -185,6 +205,16 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+func (f DecimalField[T]) Wrap(functionName FunctionName) DecimalField[T] {
+	return DecimalField[T]{
+		Base: f.Base,
+		DecimalExpr: DecimalOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.DecimalExpr},
+		}),
+	}
+}
+
 // ==================== StringField ====================
 
 type StringField[T any] struct {
@@ -242,6 +272,16 @@ func (f StringField[T]) Asc() types.OrderItem {
 
 func (f StringField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+func (f StringField[T]) Wrap(functionName FunctionName) StringField[T] {
+	return StringField[T]{
+		Base: f.Base,
+		StringExpr: StringOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.StringExpr},
+		}),
+	}
 }
 
 // ==================== DateTimeField ====================
@@ -303,6 +343,16 @@ func (f DateTimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+func (f DateTimeField[T]) Wrap(functionName FunctionName) DateTimeField[T] {
+	return DateTimeField[T]{
+		Base: f.Base,
+		DateTimeExpr: DateTimeOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.DateTimeExpr},
+		}),
+	}
+}
+
 // ==================== DateField ====================
 
 type DateField[T any] struct {
@@ -360,6 +410,16 @@ func (f DateField[T]) Asc() types.OrderItem {
 
 func (f DateField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+func (f DateField[T]) Wrap(functionName FunctionName) DateField[T] {
+	return DateField[T]{
+		Base: f.Base,
+		DateExpr: DateOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.DateExpr},
+		}),
+	}
 }
 
 // ==================== TimeField ====================
@@ -421,6 +481,16 @@ func (f TimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+func (f TimeField[T]) Wrap(functionName FunctionName) TimeField[T] {
+	return TimeField[T]{
+		Base: f.Base,
+		TimeExpr: TimeOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.TimeExpr},
+		}),
+	}
+}
+
 // ==================== ScalarField ====================
 
 type ScalarField[T any] struct {
@@ -478,4 +548,14 @@ func (f ScalarField[T]) Asc() types.OrderItem {
 
 func (f ScalarField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+func (f ScalarField[T]) Wrap(functionName FunctionName) ScalarField[T] {
+	return ScalarField[T]{
+		Base: f.Base,
+		ScalarExpr: ScalarOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.ScalarExpr},
+		}),
+	}
 }

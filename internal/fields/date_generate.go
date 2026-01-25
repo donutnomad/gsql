@@ -213,3 +213,4 @@ func (e DateExpr[T]) Format(format string) StringExpr[string] {
 func (e DateExpr[T]) UnixTimestamp() IntExpr[int64] {
 	return IntOf[int64](e.unixTimestampExpr())
 }
+

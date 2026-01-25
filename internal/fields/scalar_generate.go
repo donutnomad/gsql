@@ -59,3 +59,4 @@ func (e ScalarExpr[T]) Coalesce(values ...any) ScalarExpr[T] {
 func (e ScalarExpr[T]) NullIf(value any) ScalarExpr[T] {
 	return ScalarOf[T](e.nullifExpr(value))
 }
+

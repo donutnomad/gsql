@@ -32,7 +32,7 @@ import (
 // * 通常性能较低，特别是索引多或有复杂触发器时
 
 // Assignment 表示 ON DUPLICATE KEY UPDATE 中的赋值表达式
-// 用于支持自定义更新逻辑，如 column = IF(RowValue(version) > version, RowValue(column), column)
+// 用于支持自定义更新逻辑，如 column = IF(condition, newValue, oldValue)
 type Assignment struct {
 	Column field.IField
 	Value  field.Expression
@@ -42,12 +42,13 @@ type Assignment struct {
 // 示例:
 //
 //	// 简单更新：使用插入行的值更新
-//	gsql.Set(t.Count, gsql.RowValue(t.Count))
+//	gsql.Set(t.Count, gsql.Values[int64](t.Count))
 //
 //	// 条件更新：只有当新版本号更大时才更新
-//	gsql.Set(t.Value, gsql.IF(
-//	    gsql.Expr("? > ?", gsql.RowValue(t.Version), t.Version),
-//	    gsql.RowValue(t.Value),
+//	versionCond := gsql.Values[int64](t.Version).GteF(t.Version.ToExpr())
+//	gsql.Set(t.Value, gsql.RowIf[int64](
+//	    versionCond,
+//	    gsql.Values[int64](t.Value),
 //	    t.Value,
 //	))
 func Set(column field.IField, value field.Expression) Assignment {
@@ -105,11 +106,11 @@ func (b *InsertBuilder[T]) Values(values *[]T) *insertBuilderWithValues[T] {
 
 func (b *insertBuilderWithValues[T]) DuplicateUpdate(columns ...field.IField) *insertBuilderWithValues[T] {
 	b.onDuplicateUpdate = true
-	// 将列转换为 Assignment，使用 RowValue 引用插入行的值
+	// 将列转换为 Assignment，使用 Values 引用插入行的值
 	for _, col := range columns {
 		b.duplicateUpdates = append(b.duplicateUpdates, Assignment{
 			Column: col,
-			Value:  RowValue(col),
+			Value:  clause.Expr{SQL: "VALUES(?)", Vars: []any{col.ToExpr()}},
 		})
 	}
 	return b
@@ -122,16 +123,16 @@ func (b *insertBuilderWithValues[T]) DuplicateUpdate(columns ...field.IField) *i
 //	    Value(row).
 //	    DuplicateUpdateExpr(
 //	        gsql.Set(t.LastConsumedMessageId,
-//	            gsql.IF(
-//	                gsql.Expr("? >= ?", gsql.RowValue(t.GenerationId), t.GenerationId),
-//	                gsql.RowValue(t.LastConsumedMessageId),
+//	            gsql.RowIf[int64](
+//	                gsql.Values[int64](t.GenerationId).GteF(t.GenerationId.ToExpr()),
+//	                gsql.Values[int64](t.LastConsumedMessageId),
 //	                t.LastConsumedMessageId,
 //	            ),
 //	        ),
 //	        gsql.Set(t.GenerationId,
-//	            gsql.IF(
-//	                gsql.Expr("? >= ?", gsql.RowValue(t.GenerationId), t.GenerationId),
-//	                gsql.RowValue(t.GenerationId),
+//	            gsql.RowIf[int64](
+//	                gsql.Values[int64](t.GenerationId).GteF(t.GenerationId.ToExpr()),
+//	                gsql.Values[int64](t.GenerationId),
 //	                t.GenerationId,
 //	            ),
 //	        ),
@@ -192,13 +193,9 @@ func (b *insertBuilderWithValues[T]) ExecWithResult(db IGormDB) (int64, error) {
 		stmt.SQL.Grow(180)
 		stmt.AddClauseIfNotExists(clause.Insert{})
 
-		// 添加 VALUES 子句，根据 MySQL 版本可能需要添加行别名
+		// 添加 VALUES 子句
 		valuesClause := callbacks.ConvertToCreateValues(stmt)
-		if GetMySQLVersion() >= MySQLVersion8020 {
-			stmt.AddClause(valuesWithAlias{valuesClause})
-		} else {
-			stmt.AddClause(valuesClause)
-		}
+		stmt.AddClause(valuesClause)
 
 		// 替换 OnConflict 子句，使用自定义表达式
 		if v, ok := stmt.Clauses[clause.OnConflict{}.Name()]; ok {
@@ -268,27 +265,6 @@ func (o onConflictWithExprs) Build(builder clause.Builder) {
 func (o onConflictWithExprs) MergeClause(c *clause.Clause) {
 	c.Name = "" // 清空名称，避免输出 "ON CONFLICT" 前缀
 	c.Expression = o
-}
-
-// valuesWithAlias 包装 VALUES 子句，在 MySQL 8.0.20+ 模式下添加行别名
-type valuesWithAlias struct {
-	clause.Expression
-}
-
-func (v valuesWithAlias) Name() string {
-	return "VALUES"
-}
-
-func (v valuesWithAlias) Build(builder clause.Builder) {
-	v.Expression.Build(builder)
-	// MySQL 8.0.20+ 需要添加行别名 AS _new
-	builder.WriteString(" AS ")
-	builder.WriteQuoted(insertRowAlias)
-}
-
-func (v valuesWithAlias) MergeClause(c *clause.Clause) {
-	c.Name = "" // 清空名称，避免输出 "VALUES" 前缀
-	c.Expression = v
 }
 
 func processerExec(pClauses []string, db *GormDB) *GormDB {
@@ -393,11 +369,11 @@ type insertBuilderWithSelect[T any] struct {
 
 func (b *insertBuilderWithSelect[T]) DuplicateUpdate(columns ...field.IField) *insertBuilderWithSelect[T] {
 	b.onDuplicateUpdate = true
-	// 将列转换为 Assignment，使用 RowValue 引用插入行的值
+	// 将列转换为 Assignment，使用 Values 引用插入行的值
 	for _, col := range columns {
 		b.duplicateUpdates = append(b.duplicateUpdates, Assignment{
 			Column: col,
-			Value:  RowValue(col),
+			Value:  clause.Expr{SQL: "VALUES(?)", Vars: []any{col.ToExpr()}},
 		})
 	}
 	return b

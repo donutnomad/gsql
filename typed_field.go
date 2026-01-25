@@ -307,6 +307,7 @@ type (
 	FloatColumnBuilder         = fields.FloatColumnBuilder
 	FloatExpr[T any]           = fields.FloatExpr[T]
 	FloatField[T any]          = fields.FloatField[T]
+	FunctionName               = fields.FunctionName
 	IntColumnBuilder           = fields.IntColumnBuilder
 	IntConstraint              = fields.IntConstraint
 	IntExpr[T any]             = fields.IntExpr[T]

@@ -12,7 +12,7 @@ type Base struct {
 	tableName  string
 	columnName string
 	alias      string // 别名
-	sql        Expression
+	sql        clause.Expression
 	flags      types.FieldFlag // 字段标志
 }
 

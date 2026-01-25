@@ -248,3 +248,4 @@ func (e DecimalExpr[T]) Max() DecimalExpr[T] {
 func (e DecimalExpr[T]) Min() DecimalExpr[T] {
 	return DecimalOf[T](e.minExpr())
 }
+

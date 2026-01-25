@@ -4,3 +4,4 @@ tutorial/test_log
 .idea
 docs/plans
 .claude/settings.local.json
+.trash

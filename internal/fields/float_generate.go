@@ -312,3 +312,4 @@ func (e FloatExpr[T]) Max() FloatExpr[T] {
 func (e FloatExpr[T]) Min() FloatExpr[T] {
 	return FloatOf[T](e.minExpr())
 }
+

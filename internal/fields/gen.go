@@ -103,6 +103,17 @@ func (f {{.Name}}[T]) Asc() types.OrderItem {
 func (f {{.Name}}[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
+
+func (f {{.Name}}[T]) Wrap(functionName FunctionName) {{.Name}}[T] {
+	return {{.Name}}[T] {
+		Base:    f.Base,
+		{{.InnerName}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{f.{{.InnerName}}},
+		}),
+	}
+}
+
 {{end}}
 `
 
