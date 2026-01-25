@@ -46,6 +46,10 @@ func FloatVal[T ~float32 | ~float64 | any](val T) FloatExpr[T] {
 	return FloatOf[T](anyToExpr(val))
 }
 
+func FloatFrom[T any](field interface{ FieldType() T }) FloatExpr[T] {
+	return FloatOf[T](anyToExpr(field))
+}
+
 // FloatOf creates a generic FloatExpr[T] from a clause expression.
 func FloatOf[T any](expr clause.Expression) FloatExpr[T] {
 	return FloatExpr[T]{

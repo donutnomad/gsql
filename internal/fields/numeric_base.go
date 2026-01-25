@@ -122,6 +122,10 @@ type baseComparableImpl[T any] struct {
 	clause.Expression
 }
 
+func (f baseComparableImpl[T]) ExprType() T {
+	return lo.Empty[T]()
+}
+
 func (f baseComparableImpl[T]) Eq(value T) Condition {
 	return cond("? = ?", f.Expression, value)
 }
@@ -183,6 +187,10 @@ var emptyCondition = Condition{clause.Expr{}}
 // 嵌入 baseComparableImpl 获得基础比较操作，额外添加大于、小于、Between 等操作
 type numericComparableImpl[T any] struct {
 	baseComparableImpl[T]
+}
+
+func (f numericComparableImpl[T]) ExprType() T {
+	return lo.Empty[T]()
 }
 
 func (f numericComparableImpl[T]) Gt(value T) Condition {

@@ -38,7 +38,7 @@ func YearVal[T ~int | ~int16 | ~int32 | ~int64 | any](val T) YearExpr[T] {
 	return YearOf[T](anyToExpr(val))
 }
 
-func YearFromField[T any, Expr Expressions[T]](field Expr) YearExpr[T] {
+func YearFrom[T any](field interface{ FieldType() T }) YearExpr[T] {
 	return YearOf[T](anyToExpr(field))
 }
 

@@ -26,7 +26,7 @@ func TestValues(t *testing.T) {
 
 	// 测试 Values 的比较方法
 	versionCond := count.Apply(gsql.VALUES).GteF(count)
-	rowIfExpr := gsql.IF[string](
+	rowIfExpr := gsql.IF(
 		versionCond,
 		name.Apply(gsql.VALUES),
 		name.Expr(),
@@ -114,7 +114,7 @@ func TestSet_Function(t *testing.T) {
 	// 测试条件 Set (使用 RowIf + Values)
 	versionCond := version.Apply(gsql.VALUES).GteF(version)
 	assignment2 := gsql.Set(count,
-		gsql.IF[int64](
+		gsql.IF(
 			versionCond,
 			count.Apply(gsql.VALUES),
 			count.Expr(),
@@ -188,21 +188,21 @@ func TestDuplicateUpdateExpr_ConditionalUpdate(t *testing.T) {
 		Value(row).
 		DuplicateUpdateExpr(
 			gsql.Set(table.LastConsumedMessageID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.LastConsumedMessageID.Apply(gsql.VALUES),
 					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.GenerationID.Apply(gsql.VALUES),
 					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
-				gsql.IF[time.Time](
+				gsql.IF(
 					versionCondition,
 					table.UpdatedAt.Apply(gsql.VALUES),
 					table.UpdatedAt.Expr(),
@@ -262,7 +262,7 @@ func TestValues_InSelect(t *testing.T) {
 
 	// 测试 RowIf + Values 组合
 	versionCond := version.Apply(gsql.VALUES).GtF(version)
-	rowIfExpr := gsql.IF[string](
+	rowIfExpr := gsql.IF(
 		versionCond,
 		name.Apply(gsql.VALUES),
 		name.Expr(),

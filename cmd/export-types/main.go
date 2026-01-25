@@ -508,7 +508,48 @@ func writeExpr(buf *bytes.Buffer, expr ast.Expr, srcPkg string, excludeNames []s
 		if e.Methods == nil || len(e.Methods.List) == 0 {
 			buf.WriteString("any")
 		} else {
-			buf.WriteString("interface{}")
+			buf.WriteString("interface{ ")
+			for i, method := range e.Methods.List {
+				if i > 0 {
+					buf.WriteString("; ")
+				}
+				// 方法名
+				if len(method.Names) > 0 {
+					buf.WriteString(method.Names[0].Name)
+				}
+				// 方法签名
+				if funcType, ok := method.Type.(*ast.FuncType); ok {
+					buf.WriteString("(")
+					if funcType.Params != nil {
+						for j, param := range funcType.Params.List {
+							if j > 0 {
+								buf.WriteString(", ")
+							}
+							writeExpr(buf, param.Type, srcPkg, excludeNames)
+						}
+					}
+					buf.WriteString(")")
+					if funcType.Results != nil && len(funcType.Results.List) > 0 {
+						buf.WriteString(" ")
+						if len(funcType.Results.List) == 1 && len(funcType.Results.List[0].Names) == 0 {
+							writeExpr(buf, funcType.Results.List[0].Type, srcPkg, excludeNames)
+						} else {
+							buf.WriteString("(")
+							for j, result := range funcType.Results.List {
+								if j > 0 {
+									buf.WriteString(", ")
+								}
+								writeExpr(buf, result.Type, srcPkg, excludeNames)
+							}
+							buf.WriteString(")")
+						}
+					}
+				} else {
+					// 嵌入类型
+					writeExpr(buf, method.Type, srcPkg, excludeNames)
+				}
+			}
+			buf.WriteString(" }")
 		}
 	case *ast.IndexExpr:
 		writeExpr(buf, e.X, srcPkg, excludeNames)

@@ -132,21 +132,21 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 		Value(row1).
 		DuplicateUpdateExpr(
 			gsql.Set(table.LastConsumedMessageID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.LastConsumedMessageID.Apply(gsql.VALUES),
 					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.GenerationID.Apply(gsql.VALUES),
 					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
-				gsql.IF[time.Time](
+				gsql.IF(
 					versionCondition,
 					table.UpdatedAt.Apply(gsql.VALUES),
 					table.UpdatedAt.Expr(),
@@ -180,21 +180,21 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 		Value(row2).
 		DuplicateUpdateExpr(
 			gsql.Set(table.LastConsumedMessageID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.LastConsumedMessageID.Apply(gsql.VALUES),
 					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.GenerationID.Apply(gsql.VALUES),
 					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
-				gsql.IF[time.Time](
+				gsql.IF(
 					versionCondition,
 					table.UpdatedAt.Apply(gsql.VALUES),
 					table.UpdatedAt.Expr(),
@@ -228,21 +228,21 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 		Value(row3).
 		DuplicateUpdateExpr(
 			gsql.Set(table.LastConsumedMessageID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.LastConsumedMessageID.Apply(gsql.VALUES),
 					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
-				gsql.IF[int64](
+				gsql.IF(
 					versionCondition,
 					table.GenerationID.Apply(gsql.VALUES),
 					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
-				gsql.IF[time.Time](
+				gsql.IF(
 					versionCondition,
 					table.UpdatedAt.Apply(gsql.VALUES),
 					table.UpdatedAt.Expr(),

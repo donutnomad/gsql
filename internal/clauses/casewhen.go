@@ -24,21 +24,21 @@ var Cases = struct {
 	Decimal   func() *SearchCaseBuilder[fields.DecimalExpr[float64], float64]
 	Decimal32 func() *SearchCaseBuilder[fields.DecimalExpr[float32], float32]
 }{
-	String:    Case[string, fields.StringExpr[string]],
-	Int:       Case[int, fields.IntExpr[int]],
-	Uint:      Case[uint64, fields.IntExpr[uint64]],
-	Int8:      Case[int8, fields.IntExpr[int8]],
-	Int16:     Case[int16, fields.IntExpr[int16]],
-	Int32:     Case[int32, fields.IntExpr[int32]],
-	Int64:     Case[int64, fields.IntExpr[int64]],
-	Uint8:     Case[uint8, fields.IntExpr[uint8]],
-	Uint16:    Case[uint16, fields.IntExpr[uint16]],
-	Uint32:    Case[uint32, fields.IntExpr[uint32]],
-	Uint64:    Case[uint64, fields.IntExpr[uint64]],
-	Float:     Case[float64, fields.FloatExpr[float64]],
-	Float32:   Case[float32, fields.FloatExpr[float32]],
-	Decimal:   Case[float64, fields.DecimalExpr[float64]],
-	Decimal32: Case[float32, fields.DecimalExpr[float32]],
+	String:    Case[fields.StringExpr[string]],
+	Int:       Case[fields.IntExpr[int]],
+	Uint:      Case[fields.IntExpr[uint64]],
+	Int8:      Case[fields.IntExpr[int8]],
+	Int16:     Case[fields.IntExpr[int16]],
+	Int32:     Case[fields.IntExpr[int32]],
+	Int64:     Case[fields.IntExpr[int64]],
+	Uint8:     Case[fields.IntExpr[uint8]],
+	Uint16:    Case[fields.IntExpr[uint16]],
+	Uint32:    Case[fields.IntExpr[uint32]],
+	Uint64:    Case[fields.IntExpr[uint64]],
+	Float:     Case[fields.FloatExpr[float64]],
+	Float32:   Case[fields.FloatExpr[float32]],
+	Decimal:   Case[fields.DecimalExpr[float64]],
+	Decimal32: Case[fields.DecimalExpr[float32]],
 }
 
 // Case 创建搜索式 CASE 表达式构建器
@@ -57,7 +57,7 @@ var Cases = struct {
 //	    When(user.Age.Gte(18), gsql.IntVal(1)).
 //	    When(user.Age.Lt(18), gsql.IntVal(0)).
 //	    Else(gsql.IntVal(-1))
-func Case[R any, ResultExpr fields.Expressions[R]]() *SearchCaseBuilder[ResultExpr, R] {
+func Case[ResultExpr interface{ ExprType() R }, R any]() *SearchCaseBuilder[ResultExpr, R] {
 	return &SearchCaseBuilder[ResultExpr, R]{}
 }
 
@@ -68,13 +68,13 @@ func Case[R any, ResultExpr fields.Expressions[R]]() *SearchCaseBuilder[ResultEx
 // WHEN value2 THEN result2
 // [ELSE default_result]
 // END
-func CaseValue[V any, R any, ResultExpr fields.Expressions[R], ValExpr fields.Expressions[V]](expression ValExpr) *SimpleCaseBuilder[ValExpr, V, ResultExpr, R] {
+func CaseValue[ResultExpr interface{ ExprType() R }, ValExpr interface{ ExprType() V }, V any, R any](expression ValExpr) *SimpleCaseBuilder[ValExpr, V, ResultExpr, R] {
 	return &SimpleCaseBuilder[ValExpr, V, ResultExpr, R]{expression: expression}
 }
 
 ///////////////////////////// Simple CASE-WHEN //////////////////////////
 
-type SimpleCaseBuilder[ValExpr fields.Expressions[V], V any, ResultExpr fields.Expressions[R], R any] struct {
+type SimpleCaseBuilder[ValExpr interface{ ExprType() V }, V any, ResultExpr interface{ ExprType() R }, R any] struct {
 	expression ValExpr
 	values     []ValExpr
 	results    []ResultExpr
@@ -89,7 +89,7 @@ func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) asAny() clauses2.CaseWhen
 		return any(r).(clause.Expression)
 	})
 	var elseResult clause.Expression
-	if any(c.elseResult) != nil {
+	if !lo.IsNil(any(c.elseResult)) {
 		elseResult = any(c.elseResult).(clause.Expression)
 	}
 	return clauses2.CaseWhenExpr{
@@ -121,7 +121,7 @@ func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) End() fields.ScalarExpr[R
 
 ///////////////////////////// CASE-WHEN //////////////////////////
 
-type SearchCaseBuilder[ResultExpr fields.Expressions[R], R any] struct {
+type SearchCaseBuilder[ResultExpr interface{ ExprType() R }, R any] struct {
 	whenPairs []whenPair[ResultExpr, R]
 	elseValue *ResultExpr
 }
@@ -165,7 +165,7 @@ func (c *SearchCaseBuilder[ResultExpr, R]) End() fields.ScalarExpr[R] {
 
 // //////////////////////// builder //////////////////////////
 
-type whenPair[ResultExpr fields.Expressions[R], R any] struct {
+type whenPair[ResultExpr interface{ ExprType() R }, R any] struct {
 	condition clause.Expression // WHEN condition (或简单 CASE 中的比较值)
 	result    ResultExpr        // THEN result
 }

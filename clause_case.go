@@ -5,7 +5,6 @@ package gsql
 
 import (
 	"github.com/donutnomad/gsql/internal/clauses"
-	"github.com/donutnomad/gsql/internal/fields"
 )
 
 // ==================== Constructors ====================
@@ -26,8 +25,8 @@ import (
 //	    When(user.Age.Gte(18), gsql.IntVal(1)).
 //	    When(user.Age.Lt(18), gsql.IntVal(0)).
 //	    Else(gsql.IntVal(-1))
-func Case[R any, ResultExpr fields.Expressions[R]]() *clauses.SearchCaseBuilder[ResultExpr, R] {
-	return clauses.Case[R, ResultExpr]()
+func Case[ResultExpr interface{ ExprType() R }, R any]() *clauses.SearchCaseBuilder[ResultExpr, R] {
+	return clauses.Case[ResultExpr, R]()
 }
 
 // CaseValue 创建简单 CASE 表达式构建器（简单 CASE）
@@ -37,15 +36,15 @@ func Case[R any, ResultExpr fields.Expressions[R]]() *clauses.SearchCaseBuilder[
 // WHEN value2 THEN result2
 // [ELSE default_result]
 // END
-func CaseValue[V any, R any, ResultExpr fields.Expressions[R], ValExpr fields.Expressions[V]](expression ValExpr) *clauses.SimpleCaseBuilder[ValExpr, V, ResultExpr, R] {
-	return clauses.CaseValue[V, R, ResultExpr, ValExpr](expression)
+func CaseValue[ResultExpr interface{ ExprType() R }, ValExpr interface{ ExprType() V }, V any, R any](expression ValExpr) *clauses.SimpleCaseBuilder[ValExpr, V, ResultExpr, R] {
+	return clauses.CaseValue[ResultExpr, ValExpr, V, R](expression)
 }
 
 // ==================== Type Aliases ====================
 
 type (
-	SearchCaseBuilder[ResultExpr fields.Expressions[R], R any]                                       = clauses.SearchCaseBuilder[ResultExpr, R]
-	SimpleCaseBuilder[ValExpr fields.Expressions[V], V any, ResultExpr fields.Expressions[R], R any] = clauses.SimpleCaseBuilder[ValExpr, V, ResultExpr, R]
+	SearchCaseBuilder[ResultExpr interface{ ExprType() R }, R any]                                           = clauses.SearchCaseBuilder[ResultExpr, R]
+	SimpleCaseBuilder[ValExpr interface{ ExprType() V }, V any, ResultExpr interface{ ExprType() R }, R any] = clauses.SimpleCaseBuilder[ValExpr, V, ResultExpr, R]
 )
 
 // ==================== Variables ====================

@@ -38,6 +38,10 @@ func ScalarVal[T any](val T) ScalarExpr[T] {
 	return ScalarOf[T](anyToExpr(val))
 }
 
+func ScalarFrom[T any](field interface{ FieldType() T }) ScalarExpr[T] {
+	return ScalarOf[T](anyToExpr(field))
+}
+
 func (s ScalarExpr[T]) ToString() StringExpr[T] {
 	return StringOf[T](s)
 }

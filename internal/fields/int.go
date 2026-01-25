@@ -53,6 +53,10 @@ func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16
 	return IntOf[T](anyToExpr(val))
 }
 
+func IntFrom[T any](field interface{ FieldType() T }) IntExpr[T] {
+	return IntOf[T](anyToExpr(field))
+}
+
 // IntOf creates a generic IntExpr[T] from a clause expression.
 func IntOf[T any](expr clause.Expression) IntExpr[T] {
 	return IntExpr[T]{

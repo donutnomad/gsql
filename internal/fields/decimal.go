@@ -45,6 +45,10 @@ func DecimalVal[T ~float32 | ~float64 | any](val T) DecimalExpr[T] {
 	return DecimalOf[T](anyToExpr(val))
 }
 
+func DecimalFrom[T any](field interface{ FieldType() T }) DecimalExpr[T] {
+	return DecimalOf[T](anyToExpr(field))
+}
+
 // DecimalOf creates a generic DecimalExpr[T] from a clause expression.
 func DecimalOf[T any](expr clause.Expression) DecimalExpr[T] {
 	return DecimalExpr[T]{

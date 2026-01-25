@@ -794,7 +794,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		//          WHEN 'shipped' THEN 'On the way'
 		//          ELSE 'Unknown'
 		//        END AS status_desc
-		statusDesc := gsql.CaseValue[string, string, gsql.StringExpr[string]](o.Status.Expr()).
+		statusDesc := gsql.CaseValue[gsql.StringExpr[string]](o.Status.Expr()).
 			When(gsql.StringVal("pending"), gsql.StringVal("Waiting")).
 			When(gsql.StringVal("completed"), gsql.StringVal("Done")).
 			When(gsql.StringVal("shipped"), gsql.StringVal("On the way")).

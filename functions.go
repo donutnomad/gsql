@@ -130,7 +130,9 @@ func GROUP_CONCAT(expr Expression, separator ...string) fields.StringExpr[string
 // SELECT IF(stock > 0, 'In Stock', 'Out of Stock') FROM products;
 // SELECT name, IF(age >= 18, '成年', '未成年') FROM users;
 // SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
-func IF[V any, ValueExpr Expressions[V]](condition Condition, valueIfTrue, valueIfFalse ValueExpr) ScalarExpr[V] {
+func IF[V any, E interface {
+	ExprType() V
+}](condition Condition, valueIfTrue, valueIfFalse E) ScalarExpr[V] {
 	return fields.ScalarOf[V](clause.Expr{
 		SQL:  "IF(?, ?, ?)",
 		Vars: []any{condition, valueIfTrue, valueIfFalse},
@@ -183,4 +185,12 @@ func CONVERT_CHARSET(expr Expression, charset string) field.ExpressionTo {
 		SQL:  fmt.Sprintf("CONVERT(? USING %s)", charset),
 		Vars: []any{expr},
 	}}
+}
+
+// JsonOf
+//
+//	gsql.JsonOf(u.Profile).Extract("$.name")
+//	gsql.JsonOf(u.Profile).Length("$.skills")
+func JsonOf(expr clause.Expression) JsonExpr {
+	return fields.JsonOf(expr)
 }

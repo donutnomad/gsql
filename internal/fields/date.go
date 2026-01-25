@@ -47,6 +47,10 @@ func DateVal[T ~string | time.Time | *time.Time | sql.NullTime | any](val T) Dat
 	return DateOf[T](anyToExpr(val))
 }
 
+func DateFrom[T any](field interface{ FieldType() T }) DateExpr[T] {
+	return DateOf[T](anyToExpr(field))
+}
+
 // DateOf creates a generic DateExpr[T] from a clause expression.
 func DateOf[T any](expr clause.Expression) DateExpr[T] {
 	return DateExpr[T]{

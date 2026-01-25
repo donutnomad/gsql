@@ -30,6 +30,10 @@ func Json[T any](val T) JsonExpr {
 	return JsonOf(anyToExpr(val))
 }
 
+func JsonFrom[T any](field interface{ FieldType() T }) JsonExpr {
+	return JsonOf(anyToExpr(field))
+}
+
 // JsonOf
 //
 //	gsql.JsonOf(u.Profile).Extract("$.name")

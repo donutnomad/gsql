@@ -44,6 +44,10 @@ func DateFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields
 	return fields.DateFieldOf[T](tableName, name, flags...)
 }
 
+func DateFrom[T any](field interface{ FieldType() T }) fields.DateExpr[T] {
+	return fields.DateFrom[T](field)
+}
+
 // DateOf creates a generic DateExpr[T] from a clause expression.
 func DateOf[T any](expr clause.Expression) fields.DateExpr[T] {
 	return fields.DateOf[T](expr)
@@ -65,6 +69,10 @@ func DateTimeE(sql string, vars ...any) fields.DateTimeExpr[string] {
 
 func DateTimeFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.DateTimeField[T] {
 	return fields.DateTimeFieldOf[T](tableName, name, flags...)
+}
+
+func DateTimeFrom[T any](field interface{ FieldType() T }) fields.DateTimeExpr[T] {
+	return fields.DateTimeFrom[T](field)
 }
 
 // DateTimeOf creates a generic DateTimeExpr[T] from a clause expression.
@@ -100,6 +108,10 @@ func DecimalFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fie
 	return fields.DecimalFieldOf[T](tableName, name, flags...)
 }
 
+func DecimalFrom[T any](field interface{ FieldType() T }) fields.DecimalExpr[T] {
+	return fields.DecimalFrom[T](field)
+}
+
 // DecimalOf creates a generic DecimalExpr[T] from a clause expression.
 func DecimalOf[T any](expr clause.Expression) fields.DecimalExpr[T] {
 	return fields.DecimalOf[T](expr)
@@ -128,6 +140,10 @@ func FloatFieldOf[T any](tableName, name string, flags ...types.FieldFlag) field
 	return fields.FloatFieldOf[T](tableName, name, flags...)
 }
 
+func FloatFrom[T any](field interface{ FieldType() T }) fields.FloatExpr[T] {
+	return fields.FloatFrom[T](field)
+}
+
 // FloatOf creates a generic FloatExpr[T] from a clause expression.
 func FloatOf[T any](expr clause.Expression) fields.FloatExpr[T] {
 	return fields.FloatOf[T](expr)
@@ -151,6 +167,10 @@ func IntFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.
 	return fields.IntFieldOf[T](tableName, name, flags...)
 }
 
+func IntFrom[T any](field interface{ FieldType() T }) fields.IntExpr[T] {
+	return fields.IntFrom[T](field)
+}
+
 // IntOf creates a generic IntExpr[T] from a clause expression.
 func IntOf[T any](expr clause.Expression) fields.IntExpr[T] {
 	return fields.IntOf[T](expr)
@@ -161,8 +181,8 @@ func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16
 	return fields.IntVal[T](val)
 }
 
-func Json[T any](expr T) fields.JsonExpr {
-	return fields.Json[T](expr)
+func Json[T any](val T) fields.JsonExpr {
+	return fields.Json[T](val)
 }
 
 // JsonArrayAgg 将列值聚合为 JSON 数组 (JSON_ARRAYAGG, MySQL 8.0+)
@@ -171,6 +191,10 @@ func Json[T any](expr T) fields.JsonExpr {
 // 示例: fields.JsonArrayAgg(u.Name)
 func JsonArrayAgg(expr clause.Expression) fields.JsonExpr {
 	return fields.JsonArrayAgg(expr)
+}
+
+func JsonFrom[T any](field interface{ FieldType() T }) fields.JsonExpr {
+	return fields.JsonFrom[T](field)
 }
 
 // JsonObjectAgg 将键值对聚合为 JSON 对象 (JSON_OBJECTAGG, MySQL 8.0+)
@@ -184,14 +208,6 @@ func JsonObjectAgg(key, value clause.Expression) fields.JsonExpr {
 	return fields.JsonObjectAgg(key, value)
 }
 
-// JsonOf
-//
-//	gsql.JsonOf(u.Profile).Extract("$.name")
-//	gsql.JsonOf(u.Profile).Length("$.skills")
-func JsonOf(expr clause.Expression) fields.JsonExpr {
-	return fields.JsonOf(expr)
-}
-
 func ScalarColumn[T any](name string) fields.ScalarColumnBuilder[T] {
 	return fields.ScalarColumn[T](name)
 }
@@ -200,11 +216,15 @@ func ScalarFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fiel
 	return fields.ScalarFieldOf[T](tableName, name, flags...)
 }
 
+func ScalarFrom[T any](field interface{ FieldType() T }) fields.ScalarExpr[T] {
+	return fields.ScalarFrom[T](field)
+}
+
 func ScalarOf[T any](expr clause.Expression) fields.ScalarExpr[T] {
 	return fields.ScalarOf[T](expr)
 }
 
-// IntVal creates an IntExpr from a signed integer literal value.
+// ScalarVal creates a ScalarExpr from a literal value.
 func ScalarVal[T any](val T) fields.ScalarExpr[T] {
 	return fields.ScalarVal[T](val)
 }
@@ -225,6 +245,10 @@ func StringE(sql string, vars ...any) fields.StringExpr[string] {
 
 func StringFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.StringField[T] {
 	return fields.StringFieldOf[T](tableName, name, flags...)
+}
+
+func StringFrom[T any](field interface{ FieldType() T }) fields.StringExpr[T] {
+	return fields.StringFrom[T](field)
 }
 
 // StringOf creates a generic StringExpr[T] from a clause expression.
@@ -255,6 +279,10 @@ func TimeFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields
 	return fields.TimeFieldOf[T](tableName, name, flags...)
 }
 
+func TimeFrom[T any](field interface{ FieldType() T }) fields.TimeExpr[T] {
+	return fields.TimeFrom[T](field)
+}
+
 // TimeOf creates a generic TimeExpr[T] from a clause expression.
 func TimeOf[T any](expr clause.Expression) fields.TimeExpr[T] {
 	return fields.TimeOf[T](expr)
@@ -278,6 +306,10 @@ func Year(expr clause.Expression) fields.YearExpr[int64] {
 // YearE creates a YearExpr[int64] from raw SQL with optional variables.
 func YearE(sql string, vars ...any) fields.YearExpr[int64] {
 	return fields.YearE(sql, vars...)
+}
+
+func YearFrom[T any](field interface{ FieldType() T }) fields.YearExpr[T] {
+	return fields.YearFrom[T](field)
 }
 
 // YearOf creates a generic YearExpr[T] from a clause expression.

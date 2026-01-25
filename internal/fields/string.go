@@ -42,6 +42,10 @@ func StringVal[T ~string | any](val T) StringExpr[T] {
 	return StringOf[T](anyToExpr(val))
 }
 
+func StringFrom[T any](field interface{ FieldType() T }) StringExpr[T] {
+	return StringOf[T](anyToExpr(field))
+}
+
 // StringOf creates a generic StringExpr[T] from a clause expression.
 func StringOf[T any](expr clause.Expression) StringExpr[T] {
 	return StringExpr[T]{

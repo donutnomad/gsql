@@ -1024,7 +1024,7 @@ func TestFunc_FlowControl(t *testing.T) {
 		err := gsql.
 			Select(
 				p.Name,
-				gsql.IF[string](p.Stock.Gt(0), gsql.StringVal("Available"), gsql.StringVal("Out of Stock")).As("availability"),
+				gsql.IF(p.Stock.Gt(0), gsql.StringVal("Available"), gsql.StringVal("Out of Stock")).As("availability"),
 			).
 			From(&p).
 			Order(p.ID, true).

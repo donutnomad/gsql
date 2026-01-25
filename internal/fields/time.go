@@ -46,6 +46,10 @@ func TimeVal[T ~string | time.Time | *time.Time | sql.NullTime | any](val T) Tim
 	return TimeOf[T](anyToExpr(val))
 }
 
+func TimeFrom[T any](field interface{ FieldType() T }) TimeExpr[T] {
+	return TimeOf[T](anyToExpr(field))
+}
+
 // TimeOf creates a generic TimeExpr[T] from a clause expression.
 func TimeOf[T any](expr clause.Expression) TimeExpr[T] {
 	return TimeExpr[T]{
