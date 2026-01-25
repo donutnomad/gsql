@@ -14,17 +14,17 @@ import (
 type IntField[T any] struct {
 	IntExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) IntField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := IntField[T]{
-		IntExpr: IntOf[T](&q),
+		IntExpr: IntOf[T](q),
 		column:  q,
 	}
 	if len(flags) > 0 {
@@ -42,12 +42,6 @@ func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) IntFie
 // }
 
 /////////////// base ///////////////
-
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f IntField[T]) BetweenPtr(from, to *T) Condition {
-	return f.Expr().BetweenPtr(from, to)
-}
 
 func (f IntField[T]) Build(builder clause.Builder) {
 	f.IntExpr.Build(builder)
@@ -106,13 +100,9 @@ func (f IntField[T]) FullName() string {
 }
 
 func (f IntField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewIntField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f IntField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) IntField[T] {
@@ -124,9 +114,9 @@ func (f IntField[T]) WithTable(tableName interface{ TableName() string }, fieldN
 }
 
 func (f IntField[T]) WithAlias(alias string) IntField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewIntField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -167,17 +157,17 @@ func (f IntField[T]) Desc() types.OrderItem {
 type FloatField[T any] struct {
 	FloatExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) FloatField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := FloatField[T]{
-		FloatExpr: FloatOf[T](&q),
+		FloatExpr: FloatOf[T](q),
 		column:    q,
 	}
 	if len(flags) > 0 {
@@ -253,13 +243,9 @@ func (f FloatField[T]) FullName() string {
 }
 
 func (f FloatField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewFloatField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f FloatField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) FloatField[T] {
@@ -271,9 +257,9 @@ func (f FloatField[T]) WithTable(tableName interface{ TableName() string }, fiel
 }
 
 func (f FloatField[T]) WithAlias(alias string) FloatField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewFloatField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -314,17 +300,17 @@ func (f FloatField[T]) Desc() types.OrderItem {
 type DecimalField[T any] struct {
 	DecimalExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) DecimalField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := DecimalField[T]{
-		DecimalExpr: DecimalOf[T](&q),
+		DecimalExpr: DecimalOf[T](q),
 		column:      q,
 	}
 	if len(flags) > 0 {
@@ -400,13 +386,9 @@ func (f DecimalField[T]) FullName() string {
 }
 
 func (f DecimalField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewDecimalField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f DecimalField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DecimalField[T] {
@@ -418,9 +400,9 @@ func (f DecimalField[T]) WithTable(tableName interface{ TableName() string }, fi
 }
 
 func (f DecimalField[T]) WithAlias(alias string) DecimalField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewDecimalField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -461,17 +443,17 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 type StringField[T any] struct {
 	StringExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) StringField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := StringField[T]{
-		StringExpr: StringOf[T](&q),
+		StringExpr: StringOf[T](q),
 		column:     q,
 	}
 	if len(flags) > 0 {
@@ -547,13 +529,9 @@ func (f StringField[T]) FullName() string {
 }
 
 func (f StringField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewStringField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f StringField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) StringField[T] {
@@ -565,9 +543,9 @@ func (f StringField[T]) WithTable(tableName interface{ TableName() string }, fie
 }
 
 func (f StringField[T]) WithAlias(alias string) StringField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewStringField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -608,17 +586,17 @@ func (f StringField[T]) Desc() types.OrderItem {
 type DateTimeField[T any] struct {
 	DateTimeExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) DateTimeField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := DateTimeField[T]{
-		DateTimeExpr: DateTimeOf[T](&q),
+		DateTimeExpr: DateTimeOf[T](q),
 		column:       q,
 	}
 	if len(flags) > 0 {
@@ -694,13 +672,9 @@ func (f DateTimeField[T]) FullName() string {
 }
 
 func (f DateTimeField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewDateTimeField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f DateTimeField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateTimeField[T] {
@@ -712,9 +686,9 @@ func (f DateTimeField[T]) WithTable(tableName interface{ TableName() string }, f
 }
 
 func (f DateTimeField[T]) WithAlias(alias string) DateTimeField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewDateTimeField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -755,17 +729,17 @@ func (f DateTimeField[T]) Desc() types.OrderItem {
 type DateField[T any] struct {
 	DateExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) DateField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := DateField[T]{
-		DateExpr: DateOf[T](&q),
+		DateExpr: DateOf[T](q),
 		column:   q,
 	}
 	if len(flags) > 0 {
@@ -841,13 +815,9 @@ func (f DateField[T]) FullName() string {
 }
 
 func (f DateField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewDateField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f DateField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateField[T] {
@@ -859,9 +829,9 @@ func (f DateField[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f DateField[T]) WithAlias(alias string) DateField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewDateField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -902,17 +872,17 @@ func (f DateField[T]) Desc() types.OrderItem {
 type TimeField[T any] struct {
 	TimeExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) TimeField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := TimeField[T]{
-		TimeExpr: TimeOf[T](&q),
+		TimeExpr: TimeOf[T](q),
 		column:   q,
 	}
 	if len(flags) > 0 {
@@ -988,13 +958,9 @@ func (f TimeField[T]) FullName() string {
 }
 
 func (f TimeField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewTimeField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f TimeField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TimeField[T] {
@@ -1006,9 +972,9 @@ func (f TimeField[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f TimeField[T]) WithAlias(alias string) TimeField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewTimeField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
@@ -1049,17 +1015,17 @@ func (f TimeField[T]) Desc() types.OrderItem {
 type ScalarField[T any] struct {
 	ScalarExpr[T]
 	flags  types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) ScalarField[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := ScalarField[T]{
-		ScalarExpr: ScalarOf[T](&q),
+		ScalarExpr: ScalarOf[T](q),
 		column:     q,
 	}
 	if len(flags) > 0 {
@@ -1135,13 +1101,9 @@ func (f ScalarField[T]) FullName() string {
 }
 
 func (f ScalarField[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := NewScalarField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f ScalarField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) ScalarField[T] {
@@ -1153,9 +1115,9 @@ func (f ScalarField[T]) WithTable(tableName interface{ TableName() string }, fie
 }
 
 func (f ScalarField[T]) WithAlias(alias string) ScalarField[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := NewScalarField[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////

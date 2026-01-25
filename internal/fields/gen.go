@@ -51,17 +51,17 @@ import (
 type {{.Name}}[T any] struct {
 	{{.InnerName | camel}}[T]
 	flags types.FieldFlag
-	column clauses2.ColumnQuote
+	column *clauses2.ColumnQuote
 }
 
 func New{{.Name}}[T any](tableName, name string, flags ...types.FieldFlag) {{.Name}}[T] {
-	q := clauses2.ColumnQuote{
+	q := &clauses2.ColumnQuote{
 		TableName:  tableName,
 		ColumnName: name,
 		Alias:      "",
 	}
 	ret := {{.Name}}[T]{
-		{{.InnerName | camel}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](&q),
+		{{.InnerName | camel}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](q),
 		column: q,
 	}
 	if len(flags) > 0 {
@@ -137,13 +137,9 @@ func (f {{.Name}}[T]) FullName() string {
 }
 
 func (f {{.Name}}[T]) As(alias string) fieldi.IField {
-	var expr = f.Unwrap()
-	if v, ok := expr.(*clauses2.ColumnQuote); ok {
-		v.Alias = alias
-	} else {
-		// ignore
-	}
-	return f
+	ret := New{{.Name}}[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 func (f {{.Name}}[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) {{.Name}}[T] {
@@ -155,9 +151,9 @@ func (f {{.Name}}[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f {{.Name}}[T]) WithAlias(alias string) {{.Name}}[T] {
-	cloned := f
-	cloned.column.Alias = alias
-	return cloned
+	ret := New{{.Name}}[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret.column.Alias = alias
+	return ret
 }
 
 /////////////// flags ///////////////
