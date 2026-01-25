@@ -51,7 +51,7 @@ func SelectG[T any](fields ...field.IField) *baseQueryBuilderG[T] {
 
 func PluckG[T any, Field interface {
 	field.IField
-	field.IFieldType[T]
+	IFieldType[T]
 }](f Field) *baseQueryBuilderG[T] {
 	return SelectG[T](f)
 }

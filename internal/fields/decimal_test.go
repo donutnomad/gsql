@@ -274,7 +274,7 @@ func TestDecimalExprT_NullIf(t *testing.T) {
 	result := expr.NullIf(0.00)
 
 	e := result.IsNull()
-	exprResult, ok := e.(clause.Expr)
+	exprResult, ok := e.Expression.(clause.Expr)
 	assert.True(t, ok)
 	assert.Equal(t, "? IS NULL", exprResult.SQL)
 }
@@ -314,7 +314,7 @@ func TestDecimalExprT_IsNull(t *testing.T) {
 	expr := DecimalOf[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.IsNull()
 
-	e, ok := result.(clause.Expr)
+	e, ok := result.Expression.(clause.Expr)
 	assert.True(t, ok)
 	assert.Equal(t, "? IS NULL", e.SQL)
 }
@@ -323,7 +323,7 @@ func TestDecimalExprT_IsNotNull(t *testing.T) {
 	expr := DecimalOf[float64](clause.Expr{SQL: "price", Vars: nil})
 	result := expr.IsNotNull()
 
-	e, ok := result.(clause.Expr)
+	e, ok := result.Expression.(clause.Expr)
 	assert.True(t, ok)
 	assert.Equal(t, "? IS NOT NULL", e.SQL)
 }

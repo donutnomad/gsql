@@ -40,6 +40,7 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/clauses2"
 	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
 )
@@ -48,38 +49,105 @@ import (
 // ==================== {{.Name}} ====================
 
 type {{.Name}}[T any] struct {
-	fieldi.Base
-	{{.InnerName}}[T]
+	{{.InnerName | camel}}[T]
+	flags types.FieldFlag
+	column clauses2.ColumnQuote
 }
 
 func New{{.Name}}[T any](tableName, name string, flags ...types.FieldFlag) {{.Name}}[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return New{{.Name}}From[T](b)
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := {{.Name}}[T]{
+		{{.InnerName | camel}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](&q),
+		column: q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
 }
 
-func New{{.Name}}From[T any](f fieldi.IField) {{.Name}}[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return {{.Name}}[T]{
-		Base:      base,
-		{{.InnerName}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](expr),
-	}
-}
+// func New{{.Name}}From[T any](f fieldi.IField) {{.Name}}[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return {{.Name}}[T]{
+// 		{{.InnerName | camel}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
 
 func (f {{.Name}}[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+	f.{{.InnerName | camel}}.Build(builder)
 }
 
 func (f {{.Name}}[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+	return f.{{.InnerName | camel}}
+}
+
+func (f {{.Name}}[T]) Unwrap() clause.Expression {
+	return f.{{.InnerName | camel}}
+}
+
+func (f {{.Name}}[T]) Expr() {{.InnerName}}[T] {
+	return f.{{.InnerName | camel}}
+}
+
+func (f {{.Name}}[T]) Wrap(functionName FunctionName) {{.Name}}[T] {
+	var expr = f.{{.InnerName | camel}}.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return {{.Name}}[T] {
+		{{.InnerName | camel}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{expr},
+		}),
+	}
+}
+
+/////////////// column-name ///////////////
+
+// TableName 返回表名
+func (f {{.Name}}[T]) TableName() string {
+	return f.column.TableName
+}
+
+// ColumnName 返回列名
+func (f {{.Name}}[T]) ColumnName() string {
+	return f.column.ColumnName
+}
+
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f {{.Name}}[T]) Name() string {
+	return f.column.Name()
+}
+
+func (f {{.Name}}[T]) Alias() string {
+	return f.column.Alias
+}
+
+func (f {{.Name}}[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f {{.Name}}[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f {{.Name}}[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) {{.Name}}[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -87,14 +155,35 @@ func (f {{.Name}}[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f {{.Name}}[T]) WithAlias(alias string) {{.Name}}[T] {
-	b := f.Base.SetAlias(alias)
-	return New{{.Name}}From[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f {{.Name}}[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f {{.Name}}[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f {{.Name}}[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f {{.Name}}[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f {{.Name}}[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f {{.Name}}[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -104,21 +193,15 @@ func (f {{.Name}}[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f {{.Name}}[T]) Wrap(functionName FunctionName) {{.Name}}[T] {
-	return {{.Name}}[T] {
-		Base:    f.Base,
-		{{.InnerName}}: {{.InnerExpr | trimSuffix "Expr"}}Of[T](clause.Expr{
-			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.{{.InnerName}}},
-		}),
-	}
-}
-
 {{end}}
 `
 
 func main() {
 	funcMap := template.FuncMap{
+		"camel": func(s string) string {
+			return s
+			//return strings.ToLower(s[0:1]) + s[1:]
+		},
 		"trimSuffix": func(suffix, s string) string {
 			return strings.TrimSuffix(s, suffix)
 		},

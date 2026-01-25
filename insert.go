@@ -34,8 +34,8 @@ import (
 // Assignment 表示 ON DUPLICATE KEY UPDATE 中的赋值表达式
 // 用于支持自定义更新逻辑，如 column = IF(condition, newValue, oldValue)
 type Assignment struct {
-	Column field.IField
-	Value  field.Expression
+	Column clause.Expression
+	Value  Expression
 }
 
 // Set 创建一个赋值表达式，用于 ON DUPLICATE KEY UPDATE
@@ -51,7 +51,7 @@ type Assignment struct {
 //	    gsql.Values[int64](t.Value),
 //	    t.Value,
 //	))
-func Set(column field.IField, value field.Expression) Assignment {
+func Set(column clause.Expression, value Expression) Assignment {
 	return Assignment{
 		Column: column,
 		Value:  value,

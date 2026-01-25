@@ -6,6 +6,8 @@ import (
 
 var _ clause.Expression = (*TimeExpr[string])(nil)
 
+type timeExpr[T any] = TimeExpr[T]
+
 // TimeExpr 时间类型表达式，用于 TIME 类型字段 (HH:MM:SS)
 // @gentype default=[string]
 // 支持时间比较、运算和提取函数
@@ -68,4 +70,8 @@ func (e TimeExpr[T]) CastDatetime() DateTimeExpr[string] {
 // CastChar 转换为字符串 (CAST AS CHAR)
 func (e TimeExpr[T]) CastChar(length ...int) StringExpr[string] {
 	return StringOf[string](e.castCharExpr(length...))
+}
+
+func (e TimeExpr[T]) Unwrap() clause.Expression {
+	return e.numericComparableImpl.Expression
 }

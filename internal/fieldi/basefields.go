@@ -96,7 +96,7 @@ func (b BaseFields) Build(builder clause.Builder) {
 	}
 }
 
-func (b BaseFields) ToExpr() Expression {
+func (b BaseFields) ToExpr() clause.Expression {
 	panic("BaseFields cannot ToExpr")
 }
 

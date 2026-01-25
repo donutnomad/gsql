@@ -15,11 +15,11 @@ func TestIntColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "sub"}
 	cnt := IntColumn("cnt").From(sub)
 
-	if cnt.Base.TableName() != "sub" {
-		t.Errorf("Expected tableName 'sub', got '%s'", cnt.Base.TableName())
+	if cnt.TableName() != "sub" {
+		t.Errorf("Expected tableName 'sub', got '%s'", cnt.TableName())
 	}
-	if cnt.Base.ColumnName() != "cnt" {
-		t.Errorf("Expected columnName 'cnt', got '%s'", cnt.Base.ColumnName())
+	if cnt.ColumnName() != "cnt" {
+		t.Errorf("Expected columnName 'cnt', got '%s'", cnt.ColumnName())
 	}
 
 	// Verify comparison works
@@ -30,11 +30,11 @@ func TestFloatColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "derived"}
 	total := FloatColumn("total").From(sub)
 
-	if total.Base.TableName() != "derived" {
-		t.Errorf("Expected tableName 'derived', got '%s'", total.Base.TableName())
+	if total.TableName() != "derived" {
+		t.Errorf("Expected tableName 'derived', got '%s'", total.TableName())
 	}
-	if total.Base.ColumnName() != "total" {
-		t.Errorf("Expected columnName 'total', got '%s'", total.Base.ColumnName())
+	if total.ColumnName() != "total" {
+		t.Errorf("Expected columnName 'total', got '%s'", total.ColumnName())
 	}
 
 	// Verify comparison works
@@ -45,8 +45,8 @@ func TestStringColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "names"}
 	name := StringColumn("name").From(sub)
 
-	if name.Base.TableName() != "names" {
-		t.Errorf("Expected tableName 'names', got '%s'", name.Base.TableName())
+	if name.TableName() != "names" {
+		t.Errorf("Expected tableName 'names', got '%s'", name.TableName())
 	}
 
 	// Verify pattern matching works
@@ -57,11 +57,11 @@ func TestBoolColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "flags"}
 	active := BoolColumn("active").From(sub)
 
-	if active.Base.TableName() != "flags" {
-		t.Errorf("Expected tableName 'flags', got '%s'", active.Base.TableName())
+	if active.TableName() != "flags" {
+		t.Errorf("Expected tableName 'flags', got '%s'", active.TableName())
 	}
-	if active.Base.ColumnName() != "active" {
-		t.Errorf("Expected columnName 'active', got '%s'", active.Base.ColumnName())
+	if active.ColumnName() != "active" {
+		t.Errorf("Expected columnName 'active', got '%s'", active.ColumnName())
 	}
 
 	// Verify comparison works
@@ -72,11 +72,11 @@ func TestTimeColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "events"}
 	createdAt := TimeColumn("created_at").From(sub)
 
-	if createdAt.Base.TableName() != "events" {
-		t.Errorf("Expected tableName 'events', got '%s'", createdAt.Base.TableName())
+	if createdAt.TableName() != "events" {
+		t.Errorf("Expected tableName 'events', got '%s'", createdAt.TableName())
 	}
-	if createdAt.Base.ColumnName() != "created_at" {
-		t.Errorf("Expected columnName 'created_at', got '%s'", createdAt.Base.ColumnName())
+	if createdAt.ColumnName() != "created_at" {
+		t.Errorf("Expected columnName 'created_at', got '%s'", createdAt.ColumnName())
 	}
 }
 
@@ -84,11 +84,11 @@ func TestGenericColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "custom"}
 	custom := Column[uint64]("custom_id").From(sub)
 
-	if custom.Base.TableName() != "custom" {
-		t.Errorf("Expected tableName 'custom', got '%s'", custom.Base.TableName())
+	if custom.TableName() != "custom" {
+		t.Errorf("Expected tableName 'custom', got '%s'", custom.TableName())
 	}
-	if custom.Base.ColumnName() != "custom_id" {
-		t.Errorf("Expected columnName 'custom_id', got '%s'", custom.Base.ColumnName())
+	if custom.ColumnName() != "custom_id" {
+		t.Errorf("Expected columnName 'custom_id', got '%s'", custom.ColumnName())
 	}
 
 	// Verify comparison works with generic type

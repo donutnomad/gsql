@@ -34,7 +34,7 @@ type PathValue struct {
 //	gsql.AsJson(u.Profile).StorageSize()
 //
 //goland:noinspection ALL
-func AsJson(expr field.Expression) fields.Json {
+func AsJson(expr Expression) fields.Json {
 	return fields.AsJson(expr)
 }
 
@@ -62,20 +62,20 @@ func JsonLit(jsonStr string) fields.Json {
 //	gsql.JSON_OBJECT(lo.T2("name", name), lo.T2("age", age))
 //
 //goland:noinspection ALL
-func JSON_OBJECT(pairs ...lo.Entry[string, field.Expression]) *jsonObjectBuilder {
+func JSON_OBJECT(pairs ...lo.Entry[string, Expression]) *jsonObjectBuilder {
 	b := &jsonObjectBuilder{
-		pairs: make([]lo.Entry[string, field.Expression], 0, len(pairs)),
+		pairs: make([]lo.Entry[string, Expression], 0, len(pairs)),
 	}
 	b.pairs = append(b.pairs, pairs...)
 	return b
 }
 
 type jsonObjectBuilder struct {
-	pairs []lo.Entry[string, field.Expression]
+	pairs []lo.Entry[string, Expression]
 }
 
-func (j *jsonObjectBuilder) Add(key string, value field.Expression) *jsonObjectBuilder {
-	j.pairs = append(j.pairs, lo.Entry[string, field.Expression]{Key: key, Value: value})
+func (j *jsonObjectBuilder) Add(key string, value Expression) *jsonObjectBuilder {
+	j.pairs = append(j.pairs, lo.Entry[string, Expression]{Key: key, Value: value})
 	return j
 }
 
@@ -104,7 +104,7 @@ func (j *jsonObjectBuilder) AsF(name ...string) field.IField {
 	return field.NewBaseFromSql(j.toExpr(), alias)
 }
 
-func (j *jsonObjectBuilder) ToExpr() field.Expression {
+func (j *jsonObjectBuilder) ToExpr() Expression {
 	return j.toExpr()
 }
 
@@ -122,17 +122,17 @@ func (j *jsonObjectBuilder) ToJson() fields.Json {
 //	gsql.JSON_ARRAY(val1, val2).Add(val3)
 //
 //goland:noinspection ALL
-func JSON_ARRAY(values ...field.Expression) *jsonArrayBuilder {
+func JSON_ARRAY(values ...Expression) *jsonArrayBuilder {
 	return &jsonArrayBuilder{
 		values: values,
 	}
 }
 
 type jsonArrayBuilder struct {
-	values []field.Expression
+	values []Expression
 }
 
-func (b *jsonArrayBuilder) Add(value field.Expression) *jsonArrayBuilder {
+func (b *jsonArrayBuilder) Add(value Expression) *jsonArrayBuilder {
 	b.values = append(b.values, value)
 	return b
 }
@@ -160,7 +160,7 @@ func (b *jsonArrayBuilder) AsF(name ...string) field.IField {
 	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
-func (b *jsonArrayBuilder) ToExpr() field.Expression {
+func (b *jsonArrayBuilder) ToExpr() Expression {
 	return b.toExpr()
 }
 
@@ -176,7 +176,7 @@ func (b *jsonArrayBuilder) ToJson() fields.Json {
 // SELECT JSON_QUOTE(users.name) FROM users;
 //
 //goland:noinspection ALL
-func JSON_QUOTE(str field.Expression) fields.StringExpr[string] {
+func JSON_QUOTE(str Expression) fields.StringExpr[string] {
 	return fields.StringOf[string](clause.Expr{
 		SQL:  "JSON_QUOTE(?)",
 		Vars: []any{str},
@@ -252,7 +252,7 @@ func (b *jsonMergeBuilder) AsF(name ...string) field.IField {
 	return field.NewBaseFromSql(b.toExpr(), alias)
 }
 
-func (b *jsonMergeBuilder) ToExpr() field.Expression {
+func (b *jsonMergeBuilder) ToExpr() Expression {
 	return b.toExpr()
 }
 

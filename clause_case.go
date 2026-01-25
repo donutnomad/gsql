@@ -37,7 +37,7 @@ func Case[R any, ResultExpr fields.Expressions[R]]() *clauses.SearchCaseBuilder[
 // WHEN value2 THEN result2
 // [ELSE default_result]
 // END
-func CaseValue[R any, ResultExpr fields.Expressions[R], V any, ValExpr fields.Expressions[V]](expression ValExpr) *clauses.SimpleCaseBuilder[ValExpr, V, ResultExpr, R] {
+func CaseValue[V any, R any, ValExpr fields.Expressions[V], ResultExpr fields.Expressions[R]](expression ValExpr) *clauses.SimpleCaseBuilder[ValExpr, V, ResultExpr, R] {
 	return clauses.CaseValue[V, R, ValExpr, ResultExpr](expression)
 }
 

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/donutnomad/gsql/clause"
+	"gorm.io/gorm/clause"
 )
 
 func AddVarAutoBracket(builder clause.Builder, values []any) {

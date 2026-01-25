@@ -1,4 +1,4 @@
-package clauses
+package clauses2
 
 import (
 	"github.com/donutnomad/gsql/clause"
@@ -7,7 +7,7 @@ import (
 
 // IN Whether a value is within a set of values
 type IN struct {
-	Column any
+	Column clause.Expression
 	Values []any
 }
 
@@ -15,7 +15,7 @@ func (in IN) Build(builder clause.Builder) {
 	writeString := func(str string) {
 		_, _ = builder.WriteString(str)
 	}
-	builder.WriteQuoted(in.Column)
+	in.Column.Build(builder)
 
 	switch len(in.Values) {
 	case 0:
@@ -39,7 +39,7 @@ func (in IN) NegationBuild(builder clause.Builder) {
 		_, _ = builder.WriteString(str)
 	}
 
-	builder.WriteQuoted(in.Column)
+	in.Column.Build(builder)
 	switch len(in.Values) {
 	case 0:
 		writeString(" IS NOT NULL")

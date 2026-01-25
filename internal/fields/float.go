@@ -7,6 +7,8 @@ import (
 
 var _ clause.Expression = (*FloatExpr[float64])(nil)
 
+type floatExpr[T any] = FloatExpr[T]
+
 // ==================== FloatExpr 定义 ====================
 
 // FloatExpr 浮点类型表达式，用于 AVG, SUM 等返回浮点数的聚合函数
@@ -94,4 +96,8 @@ func (e FloatExpr[T]) CastChar(length ...int) StringExpr[string] {
 // Format 格式化数字 (FORMAT)
 func (e FloatExpr[T]) Format(decimals int) StringExpr[string] {
 	return StringOf[string](e.formatExpr(decimals))
+}
+
+func (e FloatExpr[T]) Unwrap() clause.Expression {
+	return e.numericComparableImpl.Expression
 }

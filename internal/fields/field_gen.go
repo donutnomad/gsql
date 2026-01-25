@@ -4,6 +4,7 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/clauses2"
 	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
 )
@@ -11,38 +12,105 @@ import (
 // ==================== IntField ====================
 
 type IntField[T any] struct {
-	fieldi.Base
 	IntExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
 }
 
 func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) IntField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewIntFieldFrom[T](b)
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := IntField[T]{
+		IntExpr: IntOf[T](&q),
+		column:  q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
 }
 
-func NewIntFieldFrom[T any](f fieldi.IField) IntField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return IntField[T]{
-		Base:    base,
-		IntExpr: IntOf[T](expr),
-	}
-}
+// func NewIntFieldFrom[T any](f fieldi.IField) IntField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return IntField[T]{
+// 		IntExpr: IntOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
 
 func (f IntField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+	f.IntExpr.Build(builder)
 }
 
 func (f IntField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+	return f.IntExpr
+}
+
+func (f IntField[T]) Unwrap() clause.Expression {
+	return f.IntExpr
+}
+
+func (f IntField[T]) Expr() IntExpr[T] {
+	return f.IntExpr
+}
+
+func (f IntField[T]) Wrap(functionName FunctionName) IntField[T] {
+	var expr = f.IntExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return IntField[T]{
+		IntExpr: IntOf[T](clause.Expr{
+			SQL:  string(functionName) + "(?)",
+			Vars: []any{expr},
+		}),
+	}
+}
+
+/////////////// column-name ///////////////
+
+// TableName 返回表名
+func (f IntField[T]) TableName() string {
+	return f.column.TableName
+}
+
+// ColumnName 返回列名
+func (f IntField[T]) ColumnName() string {
+	return f.column.ColumnName
+}
+
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f IntField[T]) Name() string {
+	return f.column.Name()
+}
+
+func (f IntField[T]) Alias() string {
+	return f.column.Alias
+}
+
+func (f IntField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f IntField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f IntField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) IntField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -50,14 +118,35 @@ func (f IntField[T]) WithTable(tableName interface{ TableName() string }, fieldN
 }
 
 func (f IntField[T]) WithAlias(alias string) IntField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewIntFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f IntField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f IntField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f IntField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f IntField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f IntField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f IntField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -67,51 +156,108 @@ func (f IntField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f IntField[T]) Wrap(functionName FunctionName) IntField[T] {
-	return IntField[T]{
-		Base: f.Base,
-		IntExpr: IntOf[T](clause.Expr{
+// ==================== FloatField ====================
+
+type FloatField[T any] struct {
+	FloatExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) FloatField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := FloatField[T]{
+		FloatExpr: FloatOf[T](&q),
+		column:    q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewFloatFieldFrom[T any](f fieldi.IField) FloatField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return FloatField[T]{
+// 		FloatExpr: FloatOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f FloatField[T]) Build(builder clause.Builder) {
+	f.FloatExpr.Build(builder)
+}
+
+func (f FloatField[T]) ToExpr() clause.Expression {
+	return f.FloatExpr
+}
+
+func (f FloatField[T]) Unwrap() clause.Expression {
+	return f.FloatExpr
+}
+
+func (f FloatField[T]) Expr() FloatExpr[T] {
+	return f.FloatExpr
+}
+
+func (f FloatField[T]) Wrap(functionName FunctionName) FloatField[T] {
+	var expr = f.FloatExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return FloatField[T]{
+		FloatExpr: FloatOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.IntExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== FloatField ====================
+/////////////// column-name ///////////////
 
-type FloatField[T any] struct {
-	fieldi.Base
-	FloatExpr[T]
+// TableName 返回表名
+func (f FloatField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) FloatField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewFloatFieldFrom[T](b)
+// ColumnName 返回列名
+func (f FloatField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewFloatFieldFrom[T any](f fieldi.IField) FloatField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return FloatField[T]{
-		Base:      base,
-		FloatExpr: FloatOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f FloatField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f FloatField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f FloatField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f FloatField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f FloatField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f FloatField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f FloatField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) FloatField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -119,14 +265,35 @@ func (f FloatField[T]) WithTable(tableName interface{ TableName() string }, fiel
 }
 
 func (f FloatField[T]) WithAlias(alias string) FloatField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewFloatFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f FloatField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f FloatField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f FloatField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f FloatField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f FloatField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f FloatField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -136,51 +303,108 @@ func (f FloatField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f FloatField[T]) Wrap(functionName FunctionName) FloatField[T] {
-	return FloatField[T]{
-		Base: f.Base,
-		FloatExpr: FloatOf[T](clause.Expr{
+// ==================== DecimalField ====================
+
+type DecimalField[T any] struct {
+	DecimalExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) DecimalField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := DecimalField[T]{
+		DecimalExpr: DecimalOf[T](&q),
+		column:      q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewDecimalFieldFrom[T any](f fieldi.IField) DecimalField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return DecimalField[T]{
+// 		DecimalExpr: DecimalOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f DecimalField[T]) Build(builder clause.Builder) {
+	f.DecimalExpr.Build(builder)
+}
+
+func (f DecimalField[T]) ToExpr() clause.Expression {
+	return f.DecimalExpr
+}
+
+func (f DecimalField[T]) Unwrap() clause.Expression {
+	return f.DecimalExpr
+}
+
+func (f DecimalField[T]) Expr() DecimalExpr[T] {
+	return f.DecimalExpr
+}
+
+func (f DecimalField[T]) Wrap(functionName FunctionName) DecimalField[T] {
+	var expr = f.DecimalExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return DecimalField[T]{
+		DecimalExpr: DecimalOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.FloatExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== DecimalField ====================
+/////////////// column-name ///////////////
 
-type DecimalField[T any] struct {
-	fieldi.Base
-	DecimalExpr[T]
+// TableName 返回表名
+func (f DecimalField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) DecimalField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewDecimalFieldFrom[T](b)
+// ColumnName 返回列名
+func (f DecimalField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewDecimalFieldFrom[T any](f fieldi.IField) DecimalField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return DecimalField[T]{
-		Base:        base,
-		DecimalExpr: DecimalOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f DecimalField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f DecimalField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f DecimalField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f DecimalField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f DecimalField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f DecimalField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f DecimalField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DecimalField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -188,14 +412,35 @@ func (f DecimalField[T]) WithTable(tableName interface{ TableName() string }, fi
 }
 
 func (f DecimalField[T]) WithAlias(alias string) DecimalField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewDecimalFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f DecimalField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f DecimalField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f DecimalField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f DecimalField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f DecimalField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f DecimalField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -205,51 +450,108 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f DecimalField[T]) Wrap(functionName FunctionName) DecimalField[T] {
-	return DecimalField[T]{
-		Base: f.Base,
-		DecimalExpr: DecimalOf[T](clause.Expr{
+// ==================== StringField ====================
+
+type StringField[T any] struct {
+	StringExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) StringField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := StringField[T]{
+		StringExpr: StringOf[T](&q),
+		column:     q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewStringFieldFrom[T any](f fieldi.IField) StringField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return StringField[T]{
+// 		StringExpr: StringOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f StringField[T]) Build(builder clause.Builder) {
+	f.StringExpr.Build(builder)
+}
+
+func (f StringField[T]) ToExpr() clause.Expression {
+	return f.StringExpr
+}
+
+func (f StringField[T]) Unwrap() clause.Expression {
+	return f.StringExpr
+}
+
+func (f StringField[T]) Expr() StringExpr[T] {
+	return f.StringExpr
+}
+
+func (f StringField[T]) Wrap(functionName FunctionName) StringField[T] {
+	var expr = f.StringExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return StringField[T]{
+		StringExpr: StringOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.DecimalExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== StringField ====================
+/////////////// column-name ///////////////
 
-type StringField[T any] struct {
-	fieldi.Base
-	StringExpr[T]
+// TableName 返回表名
+func (f StringField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) StringField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewStringFieldFrom[T](b)
+// ColumnName 返回列名
+func (f StringField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewStringFieldFrom[T any](f fieldi.IField) StringField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return StringField[T]{
-		Base:       base,
-		StringExpr: StringOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f StringField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f StringField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f StringField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f StringField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f StringField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f StringField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f StringField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) StringField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -257,14 +559,35 @@ func (f StringField[T]) WithTable(tableName interface{ TableName() string }, fie
 }
 
 func (f StringField[T]) WithAlias(alias string) StringField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewStringFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f StringField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f StringField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f StringField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f StringField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f StringField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f StringField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -274,51 +597,108 @@ func (f StringField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f StringField[T]) Wrap(functionName FunctionName) StringField[T] {
-	return StringField[T]{
-		Base: f.Base,
-		StringExpr: StringOf[T](clause.Expr{
+// ==================== DateTimeField ====================
+
+type DateTimeField[T any] struct {
+	DateTimeExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) DateTimeField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := DateTimeField[T]{
+		DateTimeExpr: DateTimeOf[T](&q),
+		column:       q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewDateTimeFieldFrom[T any](f fieldi.IField) DateTimeField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return DateTimeField[T]{
+// 		DateTimeExpr: DateTimeOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f DateTimeField[T]) Build(builder clause.Builder) {
+	f.DateTimeExpr.Build(builder)
+}
+
+func (f DateTimeField[T]) ToExpr() clause.Expression {
+	return f.DateTimeExpr
+}
+
+func (f DateTimeField[T]) Unwrap() clause.Expression {
+	return f.DateTimeExpr
+}
+
+func (f DateTimeField[T]) Expr() DateTimeExpr[T] {
+	return f.DateTimeExpr
+}
+
+func (f DateTimeField[T]) Wrap(functionName FunctionName) DateTimeField[T] {
+	var expr = f.DateTimeExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return DateTimeField[T]{
+		DateTimeExpr: DateTimeOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.StringExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== DateTimeField ====================
+/////////////// column-name ///////////////
 
-type DateTimeField[T any] struct {
-	fieldi.Base
-	DateTimeExpr[T]
+// TableName 返回表名
+func (f DateTimeField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) DateTimeField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewDateTimeFieldFrom[T](b)
+// ColumnName 返回列名
+func (f DateTimeField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewDateTimeFieldFrom[T any](f fieldi.IField) DateTimeField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return DateTimeField[T]{
-		Base:         base,
-		DateTimeExpr: DateTimeOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f DateTimeField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f DateTimeField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f DateTimeField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f DateTimeField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f DateTimeField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f DateTimeField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f DateTimeField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateTimeField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -326,14 +706,35 @@ func (f DateTimeField[T]) WithTable(tableName interface{ TableName() string }, f
 }
 
 func (f DateTimeField[T]) WithAlias(alias string) DateTimeField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewDateTimeFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f DateTimeField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f DateTimeField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f DateTimeField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f DateTimeField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f DateTimeField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f DateTimeField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -343,51 +744,108 @@ func (f DateTimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f DateTimeField[T]) Wrap(functionName FunctionName) DateTimeField[T] {
-	return DateTimeField[T]{
-		Base: f.Base,
-		DateTimeExpr: DateTimeOf[T](clause.Expr{
+// ==================== DateField ====================
+
+type DateField[T any] struct {
+	DateExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) DateField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := DateField[T]{
+		DateExpr: DateOf[T](&q),
+		column:   q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewDateFieldFrom[T any](f fieldi.IField) DateField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return DateField[T]{
+// 		DateExpr: DateOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f DateField[T]) Build(builder clause.Builder) {
+	f.DateExpr.Build(builder)
+}
+
+func (f DateField[T]) ToExpr() clause.Expression {
+	return f.DateExpr
+}
+
+func (f DateField[T]) Unwrap() clause.Expression {
+	return f.DateExpr
+}
+
+func (f DateField[T]) Expr() DateExpr[T] {
+	return f.DateExpr
+}
+
+func (f DateField[T]) Wrap(functionName FunctionName) DateField[T] {
+	var expr = f.DateExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return DateField[T]{
+		DateExpr: DateOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.DateTimeExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== DateField ====================
+/////////////// column-name ///////////////
 
-type DateField[T any] struct {
-	fieldi.Base
-	DateExpr[T]
+// TableName 返回表名
+func (f DateField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) DateField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewDateFieldFrom[T](b)
+// ColumnName 返回列名
+func (f DateField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewDateFieldFrom[T any](f fieldi.IField) DateField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return DateField[T]{
-		Base:     base,
-		DateExpr: DateOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f DateField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f DateField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f DateField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f DateField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f DateField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f DateField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f DateField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) DateField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -395,14 +853,35 @@ func (f DateField[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f DateField[T]) WithAlias(alias string) DateField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewDateFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f DateField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f DateField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f DateField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f DateField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f DateField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f DateField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -412,51 +891,108 @@ func (f DateField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f DateField[T]) Wrap(functionName FunctionName) DateField[T] {
-	return DateField[T]{
-		Base: f.Base,
-		DateExpr: DateOf[T](clause.Expr{
+// ==================== TimeField ====================
+
+type TimeField[T any] struct {
+	TimeExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) TimeField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := TimeField[T]{
+		TimeExpr: TimeOf[T](&q),
+		column:   q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewTimeFieldFrom[T any](f fieldi.IField) TimeField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return TimeField[T]{
+// 		TimeExpr: TimeOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f TimeField[T]) Build(builder clause.Builder) {
+	f.TimeExpr.Build(builder)
+}
+
+func (f TimeField[T]) ToExpr() clause.Expression {
+	return f.TimeExpr
+}
+
+func (f TimeField[T]) Unwrap() clause.Expression {
+	return f.TimeExpr
+}
+
+func (f TimeField[T]) Expr() TimeExpr[T] {
+	return f.TimeExpr
+}
+
+func (f TimeField[T]) Wrap(functionName FunctionName) TimeField[T] {
+	var expr = f.TimeExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return TimeField[T]{
+		TimeExpr: TimeOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.DateExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== TimeField ====================
+/////////////// column-name ///////////////
 
-type TimeField[T any] struct {
-	fieldi.Base
-	TimeExpr[T]
+// TableName 返回表名
+func (f TimeField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) TimeField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewTimeFieldFrom[T](b)
+// ColumnName 返回列名
+func (f TimeField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewTimeFieldFrom[T any](f fieldi.IField) TimeField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return TimeField[T]{
-		Base:     base,
-		TimeExpr: TimeOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f TimeField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f TimeField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f TimeField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f TimeField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f TimeField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f TimeField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f TimeField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) TimeField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -464,14 +1000,35 @@ func (f TimeField[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f TimeField[T]) WithAlias(alias string) TimeField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewTimeFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f TimeField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f TimeField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f TimeField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f TimeField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f TimeField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f TimeField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -481,51 +1038,108 @@ func (f TimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
-func (f TimeField[T]) Wrap(functionName FunctionName) TimeField[T] {
-	return TimeField[T]{
-		Base: f.Base,
-		TimeExpr: TimeOf[T](clause.Expr{
+// ==================== ScalarField ====================
+
+type ScalarField[T any] struct {
+	ScalarExpr[T]
+	flags  types.FieldFlag
+	column clauses2.ColumnQuote
+}
+
+func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) ScalarField[T] {
+	q := clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := ScalarField[T]{
+		ScalarExpr: ScalarOf[T](&q),
+		column:     q,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+// func NewScalarFieldFrom[T any](f fieldi.IField) ScalarField[T] {
+// 	base := fieldi.IFieldToBase(f)
+// 	expr := base.ToExpr()
+// 	return ScalarField[T]{
+// 		ScalarExpr: ScalarOf[T](expr),
+// 	}
+// }
+
+/////////////// base ///////////////
+
+func (f ScalarField[T]) Build(builder clause.Builder) {
+	f.ScalarExpr.Build(builder)
+}
+
+func (f ScalarField[T]) ToExpr() clause.Expression {
+	return f.ScalarExpr
+}
+
+func (f ScalarField[T]) Unwrap() clause.Expression {
+	return f.ScalarExpr
+}
+
+func (f ScalarField[T]) Expr() ScalarExpr[T] {
+	return f.ScalarExpr
+}
+
+func (f ScalarField[T]) Wrap(functionName FunctionName) ScalarField[T] {
+	var expr = f.ScalarExpr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	return ScalarField[T]{
+		ScalarExpr: ScalarOf[T](clause.Expr{
 			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.TimeExpr},
+			Vars: []any{expr},
 		}),
 	}
 }
 
-// ==================== ScalarField ====================
+/////////////// column-name ///////////////
 
-type ScalarField[T any] struct {
-	fieldi.Base
-	ScalarExpr[T]
+// TableName 返回表名
+func (f ScalarField[T]) TableName() string {
+	return f.column.TableName
 }
 
-func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) ScalarField[T] {
-	b := fieldi.NewBase(tableName, name, flags...)
-	return NewScalarFieldFrom[T](b)
+// ColumnName 返回列名
+func (f ScalarField[T]) ColumnName() string {
+	return f.column.ColumnName
 }
 
-func NewScalarFieldFrom[T any](f fieldi.IField) ScalarField[T] {
-	base := fieldi.IFieldToBase(f)
-	expr := base.ToExpr()
-	return ScalarField[T]{
-		Base:       base,
-		ScalarExpr: ScalarOf[T](expr),
-	}
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f ScalarField[T]) Name() string {
+	return f.column.Name()
 }
 
-func (f ScalarField[T]) Build(builder clause.Builder) {
-	f.Base.ToExpr().Build(builder)
+func (f ScalarField[T]) Alias() string {
+	return f.column.Alias
 }
 
-func (f ScalarField[T]) ToExpr() clause.Expression {
-	return f.Base.ToExpr()
+func (f ScalarField[T]) FullName() string {
+	return f.column.FullName()
 }
 
 func (f ScalarField[T]) As(alias string) fieldi.IField {
-	return f.Base.As(alias)
+	var expr = f.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.Alias = alias
+	} else {
+		// ignore
+	}
+	return f
 }
 
 func (f ScalarField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) ScalarField[T] {
-	name := f.Base.ColumnName()
+	name := f.ColumnName()
 	if len(fieldNames) > 0 {
 		name = fieldNames[0]
 	}
@@ -533,14 +1147,35 @@ func (f ScalarField[T]) WithTable(tableName interface{ TableName() string }, fie
 }
 
 func (f ScalarField[T]) WithAlias(alias string) ScalarField[T] {
-	b := f.Base.SetAlias(alias)
-	return NewScalarFieldFrom[T](b)
+	cloned := f
+	cloned.column.Alias = alias
+	return cloned
 }
+
+/////////////// flags ///////////////
 
 func (f ScalarField[T]) FieldType() T {
 	var def T
 	return def
 }
+
+func (f ScalarField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f ScalarField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f ScalarField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f ScalarField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
 
 func (f ScalarField[T]) Asc() types.OrderItem {
 	return types.NewOrder(f, true)
@@ -548,14 +1183,4 @@ func (f ScalarField[T]) Asc() types.OrderItem {
 
 func (f ScalarField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
-}
-
-func (f ScalarField[T]) Wrap(functionName FunctionName) ScalarField[T] {
-	return ScalarField[T]{
-		Base: f.Base,
-		ScalarExpr: ScalarOf[T](clause.Expr{
-			SQL:  string(functionName) + "(?)",
-			Vars: []any{f.ScalarExpr},
-		}),
-	}
 }

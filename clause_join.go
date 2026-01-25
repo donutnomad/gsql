@@ -2,7 +2,6 @@ package gsql
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/types"
 )
 
@@ -26,7 +25,7 @@ func Join(table ITableName) joiner {
 type JoinClause struct {
 	JoinType string
 	Table    ITableName
-	On       field.Expression
+	On       Expression
 	hasOn    bool
 }
 
@@ -35,7 +34,7 @@ type joiner struct {
 	table    ITableName
 }
 
-func (j joiner) On(expr field.Expression) JoinClause {
+func (j joiner) On(expr Expression) JoinClause {
 	return JoinClause{
 		JoinType: j.joinType,
 		Table:    j.table,
@@ -51,7 +50,7 @@ func (j joiner) OnEmpty() JoinClause {
 	}
 }
 
-func (j JoinClause) And(expr field.Expression) JoinClause {
+func (j JoinClause) And(expr Expression) JoinClause {
 	return JoinClause{
 		JoinType: j.JoinType,
 		Table:    j.Table,
@@ -60,7 +59,7 @@ func (j JoinClause) And(expr field.Expression) JoinClause {
 	}
 }
 
-func (j JoinClause) Or(expr field.Expression) JoinClause {
+func (j JoinClause) Or(expr Expression) JoinClause {
 	return JoinClause{
 		JoinType: j.JoinType,
 		Table:    j.Table,

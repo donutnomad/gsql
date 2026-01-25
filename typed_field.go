@@ -5,7 +5,6 @@ package gsql
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/donutnomad/gsql/internal/types"
 )
@@ -16,40 +15,20 @@ func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) field
 	return fields.NewDateField[T](tableName, name, flags...)
 }
 
-func NewDateFieldFrom[T any](f fieldi.IField) fields.DateField[T] {
-	return fields.NewDateFieldFrom[T](f)
-}
-
 func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) fields.DateTimeField[T] {
 	return fields.NewDateTimeField[T](tableName, name, flags...)
-}
-
-func NewDateTimeFieldFrom[T any](f fieldi.IField) fields.DateTimeField[T] {
-	return fields.NewDateTimeFieldFrom[T](f)
 }
 
 func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) fields.DecimalField[T] {
 	return fields.NewDecimalField[T](tableName, name, flags...)
 }
 
-func NewDecimalFieldFrom[T any](f fieldi.IField) fields.DecimalField[T] {
-	return fields.NewDecimalFieldFrom[T](f)
-}
-
 func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) fields.FloatField[T] {
 	return fields.NewFloatField[T](tableName, name, flags...)
 }
 
-func NewFloatFieldFrom[T any](f fieldi.IField) fields.FloatField[T] {
-	return fields.NewFloatFieldFrom[T](f)
-}
-
 func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) fields.IntField[T] {
 	return fields.NewIntField[T](tableName, name, flags...)
-}
-
-func NewIntFieldFrom[T any](f fieldi.IField) fields.IntField[T] {
-	return fields.NewIntFieldFrom[T](f)
 }
 
 func NewJson(expr clause.Expression) fields.Json {
@@ -60,24 +39,12 @@ func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) fie
 	return fields.NewScalarField[T](tableName, name, flags...)
 }
 
-func NewScalarFieldFrom[T any](f fieldi.IField) fields.ScalarField[T] {
-	return fields.NewScalarFieldFrom[T](f)
-}
-
 func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) fields.StringField[T] {
 	return fields.NewStringField[T](tableName, name, flags...)
 }
 
-func NewStringFieldFrom[T any](f fieldi.IField) fields.StringField[T] {
-	return fields.NewStringFieldFrom[T](f)
-}
-
 func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) fields.TimeField[T] {
 	return fields.NewTimeField[T](tableName, name, flags...)
-}
-
-func NewTimeFieldFrom[T any](f fieldi.IField) fields.TimeField[T] {
-	return fields.NewTimeFieldFrom[T](f)
 }
 
 func BoolColumn(name string) fields.BoolColumnBuilder {

@@ -2,17 +2,16 @@ package gsql
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
 )
 
-func Exists(builder *QueryBuilder) field.Expression {
+func Exists(builder *QueryBuilder) Expression {
 	return existsClause{
 		exists: true,
 		expr:   builder.ToExpr(),
 	}
 }
 
-func NotExists(builder *QueryBuilder) field.Expression {
+func NotExists(builder *QueryBuilder) Expression {
 	return existsClause{
 		exists: false,
 		expr:   builder.ToExpr(),
@@ -20,7 +19,7 @@ func NotExists(builder *QueryBuilder) field.Expression {
 }
 
 type existsClause struct {
-	expr   field.Expression
+	expr   Expression
 	exists bool
 }
 

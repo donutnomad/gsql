@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/donutnomad/gsql/clause"
+	"github.com/donutnomad/gsql/internal/clauses2"
 	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
+	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
@@ -18,12 +20,12 @@ type pointerExprImpl struct {
 	clause.Expression
 }
 
-func (f pointerExprImpl) IsNull() clause.Expression {
-	return clause.Expr{SQL: "? IS NULL", Vars: []any{f.Expression}}
+func (f pointerExprImpl) IsNull() Condition {
+	return Condition{clause.Expr{SQL: "? IS NULL", Vars: []any{f.Expression}}}
 }
 
-func (f pointerExprImpl) IsNotNull() clause.Expression {
-	return clause.Expr{SQL: "? IS NOT NULL", Vars: []any{f.Expression}}
+func (f pointerExprImpl) IsNotNull() Condition {
+	return Condition{clause.Expr{SQL: "? IS NOT NULL", Vars: []any{f.Expression}}}
 }
 
 // @gen public=Count return=IntExpr[int64]
@@ -147,7 +149,7 @@ type numericComparableImpl[T any] struct {
 }
 
 func (f numericComparableImpl[T]) Gt(value T) Condition {
-	return cond("? > ?", f.Expression, value)
+	return f.operateValue(value, ">")
 }
 
 func (f numericComparableImpl[T]) GtOpt(value mo.Option[T]) Condition {
@@ -158,11 +160,11 @@ func (f numericComparableImpl[T]) GtOpt(value mo.Option[T]) Condition {
 }
 
 func (f numericComparableImpl[T]) GtF(other clause.Expression) Condition {
-	return cond("? > ?", f.Expression, other)
+	return f.operateValue(other, ">")
 }
 
 func (f numericComparableImpl[T]) Gte(value T) Condition {
-	return cond("? >= ?", f.Expression, value)
+	return f.operateValue(value, ">=")
 }
 
 func (f numericComparableImpl[T]) GteOpt(value mo.Option[T]) Condition {
@@ -173,11 +175,11 @@ func (f numericComparableImpl[T]) GteOpt(value mo.Option[T]) Condition {
 }
 
 func (f numericComparableImpl[T]) GteF(other clause.Expression) Condition {
-	return cond("? >= ?", f.Expression, other)
+	return f.operateValue(other, ">=")
 }
 
 func (f numericComparableImpl[T]) Lt(value T) Condition {
-	return cond("? < ?", f.Expression, value)
+	return f.operateValue(value, "<")
 }
 
 func (f numericComparableImpl[T]) LtOpt(value mo.Option[T]) Condition {
@@ -188,11 +190,11 @@ func (f numericComparableImpl[T]) LtOpt(value mo.Option[T]) Condition {
 }
 
 func (f numericComparableImpl[T]) LtF(other clause.Expression) Condition {
-	return cond("? < ?", f.Expression, other)
+	return f.operateValue(other, "<")
 }
 
 func (f numericComparableImpl[T]) Lte(value T) Condition {
-	return cond("? <= ?", f.Expression, value)
+	return f.operateValue(value, "<=")
 }
 
 func (f numericComparableImpl[T]) LteOpt(value mo.Option[T]) Condition {
@@ -203,7 +205,7 @@ func (f numericComparableImpl[T]) LteOpt(value mo.Option[T]) Condition {
 }
 
 func (f numericComparableImpl[T]) LteF(other clause.Expression) Condition {
-	return cond("? <= ?", f.Expression, other)
+	return f.operateValue(other, "<=")
 }
 
 func (f numericComparableImpl[T]) Between(from, to T) Condition {
@@ -265,6 +267,35 @@ func (f numericComparableImpl[T]) NotBetweenPtr(from, to *T) Condition {
 // NotBetweenOpt 使用 Option 参数的范围排除查询
 func (f numericComparableImpl[T]) NotBetweenOpt(from, to mo.Option[T]) Condition {
 	return f.NotBetweenPtr(from.ToPointer(), to.ToPointer())
+}
+
+func (f numericComparableImpl[T]) operateValue(value any, operator string) Condition {
+	return f.operateValue2(f.Expression, value, operator)
+}
+
+func (f numericComparableImpl[T]) operateValue2(column clause.Expression, value any, operator string) Condition {
+	var expr clause.Expression
+	switch operator {
+	case "=":
+		expr = clause.Eq{Column: column, Value: value}
+	case "!=":
+		expr = clause.Neq{Column: column, Value: value}
+	case ">":
+		expr = clause.Gt{Column: column, Value: value}
+	case ">=":
+		expr = clause.Gte{Column: column, Value: value}
+	case "<":
+		expr = clause.Lt{Column: column, Value: value}
+	case "<=":
+		expr = clause.Lte{Column: column, Value: value}
+	case "IN":
+		expr = clause.IN{Column: column, Values: []any{value}}
+	case "NOT IN":
+		expr = clause.Not(clause.IN{Column: column, Values: []any{value}})
+	default:
+		panic(fmt.Sprintf("invalid operator %s", operator))
+	}
+	return Condition{expr}
 }
 
 // ==================== 算术运算的 SQL 生成 ====================
@@ -1106,13 +1137,7 @@ type patternExprImpl[T any] struct {
 }
 
 func (f patternExprImpl[T]) Like(value T, escape ...byte) clause.Expression {
-	if len(escape) > 0 {
-		return clause.Expr{
-			SQL:  "? LIKE ? ESCAPE ?",
-			Vars: []any{f.Expression, value, string(escape[0])},
-		}
-	}
-	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, value}}
+	return f.operateValue(value, "LIKE", utils.Optional(escape, 0))
 }
 
 func (f patternExprImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
@@ -1123,13 +1148,7 @@ func (f patternExprImpl[T]) LikeOpt(value mo.Option[T], escape ...byte) clause.E
 }
 
 func (f patternExprImpl[T]) NotLike(value T, escape ...byte) clause.Expression {
-	if len(escape) > 0 {
-		return clause.Expr{
-			SQL:  "? NOT LIKE ? ESCAPE ?",
-			Vars: []any{f.Expression, value, string(escape[0])},
-		}
-	}
-	return clause.Expr{SQL: "? NOT LIKE ?", Vars: []any{f.Expression, value}}
+	return f.operateValue(value, "NOT LIKE", utils.Optional(escape, 0))
 }
 
 func (f patternExprImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
@@ -1140,7 +1159,8 @@ func (f patternExprImpl[T]) NotLikeOpt(value mo.Option[T], escape ...byte) claus
 }
 
 func (f patternExprImpl[T]) Contains(value string) clause.Expression {
-	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, "%" + value + "%"}}
+	expr := clause.Expr{SQL: "?", Vars: []any{"%" + value + "%"}}
+	return f.operateValue(expr, "LIKE", 0)
 }
 
 func (f patternExprImpl[T]) ContainsOpt(value mo.Option[string]) clause.Expression {
@@ -1151,7 +1171,8 @@ func (f patternExprImpl[T]) ContainsOpt(value mo.Option[string]) clause.Expressi
 }
 
 func (f patternExprImpl[T]) HasPrefix(value string) clause.Expression {
-	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, value + "%"}}
+	expr := clause.Expr{SQL: "?", Vars: []any{value + "%"}}
+	return f.operateValue(expr, "LIKE", 0)
 }
 
 func (f patternExprImpl[T]) HasPrefixOpt(value mo.Option[string]) clause.Expression {
@@ -1162,7 +1183,8 @@ func (f patternExprImpl[T]) HasPrefixOpt(value mo.Option[string]) clause.Express
 }
 
 func (f patternExprImpl[T]) HasSuffix(value string) clause.Expression {
-	return clause.Expr{SQL: "? LIKE ?", Vars: []any{f.Expression, "%" + value}}
+	expr := clause.Expr{SQL: "?", Vars: []any{"%" + value}}
+	return f.operateValue(expr, "LIKE", 0)
 }
 
 func (f patternExprImpl[T]) HasSuffixOpt(value mo.Option[string]) clause.Expression {
@@ -1170,4 +1192,18 @@ func (f patternExprImpl[T]) HasSuffixOpt(value mo.Option[string]) clause.Express
 		return types.EmptyExpression
 	}
 	return f.HasSuffix(value.MustGet())
+}
+
+func (f patternExprImpl[T]) operateValue(value any, operator string, escape byte) clause.Expression {
+	var expr clause.Expression = clause.Like{
+		Column: f.Expression,
+		Value: clauses2.EscapeClause{
+			Value:  value,
+			Escape: escape,
+		},
+	}
+	if strings.HasPrefix(operator, "NOT") {
+		expr = clause.Not(expr)
+	}
+	return expr
 }

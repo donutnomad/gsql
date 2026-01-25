@@ -1,9 +1,9 @@
-package clauses
+package clauses2
 
 import "github.com/donutnomad/gsql/clause"
 
 type EscapeClause struct {
-	Value  string
+	Value  any
 	Escape byte
 }
 

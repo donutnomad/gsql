@@ -2,13 +2,12 @@ package gsql
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/types"
 )
 
 var empty = clause.Expr{}
 
-func And(exprs ...field.Expression) Condition {
+func And(exprs ...Expression) Condition {
 	exprs = filterExpr(exprs...)
 	if len(exprs) == 0 {
 		return Condition{Expression: empty}
@@ -31,7 +30,7 @@ func And(exprs ...field.Expression) Condition {
 	return Condition{Expression: and}
 }
 
-func Or(exprs ...field.Expression) Condition {
+func Or(exprs ...Expression) Condition {
 	exprs = filterExpr(exprs...)
 	if len(exprs) == 0 {
 		return Condition{Expression: empty}
@@ -47,8 +46,8 @@ func Or(exprs ...field.Expression) Condition {
 	return Condition{Expression: or}
 }
 
-func filterExpr(input ...field.Expression) []field.Expression {
-	var output = make([]field.Expression, 0, len(input))
+func filterExpr(input ...Expression) []Expression {
+	var output = make([]Expression, 0, len(input))
 	for _, expr := range input {
 		if v, ok := expr.(types.SQLChecker); ok && v.IsEmptySQL() {
 			continue

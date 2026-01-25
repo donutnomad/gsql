@@ -6,6 +6,8 @@ import (
 
 var _ clause.Expression = (*ScalarExpr[any])(nil)
 
+type scalarExpr[T any] = ScalarExpr[T]
+
 // ==================== ScalarExpr 定义 ====================
 
 // ScalarExpr 标量类型表达式，用于没有专门类型覆盖的其他类型
@@ -53,4 +55,8 @@ func (s ScalarExpr[T]) ToTime() TimeExpr[T] {
 
 func (s ScalarExpr[T]) ToDate() DateExpr[T] {
 	return DateOf[T](s)
+}
+
+func (s ScalarExpr[T]) Unwrap() clause.Expression {
+	return s.baseComparableImpl.Expression
 }

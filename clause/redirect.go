@@ -127,13 +127,6 @@ type Where = clause.Where
 type Join = clause.Join
 type Limit = clause.Limit
 type Locking = clause.Locking
-type Eq = clause.Eq
-type Neq = clause.Neq
-type Gt = clause.Gt
-type Gte = clause.Gte
-type Lt = clause.Lt
-type Lte = clause.Lte
-type Like = clause.Like
 type NamedExpr = clause.NamedExpr
 type JoinType = clause.JoinType
 

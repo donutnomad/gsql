@@ -9,7 +9,7 @@ import (
 
 // UnionAll 结果集中允许有重复行
 func UnionAll(builder ...*QueryBuilder) field.IToExpr {
-	exprs := lo.Map(builder, func(item *QueryBuilder, index int) field.Expression {
+	exprs := lo.Map(builder, func(item *QueryBuilder, index int) Expression {
 		return item.ToExpr()
 	})
 	return ExprTo{Expression: unionClause{
@@ -20,7 +20,7 @@ func UnionAll(builder ...*QueryBuilder) field.IToExpr {
 
 // Union 结果集中不允许有重复行(会造成性能问题), 是UNION DISTINCT的别名
 func Union(builder ...*QueryBuilder) field.IToExpr {
-	exprs := lo.Map(builder, func(item *QueryBuilder, index int) field.Expression {
+	exprs := lo.Map(builder, func(item *QueryBuilder, index int) Expression {
 		return item.ToExpr()
 	})
 	return ExprTo{Expression: unionClause{
@@ -30,7 +30,7 @@ func Union(builder ...*QueryBuilder) field.IToExpr {
 }
 
 type unionClause struct {
-	Exprs    []field.Expression
+	Exprs    []Expression
 	Distinct bool
 }
 

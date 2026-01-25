@@ -35,11 +35,11 @@ func Slice[T any](value ...T) field.ExpressionTo {
 	return Val(value)
 }
 
-func Eq(val1 field.ExpressionTo, val2 field.ExpressionTo) field.Expression {
+func Eq(val1 field.ExpressionTo, val2 field.ExpressionTo) Expression {
 	return Expr("? = ?", val1, val2)
 }
 
-func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) field.Expression {
+func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) Expression {
 	return Expr("? != ?", val1, val2)
 }
 
@@ -123,7 +123,7 @@ func COUNT_DISTINCT(expr field.IField) fields.IntExpr[int64] {
 // SELECT GROUP_CONCAT(name SEPARATOR ';') FROM users;
 // SELECT user_id, GROUP_CONCAT(product_name) FROM orders GROUP BY user_id;
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
-func GROUP_CONCAT(expr field.Expression, separator ...string) fields.StringExpr[string] {
+func GROUP_CONCAT(expr Expression, separator ...string) fields.StringExpr[string] {
 	if len(separator) > 0 {
 		// 使用参数化查询代替字符串拼接
 		return fields.StringOf[string](clause.Expr{
@@ -173,7 +173,7 @@ func COUNT_IF(condition Condition) IntExpr[int64] {
 //	CONVERT(field, CastTypeSigned)
 //	CONVERT(field, CastTypeDate)
 //	CONVERT(field, "DECIMAL(10,2)") // 对于需要指定精度的类型，可以直接传字符串
-func CONVERT(expr field.Expression, dataType string) field.ExpressionTo {
+func CONVERT(expr Expression, dataType string) field.ExpressionTo {
 	return ExprTo{Expression: clause.Expr{
 		SQL:  fmt.Sprintf("CONVERT(?, %s)", dataType),
 		Vars: []any{expr},
@@ -187,7 +187,7 @@ func CONVERT(expr field.Expression, dataType string) field.ExpressionTo {
 // SELECT CONVERT(description USING gbk) FROM products;
 // SELECT CONVERT(text USING utf8) FROM messages;
 // 常用字符集: utf8, utf8mb4, latin1, gbk, ascii, binary
-func CONVERT_CHARSET(expr field.Expression, charset string) field.ExpressionTo {
+func CONVERT_CHARSET(expr Expression, charset string) field.ExpressionTo {
 	// 验证字符集参数
 	charset = strings.ToLower(strings.TrimSpace(charset))
 	if !allowedCharsets[charset] {

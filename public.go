@@ -27,14 +27,6 @@ func TN(tableName string) Table2 {
 	return Table2{Name: tableName}
 }
 
-func MapPattern[OUT any, IN any](input field.Pattern[IN]) field.Pattern[OUT] {
-	return field.NewPatternFrom[OUT](input.Base)
-}
-
-func MapComparable[OUT any, IN any](input field.Comparable[IN]) field.Comparable[OUT] {
-	return field.NewComparableFrom[OUT](input.Base)
-}
-
 func Field(sql string, args ...any) field.IField {
 	return field.NewBaseFromSql(Expr(sql, args...), "")
 }

@@ -7,6 +7,8 @@ import (
 
 var _ clause.Expression = (*DecimalExpr[float64])(nil)
 
+type decimalExpr[T any] = DecimalExpr[T]
+
 // ==================== DecimalExpr 定义 ====================
 
 // DecimalExpr 定点数类型表达式，用于精确的十进制数计算
@@ -97,4 +99,8 @@ func (e DecimalExpr[T]) CastChar(length ...int) StringExpr[string] {
 // Format 格式化数字 (FORMAT)
 func (e DecimalExpr[T]) Format(decimals int) StringExpr[string] {
 	return StringOf[string](e.formatExpr(decimals))
+}
+
+func (e DecimalExpr[T]) Unwrap() clause.Expression {
+	return e.numericComparableImpl.Expression
 }

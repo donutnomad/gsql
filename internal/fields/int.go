@@ -7,6 +7,8 @@ import (
 
 var _ clause.Expression = (*IntExpr[int64])(nil)
 
+type intExpr[T any] = IntExpr[T]
+
 // ==================== IntExpr 定义 ====================
 
 // IntExpr 整数类型表达式，用于 COUNT 等返回整数的聚合函数
@@ -73,12 +75,12 @@ func IntOf[T any](expr clause.Expression) IntExpr[T] {
 
 // AsFloat 转换为 FloatExpr（不生成 SQL，仅类型转换）
 func (e IntExpr[T]) AsFloat() FloatExpr[float64] {
-	return FloatOf[float64](e.numericComparableImpl.Expression)
+	return FloatOf[float64](e.Unwrap())
 }
 
 // AsDecimal 转换为 DecimalExpr（不生成 SQL，仅类型转换）
 func (e IntExpr[T]) AsDecimal() DecimalExpr[float64] {
-	return DecimalOf[float64](e.numericComparableImpl.Expression)
+	return DecimalOf[float64](e.Unwrap())
 }
 
 // Cast 类型转换 (CAST)
@@ -131,7 +133,7 @@ func (e IntExpr[T]) Oct() StringExpr[string] {
 func (e IntExpr[T]) InetNtoa() StringExpr[string] {
 	return StringOf[string](clause.Expr{
 		SQL:  "INET_NTOA(?)",
-		Vars: []any{e.numericComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -143,7 +145,7 @@ func (e IntExpr[T]) InetNtoa() StringExpr[string] {
 func (e IntExpr[T]) SecToTime() TimeExpr[string] {
 	return TimeOf[string](clause.Expr{
 		SQL:  "SEC_TO_TIME(?)",
-		Vars: []any{e.numericComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -153,7 +155,7 @@ func (e IntExpr[T]) SecToTime() TimeExpr[string] {
 func (e IntExpr[T]) FromDays() DateExpr[string] {
 	return DateOf[string](clause.Expr{
 		SQL:  "FROM_DAYS(?)",
-		Vars: []any{e.numericComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -165,6 +167,10 @@ func (e IntExpr[T]) FromDays() DateExpr[string] {
 func (e IntExpr[T]) ToDateTime() DateTimeExpr[string] {
 	return DateTimeOf[string](clause.Expr{
 		SQL:  "FROM_UNIXTIME(?)",
-		Vars: []any{e.numericComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
+}
+
+func (e IntExpr[T]) Unwrap() clause.Expression {
+	return e.numericComparableImpl.Expression
 }

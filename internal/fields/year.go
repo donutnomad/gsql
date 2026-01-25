@@ -7,6 +7,8 @@ import (
 
 var _ clause.Expression = (*YearExpr[int64])(nil)
 
+type yearExpr[T any] = YearExpr[T]
+
 // YearExpr 年份类型表达式，用于 YEAR 类型字段
 // @gentype default=[int]
 // YEAR 类型存储年份值，范围通常是 1901-2155
@@ -64,4 +66,8 @@ func (e YearExpr[T]) CastSigned() IntExpr[int64] {
 // CastChar 转换为字符串 (CAST AS CHAR)
 func (e YearExpr[T]) CastChar(length ...int) StringExpr[string] {
 	return StringOf[string](e.castCharExpr(length...))
+}
+
+func (e YearExpr[T]) Unwrap() clause.Expression {
+	return e.numericComparableImpl.Expression
 }

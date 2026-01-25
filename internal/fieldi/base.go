@@ -16,22 +16,6 @@ type Base struct {
 	flags      types.FieldFlag // 字段标志
 }
 
-// ColumnName 返回列名
-func (f Base) ColumnName() string {
-	return f.columnName
-}
-
-// TableName 返回表名
-func (f Base) TableName() string {
-	return f.tableName
-}
-
-// SetAlias 设置别名并返回新的 Base
-func (f Base) SetAlias(alias string) Base {
-	f.alias = alias
-	return f
-}
-
 func NewBase(tableName, name string, flags ...types.FieldFlag) *Base {
 	var flag = types.FlagNone
 	if len(flags) > 0 {
@@ -41,6 +25,13 @@ func NewBase(tableName, name string, flags ...types.FieldFlag) *Base {
 		tableName:  tableName,
 		columnName: name,
 		flags:      flag,
+	}
+}
+
+func NewBaseFromSql(expr clause.Expression, alias string) *Base {
+	return &Base{
+		sql:   expr,
+		alias: alias,
 	}
 }
 
@@ -62,13 +53,6 @@ func (f Base) IsPrimaryKey() bool {
 // IsUniqueIndex 是否为唯一索引
 func (f Base) IsUniqueIndex() bool {
 	return f.HasFlag(types.FlagUniqueIndex)
-}
-
-func NewBaseFromSql(expr Expression, alias string) *Base {
-	return &Base{
-		sql:   expr,
-		alias: alias,
-	}
 }
 
 // IsExpr 是否是一个表达式字段
@@ -105,8 +89,18 @@ func (f Base) ToColumn() clause.Column {
 }
 
 // ToExpr 转换为表达式
-func (f Base) ToExpr() Expression {
+func (f Base) ToExpr() clause.Expression {
 	return NewColumnClause(f)
+}
+
+// ColumnName 返回列名
+func (f Base) ColumnName() string {
+	return f.columnName
+}
+
+// TableName 返回表名
+func (f Base) TableName() string {
+	return f.tableName
 }
 
 // Name 返回字段名称
@@ -131,6 +125,12 @@ func (f Base) FullName() string {
 
 func (f Base) Alias() string {
 	return f.alias
+}
+
+// SetAlias 设置别名并返回新的 Base
+func (f Base) SetAlias(alias string) Base {
+	f.alias = alias
+	return f
 }
 
 // As 创建一个别名字段

@@ -6,6 +6,8 @@ import (
 
 var _ clause.Expression = (*DateTimeExpr[string])(nil)
 
+type dateTimeExpr[T any] = DateTimeExpr[T]
+
 // DateTimeExpr 日期时间类型表达式，用于 DATETIME 类型字段 (YYYY-MM-DD HH:MM:SS)
 // @gentype default=[string]
 // 支持日期时间比较、运算和提取函数
@@ -82,4 +84,8 @@ func (e DateTimeExpr[T]) CastTime() TimeExpr[string] {
 // CastChar 转换为字符串 (CAST AS CHAR)
 func (e DateTimeExpr[T]) CastChar(length ...int) StringExpr[string] {
 	return StringOf[string](e.castCharExpr(length...))
+}
+
+func (e DateTimeExpr[T]) Unwrap() clause.Expression {
+	return e.numericComparableImpl.Expression
 }

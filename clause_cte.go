@@ -9,7 +9,7 @@ import (
 type CTEDefinition struct {
 	Name    string
 	Columns []string // 可选的列名列表
-	Query   field.Expression
+	Query   Expression
 }
 
 // CTEClause 表示 WITH 子句（可包含多个 CTE）

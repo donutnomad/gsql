@@ -9,6 +9,8 @@ import (
 
 var _ clause.Expression = (*StringExpr[string])(nil)
 
+type stringExpr[T any] = StringExpr[T]
+
 // ==================== StringExpr 定义 ====================
 
 // StringExpr 文本类型表达式，用于 VARCHAR 和 TEXT 类型字段
@@ -61,7 +63,7 @@ func StringOf[T any](expr clause.Expression) StringExpr[T] {
 func (e StringExpr[T]) Cast(targetType string) clause.Expression {
 	return clause.Expr{
 		SQL:  "CAST(? AS " + targetType + ")",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	}
 }
 
@@ -69,7 +71,7 @@ func (e StringExpr[T]) Cast(targetType string) clause.Expression {
 func (e StringExpr[T]) CastSigned() IntExpr[int64] {
 	return IntOf[int64](clause.Expr{
 		SQL:  "CAST(? AS SIGNED)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -77,7 +79,7 @@ func (e StringExpr[T]) CastSigned() IntExpr[int64] {
 func (e StringExpr[T]) CastUnsigned() IntExpr[uint64] {
 	return IntOf[uint64](clause.Expr{
 		SQL:  "CAST(? AS UNSIGNED)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -86,7 +88,7 @@ func (e StringExpr[T]) CastUnsigned() IntExpr[uint64] {
 func (e StringExpr[T]) CastDecimal(precision, scale int) DecimalExpr[float64] {
 	return DecimalOf[float64](clause.Expr{
 		SQL:  fmt.Sprintf("CAST(? AS DECIMAL(%d, %d))", precision, scale),
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -95,12 +97,12 @@ func (e StringExpr[T]) CastChar(length ...int) StringExpr[string] {
 	if len(length) > 0 {
 		return StringOf[string](clause.Expr{
 			SQL:  fmt.Sprintf("CAST(? AS CHAR(%d))", length[0]),
-			Vars: []any{e.baseComparableImpl.Expression},
+			Vars: []any{e.Unwrap()},
 		})
 	}
 	return StringOf[string](clause.Expr{
 		SQL:  "CAST(? AS CHAR)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -114,7 +116,7 @@ func (e StringExpr[T]) CastChar(length ...int) StringExpr[string] {
 func (e StringExpr[T]) Upper() StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "UPPER(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -131,7 +133,7 @@ func init() {
 func (e StringExpr[T]) Lower() StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "LOWER(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -142,7 +144,7 @@ func (e StringExpr[T]) Lower() StringExpr[T] {
 func (e StringExpr[T]) Trim() StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "TRIM(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -154,7 +156,7 @@ func (e StringExpr[T]) Trim() StringExpr[T] {
 func (e StringExpr[T]) LTrim() StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "LTRIM(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -166,7 +168,7 @@ func (e StringExpr[T]) LTrim() StringExpr[T] {
 func (e StringExpr[T]) RTrim() StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "RTRIM(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -178,7 +180,7 @@ func (e StringExpr[T]) RTrim() StringExpr[T] {
 func (e StringExpr[T]) Substring(pos, length int) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "SUBSTRING(?, ?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, pos, length},
+		Vars: []any{e.Unwrap(), pos, length},
 	})
 }
 
@@ -190,7 +192,7 @@ func (e StringExpr[T]) Substring(pos, length int) StringExpr[T] {
 func (e StringExpr[T]) Left(length int) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "LEFT(?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, length},
+		Vars: []any{e.Unwrap(), length},
 	})
 }
 
@@ -202,7 +204,7 @@ func (e StringExpr[T]) Left(length int) StringExpr[T] {
 func (e StringExpr[T]) Right(length int) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "RIGHT(?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, length},
+		Vars: []any{e.Unwrap(), length},
 	})
 }
 
@@ -215,7 +217,7 @@ func (e StringExpr[T]) Right(length int) StringExpr[T] {
 func (e StringExpr[T]) Length() IntExpr[int64] {
 	return IntOf[int64](clause.Expr{
 		SQL:  "LENGTH(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -227,7 +229,7 @@ func (e StringExpr[T]) Length() IntExpr[int64] {
 func (e StringExpr[T]) CharLength() IntExpr[int64] {
 	return IntOf[int64](clause.Expr{
 		SQL:  "CHAR_LENGTH(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -238,7 +240,7 @@ func (e StringExpr[T]) CharLength() IntExpr[int64] {
 // SELECT CONCAT(YEAR(NOW()), '-', MONTH(NOW()));
 func (e StringExpr[T]) Concat(args ...clause.Expression) StringExpr[T] {
 	placeholders := "?"
-	allArgs := []any{e.baseComparableImpl.Expression}
+	allArgs := []any{e.Unwrap()}
 	for _, arg := range args {
 		placeholders += ", ?"
 		allArgs = append(allArgs, arg)
@@ -257,7 +259,7 @@ func (e StringExpr[T]) Concat(args ...clause.Expression) StringExpr[T] {
 // 注意：分隔符为NULL则返回NULL，但参数中的NULL会被跳过
 func (e StringExpr[T]) ConcatWS(separator string, args ...clause.Expression) StringExpr[T] {
 	placeholders := "?, ?"
-	allArgs := []any{separator, e.baseComparableImpl.Expression}
+	allArgs := []any{separator, e.Unwrap()}
 	for _, arg := range args {
 		placeholders += ", ?"
 		allArgs = append(allArgs, arg)
@@ -276,7 +278,7 @@ func (e StringExpr[T]) ConcatWS(separator string, args ...clause.Expression) Str
 func (e StringExpr[T]) Replace(from, to string) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "REPLACE(?, ?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, from, to},
+		Vars: []any{e.Unwrap(), from, to},
 	})
 }
 
@@ -286,7 +288,7 @@ func (e StringExpr[T]) Replace(from, to string) StringExpr[T] {
 func (e StringExpr[T]) Locate(substr string) IntExpr[int64] {
 	return IntOf[int64](clause.Expr{
 		SQL:  "LOCATE(?, ?)",
-		Vars: []any{substr, e.baseComparableImpl.Expression},
+		Vars: []any{substr, e.Unwrap()},
 	})
 }
 
@@ -295,7 +297,7 @@ func (e StringExpr[T]) Locate(substr string) IntExpr[int64] {
 func (e StringExpr[T]) Reverse() StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "REVERSE(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
 }
 
@@ -304,7 +306,7 @@ func (e StringExpr[T]) Reverse() StringExpr[T] {
 func (e StringExpr[T]) Repeat(count int) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "REPEAT(?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, count},
+		Vars: []any{e.Unwrap(), count},
 	})
 }
 
@@ -313,7 +315,7 @@ func (e StringExpr[T]) Repeat(count int) StringExpr[T] {
 func (e StringExpr[T]) LPad(length int, padStr string) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "LPAD(?, ?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, length, padStr},
+		Vars: []any{e.Unwrap(), length, padStr},
 	})
 }
 
@@ -322,7 +324,7 @@ func (e StringExpr[T]) LPad(length int, padStr string) StringExpr[T] {
 func (e StringExpr[T]) RPad(length int, padStr string) StringExpr[T] {
 	return StringOf[T](clause.Expr{
 		SQL:  "RPAD(?, ?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, length, padStr},
+		Vars: []any{e.Unwrap(), length, padStr},
 	})
 }
 
@@ -336,7 +338,7 @@ func (e StringExpr[T]) RPad(length int, padStr string) StringExpr[T] {
 func (e StringExpr[T]) ToDate(format string) DateTimeExpr[string] {
 	return DateTimeOf[string](clause.Expr{
 		SQL:  "STR_TO_DATE(?, ?)",
-		Vars: []any{e.baseComparableImpl.Expression, format},
+		Vars: []any{e.Unwrap(), format},
 	})
 }
 
@@ -348,6 +350,10 @@ func (e StringExpr[T]) ToDate(format string) DateTimeExpr[string] {
 func (e StringExpr[T]) InetAton() IntExpr[uint32] {
 	return IntOf[uint32](clause.Expr{
 		SQL:  "INET_ATON(?)",
-		Vars: []any{e.baseComparableImpl.Expression},
+		Vars: []any{e.Unwrap()},
 	})
+}
+
+func (e StringExpr[T]) Unwrap() clause.Expression {
+	return e.baseComparableImpl.Expression
 }
