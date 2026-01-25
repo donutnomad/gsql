@@ -109,7 +109,7 @@ func TestSet_Function(t *testing.T) {
 
 	// 测试简单的 Set（使用 Values）
 	assignment := gsql.Set(count, count.Wrap(gsql.FUNC_VALUES))
-	t.Logf("Assignment Column: %s", assignment.Name())
+	t.Logf("Assignment Column: %s", assignment.Column.Name())
 
 	// 测试条件 Set (使用 RowIf + Values)
 	versionCond := version.Wrap(gsql.FUNC_VALUES).GteF(version.ToExpr())

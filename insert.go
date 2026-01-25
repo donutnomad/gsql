@@ -8,6 +8,7 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
 	"github.com/donutnomad/gsql/internal/utils"
 	"github.com/samber/lo"
@@ -34,7 +35,7 @@ import (
 // Assignment 表示 ON DUPLICATE KEY UPDATE 中的赋值表达式
 // 用于支持自定义更新逻辑，如 column = IF(condition, newValue, oldValue)
 type Assignment struct {
-	Column clause.Expression
+	Column fieldi.IField
 	Value  Expression
 }
 
@@ -51,7 +52,7 @@ type Assignment struct {
 //	    gsql.Values[int64](t.Value),
 //	    t.Value,
 //	))
-func Set(column clause.Expression, value Expression) Assignment {
+func Set(column fieldi.IField, value Expression) Assignment {
 	return Assignment{
 		Column: column,
 		Value:  value,
