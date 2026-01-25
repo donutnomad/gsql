@@ -137,6 +137,13 @@ func IF[Result interface{ ExprType() R }, R any](condition Condition, valueIfTru
 	})
 }
 
+func IFF[Result interface{ Expr() ResultExpr }, ResultExpr interface{ ExprType() R }, R any](condition Condition, valueIfTrue, valueIfFalse Result) ResultExpr {
+	return fields.CastExpr[ResultExpr](clause.Expr{
+		SQL:  "IF(?, ?, ?)",
+		Vars: []any{condition, valueIfTrue, valueIfFalse},
+	})
+}
+
 func COUNT_IF(condition Condition) IntExpr[int64] {
 	return COUNT(
 		IF(condition, IntVal(1), IntOf[int](nil)),
