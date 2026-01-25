@@ -27,7 +27,6 @@ func Field(columnName string) field.IField {
 	return fields.NewScalarField[any]("", columnName)
 }
 
-// FieldExpr TODO: 修复问题
 func FieldExpr(expr clause.Expression, alias string) field.IField {
 	return fields.ScalarOf[any](expr).As(alias)
 }

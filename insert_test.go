@@ -17,8 +17,7 @@ func TestValues(t *testing.T) {
 	count := gsql.NewIntField[int64]("", "count")
 
 	// 测试 Values 函数
-	valuesExpr := id.Wrap(gsql.FUNC_VALUES)
-	sql := gsql.Select(valuesExpr.As("values_id")).From(gsql.TN("test")).ToSQL()
+	sql := gsql.Select(id.Wrap(gsql.FUNC_VALUES).As("values_id")).From(gsql.TN("test")).ToSQL()
 	t.Logf("Values SQL:\n%s", sql)
 
 	if sql != "SELECT VALUES(`id`) AS `values_id` FROM `test`" {
@@ -47,6 +46,7 @@ func TestValues(t *testing.T) {
 func TestValues_ComparisonMethods(t *testing.T) {
 	count := field.NewComparable[int64]("t", "count")
 
+	countF := gsql.NewIntField[int64]("t", "count").Wrap(gsql.FUNC_VALUES)
 	testCases := []struct {
 		name       string
 		buildExpr  func() clause.Expression
@@ -54,37 +54,37 @@ func TestValues_ComparisonMethods(t *testing.T) {
 	}{
 		{
 			name:       "Eq",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int]("t", "count").Eq(100) },
+			buildExpr:  func() clause.Expression { return countF.Eq(100) },
 			expectLike: "VALUES(`t`.`count`) = 100",
 		},
 		{
 			name:       "Not",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int64]("t", "count").Not(100) },
+			buildExpr:  func() clause.Expression { return countF.Not(100) },
 			expectLike: "VALUES(`t`.`count`) != 100",
 		},
 		{
 			name:       "Gt",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int64]("t", "count").Gt(100) },
+			buildExpr:  func() clause.Expression { return countF.Gt(100) },
 			expectLike: "VALUES(`t`.`count`) > 100",
 		},
 		{
 			name:       "GteF",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int64]("t", "count").GteF(count.ToExpr()) },
+			buildExpr:  func() clause.Expression { return countF.GteF(count.ToExpr()) },
 			expectLike: "VALUES(`t`.`count`) >= `t`.`count`",
 		},
 		{
 			name:       "Lt",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int64]("t", "count").Lt(100) },
+			buildExpr:  func() clause.Expression { return countF.Lt(100) },
 			expectLike: "VALUES(`t`.`count`) < 100",
 		},
 		{
 			name:       "Lte",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int64]("t", "count").Lte(100) },
+			buildExpr:  func() clause.Expression { return countF.Lte(100) },
 			expectLike: "VALUES(`t`.`count`) <= 100",
 		},
 		{
 			name:       "Between",
-			buildExpr:  func() clause.Expression { return gsql.NewIntField[int64]("t", "count").Between(10, 100) },
+			buildExpr:  func() clause.Expression { return countF.Between(10, 100) },
 			expectLike: "VALUES(`t`.`count`) BETWEEN 10 AND 100",
 		},
 	}

@@ -54,19 +54,24 @@ type {{.Name}}[T any] struct {
 }
 
 func New{{.Name}}[T any](tableName, name string, flags ...types.FieldFlag) {{.Name}}[T] {
-	q := &clauses2.ColumnQuote{
-		TableName:  tableName,
-		ColumnName: name,
-		Alias:      "",
-	}
-	ret := {{.Name}}[T]{
-		{{.InnerName | camel}}: {{.InnerExpr}}Of[T](q),
-		column: q,
-	}
+	ret := new{{.Name}}FromExpr[T](nil, tableName, name, "")
+	ret.{{.InnerName | camel}} = {{.InnerExpr}}Of[T](ret.column)
 	if len(flags) > 0 {
 		ret.flags = flags[0]
 	}
 	return ret
+}
+
+func new{{.Name}}FromExpr[T any](expr clause.Expression, tableName, columnName, alias string) {{.Name}}[T] {
+	return {{.Name}}[T]{
+		{{.InnerName | camel}}: {{.InnerExpr}}Of[T](expr),
+		column: &clauses2.ColumnQuote{
+			TableName:  tableName,
+			ColumnName: columnName,
+			Alias:      alias,
+		},
+		flags: 0,
+	}
 }
 
 /////////////// base ///////////////
@@ -92,12 +97,11 @@ func (f {{.Name}}[T]) Wrap(functionName FunctionName) {{.Name}}[T] {
 	if v, ok := expr.(*clauses2.ColumnQuote); ok {
 		v.NoAS()
 	}
-	return {{.Name}}[T] {
-		{{.InnerName | camel}}: {{.InnerExpr}}Of[T](clause.Expr{
-			SQL:  string(functionName) + "(?)",
-			Vars: []any{expr},
-		}),
+	e := clause.Expr{
+		SQL:  string(functionName) + "(?)",
+		Vars: []any{expr},
 	}
+	return new{{.Name}}FromExpr[T](e, f.TableName(), f.ColumnName(), "")
 }
 
 /////////////// column-name ///////////////
@@ -128,9 +132,11 @@ func (f {{.Name}}[T]) FullName() string {
 }
 
 func (f {{.Name}}[T]) As(alias string) fieldi.IField {
-	ret := New{{.Name}}[T](f.column.TableName, f.column.ColumnName, f.flags)
-	ret.column.Alias = alias
-	return ret
+	e := fieldImpl{
+		expr:  f.Unwrap(),
+		alias: alias,
+	}
+	return new{{.Name}}FromExpr[T](e, f.TableName(), f.ColumnName(), alias)
 }
 
 func (f {{.Name}}[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) {{.Name}}[T] {
@@ -142,7 +148,7 @@ func (f {{.Name}}[T]) WithTable(tableName interface{ TableName() string }, field
 }
 
 func (f {{.Name}}[T]) WithAlias(alias string) {{.Name}}[T] {
-	ret := New{{.Name}}[T](f.column.TableName, f.column.ColumnName, f.flags)
+	ret := New{{.Name}}[T](f.TableName(), f.ColumnName(), f.flags)
 	ret.column.Alias = alias
 	return ret
 }
