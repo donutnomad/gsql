@@ -1,6 +1,4 @@
-//go:build ignore
-
-//go:generate go run gen1.go
+//go:build gen
 
 package main
 

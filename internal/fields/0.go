@@ -1,5 +1,8 @@
 package fields
 
+//go:generate go run -tags gen 0gen.go
+//go:generate go run -tags gen 0gen1.go
+
 type Expressions[T any] interface {
 	IntField[T] | IntExpr[T] |
 		FloatExpr[T] | FloatField[T] |

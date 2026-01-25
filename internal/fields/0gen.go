@@ -1,11 +1,10 @@
-//go:build ignore
-
-//go:generate go run gen.go
+//go:build gen
 
 package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"os"
 	"strings"
@@ -219,4 +218,5 @@ func main() {
 	if err := os.WriteFile("field_gen.go", formatted, 0644); err != nil {
 		panic(err)
 	}
+	fmt.Println("Generated field_gen.go successfully")
 }
