@@ -93,12 +93,12 @@ func (ConsumerProgressTable) ModelType() ConsumerProgress {
 func NewConsumerProgressTable() ConsumerProgressTable {
 	tableName := "consumer_progress"
 	return ConsumerProgressTable{
-		ID:                    gsql.NewIntField[int64](tableName, "id"),
-		ConsumerGroup:         gsql.NewStringField[string](tableName, "consumer_group"),
-		LastConsumedMessageID: gsql.NewIntField[int64](tableName, "last_consumed_message_id"),
-		GenerationID:          gsql.NewIntField[int64](tableName, "generation_id"),
-		CreatedAt:             gsql.NewDateTimeField[time.Time](tableName, "created_at"),
-		UpdatedAt:             gsql.NewDateTimeField[time.Time](tableName, "updated_at"),
+		ID:                    gsql.IntFieldOf[int64](tableName, "id"),
+		ConsumerGroup:         gsql.StringFieldOf[string](tableName, "consumer_group"),
+		LastConsumedMessageID: gsql.IntFieldOf[int64](tableName, "last_consumed_message_id"),
+		GenerationID:          gsql.IntFieldOf[int64](tableName, "generation_id"),
+		CreatedAt:             gsql.DateTimeFieldOf[time.Time](tableName, "created_at"),
+		UpdatedAt:             gsql.DateTimeFieldOf[time.Time](tableName, "updated_at"),
 	}
 }
 
@@ -117,7 +117,7 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 
 	// 条件表达式：新版本号 >= 现有版本号（使用 Values）
-	versionCondition := table.GenerationID.Wrap(gsql.FUNC_VALUES).GteF(table.GenerationID.ToExpr())
+	versionCondition := table.GenerationID.Apply(gsql.VALUES).GteF(table.GenerationID)
 
 	// 第一次插入
 	row1 := ConsumerProgress{
@@ -134,22 +134,22 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 			gsql.Set(table.LastConsumedMessageID,
 				gsql.IF[int64](
 					versionCondition,
-					table.LastConsumedMessageID.Wrap(gsql.FUNC_VALUES),
-					table.LastConsumedMessageID,
+					table.LastConsumedMessageID.Apply(gsql.VALUES),
+					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
 				gsql.IF[int64](
 					versionCondition,
-					table.GenerationID.Wrap(gsql.FUNC_VALUES),
-					table.GenerationID,
+					table.GenerationID.Apply(gsql.VALUES),
+					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
 				gsql.IF[time.Time](
 					versionCondition,
-					table.UpdatedAt.Wrap(gsql.FUNC_VALUES),
-					table.UpdatedAt,
+					table.UpdatedAt.Apply(gsql.VALUES),
+					table.UpdatedAt.Expr(),
 				),
 			),
 		).Exec(testDB)
@@ -182,22 +182,22 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 			gsql.Set(table.LastConsumedMessageID,
 				gsql.IF[int64](
 					versionCondition,
-					table.LastConsumedMessageID.Wrap(gsql.FUNC_VALUES),
-					table.LastConsumedMessageID,
+					table.LastConsumedMessageID.Apply(gsql.VALUES),
+					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
 				gsql.IF[int64](
 					versionCondition,
-					table.GenerationID.Wrap(gsql.FUNC_VALUES),
-					table.GenerationID,
+					table.GenerationID.Apply(gsql.VALUES),
+					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
 				gsql.IF[time.Time](
 					versionCondition,
-					table.UpdatedAt.Wrap(gsql.FUNC_VALUES),
-					table.UpdatedAt,
+					table.UpdatedAt.Apply(gsql.VALUES),
+					table.UpdatedAt.Expr(),
 				),
 			),
 		).Exec(testDB)
@@ -230,22 +230,22 @@ func TestIntegration_DuplicateUpdateExpr_WithValues(t *testing.T) {
 			gsql.Set(table.LastConsumedMessageID,
 				gsql.IF[int64](
 					versionCondition,
-					table.LastConsumedMessageID.Wrap(gsql.FUNC_VALUES),
-					table.LastConsumedMessageID,
+					table.LastConsumedMessageID.Apply(gsql.VALUES),
+					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
 				gsql.IF[int64](
 					versionCondition,
-					table.GenerationID.Wrap(gsql.FUNC_VALUES),
-					table.GenerationID,
+					table.GenerationID.Apply(gsql.VALUES),
+					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
 				gsql.IF[time.Time](
 					versionCondition,
-					table.UpdatedAt.Wrap(gsql.FUNC_VALUES),
-					table.UpdatedAt,
+					table.UpdatedAt.Apply(gsql.VALUES),
+					table.UpdatedAt.Expr(),
 				),
 			),
 		).Exec(testDB)

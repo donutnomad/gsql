@@ -26,9 +26,9 @@ type (
 )
 
 func NewComparable[T any](tableName, name string, flags ...types.FieldFlag) Comparable[T] {
-	return fields.NewIntField[T](tableName, name, flags...)
+	return fields.IntFieldOf[T](tableName, name, flags...)
 }
 
 func NewPattern[T any](tableName, name string, flags ...types.FieldFlag) Pattern[T] {
-	return fields.NewStringField[T](tableName, name, flags...)
+	return fields.StringFieldOf[T](tableName, name, flags...)
 }

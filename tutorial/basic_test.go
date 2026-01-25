@@ -586,7 +586,7 @@ func TestFunc_String(t *testing.T) {
 		var result struct {
 			FullInfo string `gorm:"column:full_info"`
 		}
-		err := gsql.Select(e.Name.Concat(gsql.Lit(" - "), e.Department.ToExpr()).As("full_info")).
+		err := gsql.Select(e.Name.Concat(gsql.Lit(" - "), e.Department).As("full_info")).
 			From(&e).
 			Limit(1).
 			First(db, &result)
@@ -1232,7 +1232,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		var result struct {
 			Product float64 `gorm:"column:product"`
 		}
-		err := gsql.Select(p.Price.Mul(p.Stock.ToExpr()).As("product")).
+		err := gsql.Select(p.Price.Mul(p.Stock).As("product")).
 			From(&p).
 			Limit(1).
 			First(db, &result)
@@ -1285,7 +1285,7 @@ func TestFunc_Arithmetic(t *testing.T) {
 		}
 		// (price * stock) - (price / 2) = (100 * 20) - (100 / 2) = 2000 - 50 = 1950
 		err := gsql.Select(
-			p.Price.Mul(p.Stock.ToExpr()).Sub(p.Price.Div(2)).As("value"),
+			p.Price.Mul(p.Stock).Sub(p.Price.Div(2)).As("value"),
 		).
 			From(&p).
 			Limit(1).

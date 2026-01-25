@@ -29,7 +29,7 @@ func (m SortNameMapping) Map(orders []SortOrder, defaultOrder ...SortOrder) []gs
 	var ret []gsql.FieldOrder
 	for _, item := range orders {
 		if v, ok := m[item.Name]; ok {
-			ret = append(ret, types.NewOrder(v.ToExpr(), item.Asc))
+			ret = append(ret, types.NewOrder(v, item.Asc))
 		}
 	}
 	return ret

@@ -12,12 +12,12 @@ import (
 
 // TestValues 测试泛型 Values 函数
 func TestValues(t *testing.T) {
-	id := gsql.NewIntField[int64]("", "id")
-	name := gsql.NewStringField[string]("", "name")
-	count := gsql.NewIntField[int64]("", "count")
+	id := gsql.IntFieldOf[int64]("", "id")
+	name := gsql.StringFieldOf[string]("", "name")
+	count := gsql.IntFieldOf[int64]("", "count")
 
 	// 测试 Values 函数
-	sql := gsql.Select(id.Wrap(gsql.FUNC_VALUES).As("values_id")).From(gsql.TN("test")).ToSQL()
+	sql := gsql.Select(id.Apply(gsql.VALUES).As("values_id")).From(gsql.TN("test")).ToSQL()
 	t.Logf("Values SQL:\n%s", sql)
 
 	if sql != "SELECT VALUES(`id`) AS `values_id` FROM `test`" {
@@ -25,11 +25,11 @@ func TestValues(t *testing.T) {
 	}
 
 	// 测试 Values 的比较方法
-	versionCond := count.Wrap(gsql.FUNC_VALUES).GteF(count.ToExpr())
+	versionCond := count.Apply(gsql.VALUES).GteF(count)
 	rowIfExpr := gsql.IF[string](
 		versionCond,
-		name.Wrap(gsql.FUNC_VALUES),
-		name,
+		name.Apply(gsql.VALUES),
+		name.Expr(),
 	)
 	sql2 := gsql.Select(rowIfExpr.As("result")).From(gsql.TN("test")).ToSQL()
 	t.Logf("RowIf + Values with comparison SQL:\n%s", sql2)
@@ -46,7 +46,7 @@ func TestValues(t *testing.T) {
 func TestValues_ComparisonMethods(t *testing.T) {
 	count := field.NewComparable[int64]("t", "count")
 
-	countF := gsql.NewIntField[int64]("t", "count").Wrap(gsql.FUNC_VALUES)
+	countF := gsql.IntFieldOf[int64]("t", "count").Apply(gsql.VALUES)
 	testCases := []struct {
 		name       string
 		buildExpr  func() clause.Expression
@@ -69,7 +69,7 @@ func TestValues_ComparisonMethods(t *testing.T) {
 		},
 		{
 			name:       "GteF",
-			buildExpr:  func() clause.Expression { return countF.GteF(count.ToExpr()) },
+			buildExpr:  func() clause.Expression { return countF.GteF(count) },
 			expectLike: "VALUES(`t`.`count`) >= `t`.`count`",
 		},
 		{
@@ -104,20 +104,20 @@ func TestValues_ComparisonMethods(t *testing.T) {
 
 // TestSet_Function 测试 Set 函数
 func TestSet_Function(t *testing.T) {
-	count := gsql.NewIntField[int64]("", "count")
-	version := gsql.NewIntField[int64]("", "version")
+	count := gsql.IntFieldOf[int64]("", "count")
+	version := gsql.IntFieldOf[int64]("", "version")
 
 	// 测试简单的 Set（使用 Values）
-	assignment := gsql.Set(count, count.Wrap(gsql.FUNC_VALUES))
+	assignment := gsql.Set(count, count.Apply(gsql.VALUES))
 	t.Logf("Assignment Column: %s", assignment.Column.Name())
 
 	// 测试条件 Set (使用 RowIf + Values)
-	versionCond := version.Wrap(gsql.FUNC_VALUES).GteF(version.ToExpr())
+	versionCond := version.Apply(gsql.VALUES).GteF(version)
 	assignment2 := gsql.Set(count,
 		gsql.IF[int64](
 			versionCond,
-			count.Wrap(gsql.FUNC_VALUES),
-			count,
+			count.Apply(gsql.VALUES),
+			count.Expr(),
 		),
 	)
 	t.Logf("Conditional Assignment Column: %s", assignment2.Column.Name())
@@ -158,12 +158,12 @@ func (MessageConsumerProgressTable) ModelType() MessageConsumerProgress {
 func NewMessageConsumerProgressTable() MessageConsumerProgressTable {
 	tableName := "message_consumer_progress"
 	return MessageConsumerProgressTable{
-		ID:                    gsql.NewIntField[int64](tableName, "id"),
-		ConsumerGroup:         gsql.NewStringField[string](tableName, "consumer_group"),
-		LastConsumedMessageID: gsql.NewIntField[int64](tableName, "last_consumed_message_id"),
-		GenerationID:          gsql.NewIntField[int64](tableName, "generation_id"),
-		CreatedAt:             gsql.NewDateTimeField[time.Time](tableName, "created_at"),
-		UpdatedAt:             gsql.NewDateTimeField[time.Time](tableName, "updated_at"),
+		ID:                    gsql.IntFieldOf[int64](tableName, "id"),
+		ConsumerGroup:         gsql.StringFieldOf[string](tableName, "consumer_group"),
+		LastConsumedMessageID: gsql.IntFieldOf[int64](tableName, "last_consumed_message_id"),
+		GenerationID:          gsql.IntFieldOf[int64](tableName, "generation_id"),
+		CreatedAt:             gsql.DateTimeFieldOf[time.Time](tableName, "created_at"),
+		UpdatedAt:             gsql.DateTimeFieldOf[time.Time](tableName, "updated_at"),
 	}
 }
 
@@ -181,7 +181,7 @@ func TestDuplicateUpdateExpr_ConditionalUpdate(t *testing.T) {
 	}
 
 	// 条件表达式：新版本号 >= 现有版本号（使用 Values）
-	versionCondition := table.GenerationID.Wrap(gsql.FUNC_VALUES).GteF(table.GenerationID.ToExpr())
+	versionCondition := table.GenerationID.Apply(gsql.VALUES).GteF(table.GenerationID)
 
 	// 构建 INSERT ... ON DUPLICATE KEY UPDATE 语句
 	builder := gsql.InsertInto(table).
@@ -190,22 +190,22 @@ func TestDuplicateUpdateExpr_ConditionalUpdate(t *testing.T) {
 			gsql.Set(table.LastConsumedMessageID,
 				gsql.IF[int64](
 					versionCondition,
-					table.LastConsumedMessageID.Wrap(gsql.FUNC_VALUES),
-					table.LastConsumedMessageID,
+					table.LastConsumedMessageID.Apply(gsql.VALUES),
+					table.LastConsumedMessageID.Expr(),
 				),
 			),
 			gsql.Set(table.GenerationID,
 				gsql.IF[int64](
 					versionCondition,
-					table.GenerationID.Wrap(gsql.FUNC_VALUES),
-					table.GenerationID,
+					table.GenerationID.Apply(gsql.VALUES),
+					table.GenerationID.Expr(),
 				),
 			),
 			gsql.Set(table.UpdatedAt,
 				gsql.IF[time.Time](
 					versionCondition,
-					table.UpdatedAt.Wrap(gsql.FUNC_VALUES),
-					table.UpdatedAt,
+					table.UpdatedAt.Apply(gsql.VALUES),
+					table.UpdatedAt.Expr(),
 				),
 			),
 		)
@@ -249,23 +249,23 @@ func TestDuplicateUpdate_Simple(t *testing.T) {
 
 // TestValues_InSelect 测试 Values 在 SELECT 中的使用
 func TestValues_InSelect(t *testing.T) {
-	id := gsql.NewIntField[int64]("t", "id")
-	name := gsql.NewStringField[string]("t", "name")
-	version := gsql.NewIntField[int64]("t", "version")
+	id := gsql.IntFieldOf[int64]("t", "id")
+	name := gsql.StringFieldOf[string]("t", "name")
+	version := gsql.IntFieldOf[int64]("t", "version")
 
 	// 测试简单的 Values
-	sql1 := gsql.Select(id.Wrap(gsql.FUNC_VALUES).As("result")).From(gsql.TN("test")).ToSQL()
+	sql1 := gsql.Select(id.Apply(gsql.VALUES).As("result")).From(gsql.TN("test")).ToSQL()
 	t.Logf("Simple Values SQL:\n%s", sql1)
 	if !strings.Contains(sql1, "VALUES(") {
 		t.Errorf("期望包含 VALUES()，实际: %s", sql1)
 	}
 
 	// 测试 RowIf + Values 组合
-	versionCond := version.Wrap(gsql.FUNC_VALUES).GtF(version.ToExpr())
+	versionCond := version.Apply(gsql.VALUES).GtF(version)
 	rowIfExpr := gsql.IF[string](
 		versionCond,
-		name.Wrap(gsql.FUNC_VALUES),
-		name,
+		name.Apply(gsql.VALUES),
+		name.Expr(),
 	)
 	sql2 := gsql.Select(rowIfExpr.As("result")).From(gsql.TN("test")).ToSQL()
 	t.Logf("RowIf + Values SQL:\n%s", sql2)

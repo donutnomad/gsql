@@ -9,7 +9,7 @@ import (
 )
 
 func TestT(t *testing.T) {
-	var a = fields.IntColumn("age").From(TN("test"))
+	var a = fields.IntColumn[int64]("age").From(TN("test"))
 	var str = Cases.String().
 		When(a.Gt(20), fields.StringVal("C")).
 		When(a.Gt(60), fields.StringVal("B")).

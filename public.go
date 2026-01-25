@@ -24,7 +24,7 @@ func TN(tableName string) Table2 {
 }
 
 func Field(columnName string) field.IField {
-	return fields.NewScalarField[any]("", columnName)
+	return fields.ScalarFieldOf[any]("", columnName)
 }
 
 func FieldExpr(expr clause.Expression, alias string) field.IField {
@@ -159,7 +159,7 @@ func addSelects(stmt interface {
 		Expression: columnClause{
 			commaExpr: clause.CommaExpression{
 				Exprs: lo.Map(selects, func(item field.IField, index int) clause.Expression {
-					return item.ToExpr()
+					return item
 				}),
 			},
 			distinct: distinct,

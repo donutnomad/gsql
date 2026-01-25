@@ -11,7 +11,7 @@ import (
 
 // TestDateAddSQLInjectionPrevention 测试 DateTimeExpr.AddInterval 方法的 SQL 注入防护
 func TestDateAddSQLInjectionPrevention(t *testing.T) {
-	dateField := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "created_at").ToExpr())
+	dateField := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "created_at"))
 
 	tests := []struct {
 		name        string
@@ -97,7 +97,7 @@ func TestDateAddSQLInjectionPrevention(t *testing.T) {
 
 // TestDateSubSQLInjectionPrevention 测试 DateTimeExpr.SubInterval 方法的 SQL 注入防护
 func TestDateSubSQLInjectionPrevention(t *testing.T) {
-	dateField := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "created_at").ToExpr())
+	dateField := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "created_at"))
 
 	tests := []struct {
 		name        string
@@ -145,8 +145,8 @@ func TestDateSubSQLInjectionPrevention(t *testing.T) {
 
 // TestTimestampDiffSQLInjectionPrevention 测试 DateTimeExpr.TimestampDiff 方法的 SQL 注入防护
 func TestTimestampDiffSQLInjectionPrevention(t *testing.T) {
-	expr1 := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "created_at").ToExpr())
-	expr2 := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "updated_at").ToExpr())
+	expr1 := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "created_at"))
+	expr2 := fields.DateTimeOf[time.Time](field.NewComparable[time.Time]("users", "updated_at"))
 
 	tests := []struct {
 		name        string
@@ -255,7 +255,7 @@ func TestConvertCharsetSQLInjectionPrevention(t *testing.T) {
 					}
 				}()
 			}
-			_ = CONVERT_CHARSET(expr.ToExpr(), tt.charset)
+			_ = CONVERT_CHARSET(expr, tt.charset)
 		})
 	}
 }

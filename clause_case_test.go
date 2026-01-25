@@ -12,7 +12,7 @@ import (
 
 func TestCaseExample_SearchedCase(t *testing.T) {
 	// 场景：根据订单金额分级
-	amount := gsql.NewIntField[int64]("", "amount")
+	amount := gsql.IntFieldOf[int64]("", "amount")
 
 	amountLevel := gsql.Cases.String().
 		When(amount.Gt(10000), gsql.StringVal("VIP")).
@@ -33,7 +33,7 @@ func TestCaseExample_SearchedCase(t *testing.T) {
 
 func TestCaseExample_SimpleCaseValue(t *testing.T) {
 	// 场景：将状态码转换为中文描述
-	status := gsql.NewIntField[int]("", "status")
+	status := gsql.IntFieldOf[int]("", "status")
 
 	statusDesc := gsql.CaseValue[int, string, gsql.StringExpr[string]](status.Expr()).
 		When(gsql.IntVal(0), gsql.StringVal("待处理")).
@@ -52,9 +52,9 @@ func TestCaseExample_SimpleCaseValue(t *testing.T) {
 
 func TestCaseExample_ComplexScenario(t *testing.T) {
 	// 场景：根据多个条件计算折扣
-	userLevel := gsql.NewStringField[string]("", "user_level")
-	amount := gsql.NewIntField[int64]("", "amount")
-	firstOrder := gsql.NewScalarField[bool]("", "first_order")
+	userLevel := gsql.StringFieldOf[string]("", "user_level")
+	amount := gsql.IntFieldOf[int64]("", "amount")
+	firstOrder := gsql.ScalarFieldOf[bool]("", "first_order")
 
 	discount := gsql.Cases.Float().
 		When(
@@ -88,7 +88,7 @@ func TestCaseExample_ComplexScenario(t *testing.T) {
 
 func TestCaseExample_InGroupBy(t *testing.T) {
 	// 场景：按金额分段统计订单数
-	amount := fields.NewIntField[int64]("", "amount")
+	amount := fields.IntFieldOf[int64]("", "amount")
 
 	amountRange := gsql.Cases.String().
 		When(amount.Lt(100), gsql.StringVal("0-100")).
@@ -111,8 +111,8 @@ func TestCaseExample_InGroupBy(t *testing.T) {
 
 func TestCaseExample_InOrderBy(t *testing.T) {
 	// 场景：自定义排序优先级
-	status := fields.NewStringField[string]("", "status")
-	id := fields.NewIntField[uint]("", "id")
+	status := fields.StringFieldOf[string]("", "status")
+	id := fields.IntFieldOf[uint]("", "id")
 
 	priority := gsql.Cases.Int().
 		When(status.Eq("urgent"), gsql.IntVal(1)).
@@ -136,8 +136,8 @@ func TestCaseExample_InOrderBy(t *testing.T) {
 
 func TestCaseExample_NestedCase(t *testing.T) {
 	// 场景：嵌套 CASE 表达式
-	userType := fields.NewStringField[string]("", "user_type")
-	createdAt := fields.NewDateTimeField[time.Time]("", "created_at")
+	userType := fields.StringFieldOf[string]("", "user_type")
+	createdAt := fields.DateTimeFieldOf[time.Time]("", "created_at")
 	monthCreatedAt := createdAt.Month()
 
 	// 季节性折扣

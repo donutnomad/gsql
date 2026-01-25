@@ -821,7 +821,7 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 		derivedTable := gsql.DefineTable[any, CustomerOrderCount]("sub", CustomerOrderCount{}, subquery)
 
 		// 4. Use typed column from derived table
-		orderCount := gsql.IntColumn("order_count").From(&derivedTable)
+		orderCount := gsql.IntColumn[int]("order_count").From(&derivedTable)
 		customerID := field.NewComparable[uint64]("sub", "customer_id")
 
 		// 5. Build main query with typed column comparison
@@ -865,7 +865,7 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 			GroupBy(o.CustomerID)
 
 		derivedTable := gsql.DefineTable[any, CustomerOrderCount]("sub", CustomerOrderCount{}, subquery)
-		orderCount := gsql.IntColumn("order_count").From(&derivedTable)
+		orderCount := gsql.IntColumn[int]("order_count").From(&derivedTable)
 
 		sql := gsql.Select(
 			gsql.Field("customer_id"),

@@ -46,7 +46,7 @@ type Assignment struct {
 //	gsql.Set(t.Count, gsql.Values[int64](t.Count))
 //
 //	// 条件更新：只有当新版本号更大时才更新
-//	versionCond := gsql.Values[int64](t.Version).GteF(t.Version.ToExpr())
+//	versionCond := gsql.Values[int64](t.Version).GteF(t.Version)
 //	gsql.Set(t.Value, gsql.RowIf[int64](
 //	    versionCond,
 //	    gsql.Values[int64](t.Value),
@@ -111,7 +111,7 @@ func (b *insertBuilderWithValues[T]) DuplicateUpdate(columns ...field.IField) *i
 	for _, col := range columns {
 		b.duplicateUpdates = append(b.duplicateUpdates, Assignment{
 			Column: col,
-			Value:  clause.Expr{SQL: "VALUES(?)", Vars: []any{col.ToExpr()}},
+			Value:  clause.Expr{SQL: "VALUES(?)", Vars: []any{col}},
 		})
 	}
 	return b
@@ -125,14 +125,14 @@ func (b *insertBuilderWithValues[T]) DuplicateUpdate(columns ...field.IField) *i
 //	    DuplicateUpdateExpr(
 //	        gsql.Set(t.LastConsumedMessageId,
 //	            gsql.RowIf[int64](
-//	                gsql.Values[int64](t.GenerationId).GteF(t.GenerationId.ToExpr()),
+//	                gsql.Values[int64](t.GenerationId).GteF(t.GenerationId),
 //	                gsql.Values[int64](t.LastConsumedMessageId),
 //	                t.LastConsumedMessageId,
 //	            ),
 //	        ),
 //	        gsql.Set(t.GenerationId,
 //	            gsql.RowIf[int64](
-//	                gsql.Values[int64](t.GenerationId).GteF(t.GenerationId.ToExpr()),
+//	                gsql.Values[int64](t.GenerationId).GteF(t.GenerationId),
 //	                gsql.Values[int64](t.GenerationId),
 //	                t.GenerationId,
 //	            ),
@@ -374,7 +374,7 @@ func (b *insertBuilderWithSelect[T]) DuplicateUpdate(columns ...field.IField) *i
 	for _, col := range columns {
 		b.duplicateUpdates = append(b.duplicateUpdates, Assignment{
 			Column: col,
-			Value:  clause.Expr{SQL: "VALUES(?)", Vars: []any{col.ToExpr()}},
+			Value:  clause.Expr{SQL: "VALUES(?)", Vars: []any{col}},
 		})
 	}
 	return b

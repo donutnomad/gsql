@@ -13,7 +13,6 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"go/parser"
 	"go/token"
 	"os"
@@ -174,17 +173,8 @@ func run(cfg Config) error {
 	// 生成代码
 	code := generateCode(cfg, srcPkgName, srcImportPath, types, funcs, vars)
 
-	// 格式化代码
-	formatted, err := format.Source([]byte(code))
-	if err != nil {
-		// 输出原始代码以便调试
-		fmt.Println("Generated code (before formatting):")
-		fmt.Println(code)
-		return fmt.Errorf("failed to format generated code: %w", err)
-	}
-
 	// 写入文件
-	if err := os.WriteFile(cfg.DstFile, formatted, 0644); err != nil {
+	if err := WriteFormat(cfg.DstFile, []byte(code)); err != nil {
 		return fmt.Errorf("failed to write output file: %w", err)
 	}
 

@@ -90,7 +90,7 @@ func (j *jsonObjectBuilder) Build(builder clause.Builder) {
 }
 
 func (j *jsonObjectBuilder) As(name string) field.IField {
-	return fields.ScalarOf[any](j.toExpr()).As(name)
+	return fields.ScalarOf[any](j).As(name)
 }
 
 func (j *jsonObjectBuilder) ToExpr() Expression {
@@ -142,7 +142,7 @@ func (b *jsonArrayBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonArrayBuilder) As(name string) field.IField {
-	return fields.ScalarOf[any](b.toExpr()).As(name)
+	return fields.ScalarOf[any](b).As(name)
 }
 
 func (b *jsonArrayBuilder) ToExpr() Expression {
@@ -230,7 +230,7 @@ func (b *jsonMergeBuilder) Build(builder clause.Builder) {
 }
 
 func (b *jsonMergeBuilder) As(name string) field.IField {
-	return fields.ScalarOf[any](b.toExpr()).As(name)
+	return fields.ScalarOf[any](b).As(name)
 }
 
 func (b *jsonMergeBuilder) ToExpr() Expression {

@@ -22,7 +22,7 @@ func Test_BasicUsage_GroupBy_Having_For_IndexHint_Partition(t *testing.T) {
 		UseIndexForOrderBy("idx_users_created_at").
 		Where(u.Status.Eq("active")).
 		GroupBy(u.OrgID).
-		Having(gsql.Expr("COUNT(?) > ?", u.ID.ToExpr(), 10)).
+		Having(gsql.Expr("COUNT(?) > ?", u.ID, 10)).
 		Order(u.CreatedAt, false).
 		ForUpdate().
 		Nowait().

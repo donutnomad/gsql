@@ -11,47 +11,19 @@ import (
 
 // ==================== Constructors ====================
 
-func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) fields.DateField[T] {
-	return fields.NewDateField[T](tableName, name, flags...)
-}
-
-func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) fields.DateTimeField[T] {
-	return fields.NewDateTimeField[T](tableName, name, flags...)
-}
-
-func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) fields.DecimalField[T] {
-	return fields.NewDecimalField[T](tableName, name, flags...)
-}
-
-func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) fields.FloatField[T] {
-	return fields.NewFloatField[T](tableName, name, flags...)
-}
-
-func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) fields.IntField[T] {
-	return fields.NewIntField[T](tableName, name, flags...)
-}
-
 func NewJson(expr clause.Expression) fields.Json {
 	return fields.NewJson(expr)
 }
 
-func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) fields.ScalarField[T] {
-	return fields.NewScalarField[T](tableName, name, flags...)
+func NewLitExpr[T any](value T) *fields.LitExpr {
+	return fields.NewLitExpr[T](value)
 }
 
-func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) fields.StringField[T] {
-	return fields.NewStringField[T](tableName, name, flags...)
-}
-
-func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) fields.TimeField[T] {
-	return fields.NewTimeField[T](tableName, name, flags...)
-}
-
-func BoolColumn(name string) fields.BoolColumnBuilder {
+func BoolColumn(name string) fields.ScalarColumnBuilder[bool] {
 	return fields.BoolColumn(name)
 }
 
-func Column[T any](name string) fields.ColumnBuilder[T] {
+func Column[T any](name string) fields.ScalarColumnBuilder[T] {
 	return fields.Column[T](name)
 }
 
@@ -60,13 +32,17 @@ func Date(expr clause.Expression) fields.DateExpr[string] {
 	return fields.Date(expr)
 }
 
-func DateColumn(name string) fields.DateColumnBuilder {
-	return fields.DateColumn(name)
+func DateColumn[T any](name string) fields.DateColumnBuilder[T] {
+	return fields.DateColumn[T](name)
 }
 
 // DateE creates a DateExpr[string] from raw SQL with optional variables.
 func DateE(sql string, vars ...any) fields.DateExpr[string] {
 	return fields.DateE(sql, vars...)
+}
+
+func DateFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.DateField[T] {
+	return fields.DateFieldOf[T](tableName, name, flags...)
 }
 
 // DateOf creates a generic DateExpr[T] from a clause expression.
@@ -79,13 +55,17 @@ func DateTime(expr clause.Expression) fields.DateTimeExpr[string] {
 	return fields.DateTime(expr)
 }
 
-func DateTimeColumn(name string) fields.DateTimeColumnBuilder {
-	return fields.DateTimeColumn(name)
+func DateTimeColumn[T any](name string) fields.DateTimeColumnBuilder[T] {
+	return fields.DateTimeColumn[T](name)
 }
 
 // DateTimeE creates a DateTimeExpr[string] from raw SQL with optional variables.
 func DateTimeE(sql string, vars ...any) fields.DateTimeExpr[string] {
 	return fields.DateTimeE(sql, vars...)
+}
+
+func DateTimeFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.DateTimeField[T] {
+	return fields.DateTimeFieldOf[T](tableName, name, flags...)
 }
 
 // DateTimeOf creates a generic DateTimeExpr[T] from a clause expression.
@@ -98,13 +78,17 @@ func Decimal(expr clause.Expression) fields.DecimalExpr[float64] {
 	return fields.Decimal(expr)
 }
 
-func DecimalColumn(name string) fields.DecimalColumnBuilder {
-	return fields.DecimalColumn(name)
+func DecimalColumn[T any](name string) fields.DecimalColumnBuilder[T] {
+	return fields.DecimalColumn[T](name)
 }
 
 // DecimalE creates a DecimalExpr[float64] from raw SQL with optional variables.
 func DecimalE(sql string, vars ...any) fields.DecimalExpr[float64] {
 	return fields.DecimalE(sql, vars...)
+}
+
+func DecimalFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.DecimalField[T] {
+	return fields.DecimalFieldOf[T](tableName, name, flags...)
 }
 
 // DecimalOf creates a generic DecimalExpr[T] from a clause expression.
@@ -122,13 +106,17 @@ func Float(expr clause.Expression) fields.FloatExpr[float64] {
 	return fields.Float(expr)
 }
 
-func FloatColumn(name string) fields.FloatColumnBuilder {
-	return fields.FloatColumn(name)
+func FloatColumn[T any](name string) fields.FloatColumnBuilder[T] {
+	return fields.FloatColumn[T](name)
 }
 
 // FloatE creates a FloatExpr[float64] from raw SQL with optional variables.
 func FloatE(sql string, vars ...any) fields.FloatExpr[float64] {
 	return fields.FloatE(sql, vars...)
+}
+
+func FloatFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.FloatField[T] {
+	return fields.FloatFieldOf[T](tableName, name, flags...)
 }
 
 // FloatOf creates a generic FloatExpr[T] from a clause expression.
@@ -146,8 +134,12 @@ func Int(expr clause.Expression) fields.IntExpr[int64] {
 	return fields.Int(expr)
 }
 
-func IntColumn(name string) fields.IntColumnBuilder {
-	return fields.IntColumn(name)
+func IntColumn[T any](name string) fields.IntColumnBuilder[T] {
+	return fields.IntColumn[T](name)
+}
+
+func IntFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.IntField[T] {
+	return fields.IntFieldOf[T](tableName, name, flags...)
 }
 
 // IntOf creates a generic IntExpr[T] from a clause expression.
@@ -183,6 +175,10 @@ func ScalarColumn[T any](name string) fields.ScalarColumnBuilder[T] {
 	return fields.ScalarColumn[T](name)
 }
 
+func ScalarFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.ScalarField[T] {
+	return fields.ScalarFieldOf[T](tableName, name, flags...)
+}
+
 func ScalarOf[T any](expr clause.Expression) fields.ScalarExpr[T] {
 	return fields.ScalarOf[T](expr)
 }
@@ -192,13 +188,17 @@ func String(expr clause.Expression) fields.StringExpr[string] {
 	return fields.String(expr)
 }
 
-func StringColumn(name string) fields.StringColumnBuilder {
-	return fields.StringColumn(name)
+func StringColumn[T any](name string) fields.StringColumnBuilder[T] {
+	return fields.StringColumn[T](name)
 }
 
 // StringE creates a StringExpr[string] from raw SQL with optional variables.
 func StringE(sql string, vars ...any) fields.StringExpr[string] {
 	return fields.StringE(sql, vars...)
+}
+
+func StringFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.StringField[T] {
+	return fields.StringFieldOf[T](tableName, name, flags...)
 }
 
 // StringOf creates a generic StringExpr[T] from a clause expression.
@@ -216,13 +216,17 @@ func Time(expr clause.Expression) fields.TimeExpr[string] {
 	return fields.Time(expr)
 }
 
-func TimeColumn(name string) fields.TimeColumnBuilder {
-	return fields.TimeColumn(name)
+func TimeColumn[T any](name string) fields.TimeColumnBuilder[T] {
+	return fields.TimeColumn[T](name)
 }
 
 // TimeE creates a TimeExpr[string] from raw SQL with optional variables.
 func TimeE(sql string, vars ...any) fields.TimeExpr[string] {
 	return fields.TimeE(sql, vars...)
+}
+
+func TimeFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.TimeField[T] {
+	return fields.TimeFieldOf[T](tableName, name, flags...)
 }
 
 // TimeOf creates a generic TimeExpr[T] from a clause expression.
@@ -258,37 +262,37 @@ func YearVal[T ~int | ~int16 | ~int32 | ~int64](val T) fields.YearExpr[T] {
 // ==================== Type Aliases ====================
 
 type (
-	BoolColumnBuilder          = fields.BoolColumnBuilder
-	ColumnBuilder[T any]       = fields.ColumnBuilder[T]
-	Condition                  = fields.Condition
-	DateColumnBuilder          = fields.DateColumnBuilder
-	DateExpr[T any]            = fields.DateExpr[T]
-	DateField[T any]           = fields.DateField[T]
-	DateTimeColumnBuilder      = fields.DateTimeColumnBuilder
-	DateTimeExpr[T any]        = fields.DateTimeExpr[T]
-	DateTimeField[T any]       = fields.DateTimeField[T]
-	DecimalColumnBuilder       = fields.DecimalColumnBuilder
-	DecimalExpr[T any]         = fields.DecimalExpr[T]
-	DecimalField[T any]        = fields.DecimalField[T]
-	Expressions[T any]         = fields.Expressions[T]
-	FloatColumnBuilder         = fields.FloatColumnBuilder
-	FloatExpr[T any]           = fields.FloatExpr[T]
-	FloatField[T any]          = fields.FloatField[T]
-	FunctionName               = fields.FunctionName
-	IntColumnBuilder           = fields.IntColumnBuilder
-	IntConstraint              = fields.IntConstraint
-	IntExpr[T any]             = fields.IntExpr[T]
-	IntField[T any]            = fields.IntField[T]
-	Json                       = fields.Json
-	JsonInput                  = fields.JsonInput
-	ScalarColumnBuilder[T any] = fields.ScalarColumnBuilder[T]
-	ScalarExpr[T any]          = fields.ScalarExpr[T]
-	ScalarField[T any]         = fields.ScalarField[T]
-	StringColumnBuilder        = fields.StringColumnBuilder
-	StringExpr[T any]          = fields.StringExpr[T]
-	StringField[T any]         = fields.StringField[T]
-	TimeColumnBuilder          = fields.TimeColumnBuilder
-	TimeExpr[T any]            = fields.TimeExpr[T]
-	TimeField[T any]           = fields.TimeField[T]
-	YearExpr[T any]            = fields.YearExpr[T]
+	BaseFields                   = fields.BaseFields
+	Condition                    = fields.Condition
+	DateColumnBuilder[T any]     = fields.DateColumnBuilder[T]
+	DateExpr[T any]              = fields.DateExpr[T]
+	DateField[T any]             = fields.DateField[T]
+	DateTimeColumnBuilder[T any] = fields.DateTimeColumnBuilder[T]
+	DateTimeExpr[T any]          = fields.DateTimeExpr[T]
+	DateTimeField[T any]         = fields.DateTimeField[T]
+	DecimalColumnBuilder[T any]  = fields.DecimalColumnBuilder[T]
+	DecimalExpr[T any]           = fields.DecimalExpr[T]
+	DecimalField[T any]          = fields.DecimalField[T]
+	Expressions[T any]           = fields.Expressions[T]
+	FloatColumnBuilder[T any]    = fields.FloatColumnBuilder[T]
+	FloatExpr[T any]             = fields.FloatExpr[T]
+	FloatField[T any]            = fields.FloatField[T]
+	FunctionName                 = fields.FunctionName
+	IntColumnBuilder[T any]      = fields.IntColumnBuilder[T]
+	IntConstraint                = fields.IntConstraint
+	IntExpr[T any]               = fields.IntExpr[T]
+	IntField[T any]              = fields.IntField[T]
+	Json                         = fields.Json
+	JsonInput                    = fields.JsonInput
+	LitExpr                      = fields.LitExpr
+	ScalarColumnBuilder[T any]   = fields.ScalarColumnBuilder[T]
+	ScalarExpr[T any]            = fields.ScalarExpr[T]
+	ScalarField[T any]           = fields.ScalarField[T]
+	StringColumnBuilder[T any]   = fields.StringColumnBuilder[T]
+	StringExpr[T any]            = fields.StringExpr[T]
+	StringField[T any]           = fields.StringField[T]
+	TimeColumnBuilder[T any]     = fields.TimeColumnBuilder[T]
+	TimeExpr[T any]              = fields.TimeExpr[T]
+	TimeField[T any]             = fields.TimeField[T]
+	YearExpr[T any]              = fields.YearExpr[T]
 )

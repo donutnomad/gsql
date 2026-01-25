@@ -124,9 +124,9 @@ func TestDD(t *testing.T) {
 // 演示 ROW_NUMBER() OVER() 窗口函数的使用
 func ExampleRowNumber() {
 	// 创建字段
-	category := fields.NewStringField[string]("products", "category")
-	price := fields.NewFloatField[float64]("products", "price")
-	name := fields.NewStringField[string]("products", "name")
+	category := fields.StringFieldOf[string]("products", "category")
+	price := fields.FloatFieldOf[float64]("products", "price")
+	name := fields.StringFieldOf[string]("products", "name")
 
 	products := &gsql.Table{Name: "products"}
 
@@ -180,9 +180,9 @@ func ExampleRowNumber() {
 // 演示 RANK() 窗口函数的使用
 func ExampleRank() {
 	// 创建字段
-	category := fields.NewStringField[string]("products", "category")
-	price := fields.NewFloatField[float64]("products", "price")
-	name := fields.NewStringField[string]("products", "name")
+	category := fields.StringFieldOf[string]("products", "category")
+	price := fields.FloatFieldOf[float64]("products", "price")
+	name := fields.StringFieldOf[string]("products", "name")
 
 	products := &gsql.Table{Name: "products"}
 
@@ -206,8 +206,8 @@ func ExampleRank() {
 // 演示 DENSE_RANK() 窗口函数的使用
 func ExampleDenseRank() {
 	// 创建字段
-	score := fields.NewIntField[int]("students", "score")
-	name := fields.NewStringField[string]("students", "name")
+	score := fields.IntFieldOf[int]("students", "score")
+	name := fields.StringFieldOf[string]("students", "name")
 
 	students := &gsql.Table{Name: "students"}
 

@@ -16,7 +16,7 @@ var allowedCharsets = map[string]bool{
 	"ucs2": true, "utf16": true, "utf32": true,
 }
 
-var Star field.IField = fields.NewScalarField[any]("", "*")
+var Star field.IField = fields.ScalarFieldOf[any]("", "*")
 
 func Lit[T primitive](value T) *fields.LitExpr {
 	return fields.NewLitExpr(value)
@@ -39,7 +39,7 @@ func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) Expression {
 }
 
 func StarWith(tableName string) field.IField {
-	return fields.NewScalarField[any](tableName, "*")
+	return fields.ScalarFieldOf[any](tableName, "*")
 }
 
 // False 返回布尔值假

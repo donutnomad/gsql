@@ -21,5 +21,5 @@ const (
 )
 
 const (
-	FUNC_VALUES FunctionName = "VALUES"
+	VALUES FunctionName = "VALUES"
 )

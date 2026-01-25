@@ -13,7 +13,7 @@ func (m mockTable) TableName() string { return m.tableName }
 
 func TestIntColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "sub"}
-	cnt := IntColumn("cnt").From(sub)
+	cnt := IntColumn[int]("cnt").From(sub)
 
 	if cnt.TableName() != "sub" {
 		t.Errorf("Expected tableName 'sub', got '%s'", cnt.TableName())
@@ -28,7 +28,7 @@ func TestIntColumn_From(t *testing.T) {
 
 func TestFloatColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "derived"}
-	total := FloatColumn("total").From(sub)
+	total := FloatColumn[any]("total").From(sub)
 
 	if total.TableName() != "derived" {
 		t.Errorf("Expected tableName 'derived', got '%s'", total.TableName())
@@ -43,7 +43,7 @@ func TestFloatColumn_From(t *testing.T) {
 
 func TestStringColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "names"}
-	name := StringColumn("name").From(sub)
+	name := StringColumn[string]("name").From(sub)
 
 	if name.TableName() != "names" {
 		t.Errorf("Expected tableName 'names', got '%s'", name.TableName())
@@ -70,7 +70,7 @@ func TestBoolColumn_From(t *testing.T) {
 
 func TestTimeColumn_From(t *testing.T) {
 	sub := mockTable{tableName: "events"}
-	createdAt := TimeColumn("created_at").From(sub)
+	createdAt := TimeColumn[any]("created_at").From(sub)
 
 	if createdAt.TableName() != "events" {
 		t.Errorf("Expected tableName 'events', got '%s'", createdAt.TableName())
