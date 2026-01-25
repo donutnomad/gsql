@@ -40,7 +40,7 @@ type QueryBuilderG[T any] struct {
 	// table hints on FROM
 	fromIndexHints []indexHint
 	fromPartitions []string
-	// CTE (Common Table Expressions)
+	// CTE (Common Table Expression)
 	cte      *CTEClause
 	logLevel int
 }

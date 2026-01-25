@@ -6,7 +6,6 @@ import (
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/donutnomad/gsql/internal/types"
 	"github.com/samber/lo"
 )
@@ -46,7 +45,7 @@ func OrderBy(name string, asc bool) SortOrder {
 // TimeBetween
 // opFrom: >=,>,=,<=,<, default: >=
 // opTo: >=,>,=,<=,<, default: <
-func TimeBetween[F any, ValExpr fields.Expressions[F], Value TimestampRange | TimeRange](
+func TimeBetween[ValExpr interface{ ExprType() F }, Value TimestampRange | TimeRange, F any](
 	fieldComparable ValExpr, value Value, op ...string,
 ) gsql.ScopeFunc {
 	var opFrom = ">="

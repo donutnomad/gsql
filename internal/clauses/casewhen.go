@@ -109,14 +109,14 @@ func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) When(value ValExpr, resul
 }
 
 // Else 设置 ELSE 子句（可选）
-func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) Else(result ResultExpr) fields.ScalarExpr[R] {
+func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) Else(result ResultExpr) ResultExpr {
 	c.elseResult = &result
-	return fields.ScalarOf[R](c.asAny())
+	return fields.CastExpr[ResultExpr](c.asAny())
 }
 
 // End 结束 CASE 表达式，返回可用作字段的表达式
-func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) End() fields.ScalarExpr[R] {
-	return fields.ScalarOf[R](c.asAny())
+func (c *SimpleCaseBuilder[ValExpr, V, ResultExpr, R]) End() ResultExpr {
+	return fields.CastExpr[ResultExpr](c.asAny())
 }
 
 ///////////////////////////// CASE-WHEN //////////////////////////
@@ -153,14 +153,14 @@ func (c *SearchCaseBuilder[ResultExpr, R]) When(condition fields.Condition, val 
 }
 
 // Else 设置 ELSE 子句（可选）
-func (c *SearchCaseBuilder[ResultExpr, R]) Else(value ResultExpr) fields.ScalarExpr[R] {
+func (c *SearchCaseBuilder[ResultExpr, R]) Else(value ResultExpr) ResultExpr {
 	c.elseValue = &value
-	return fields.ScalarOf[R](c.asAny())
+	return fields.CastExpr[ResultExpr](c.asAny())
 }
 
 // End 结束 CASE 表达式，返回可用作字段的表达式
-func (c *SearchCaseBuilder[ResultExpr, R]) End() fields.ScalarExpr[R] {
-	return fields.ScalarOf[R](c.asAny())
+func (c *SearchCaseBuilder[ResultExpr, R]) End() ResultExpr {
+	return fields.CastExpr[ResultExpr](c.asAny())
 }
 
 // //////////////////////// builder //////////////////////////

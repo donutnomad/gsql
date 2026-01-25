@@ -55,7 +55,7 @@ func TestMod(t *testing.T) {
 		Where(M.UserID.BetweenPtr(lo.ToPtr[uint64](123), nil)).
 		OrderBy(ordersMapping.Map(orders)...).
 		Scope(
-			TimeBetween[time.Time](M.CreatedAt, TimestampRange{
+			TimeBetween(M.CreatedAt, TimestampRange{
 				//From: mo.Some(int64(123)),
 				To: mo.Some(int64(222)),
 			}, ">", "<="),
@@ -67,7 +67,7 @@ func TestMod2(t *testing.T) {
 	sql := gsql.SelectG[any]().
 		From(UserWalletLogSchema).
 		Scope(
-			TimeBetween[time.Time](UserWalletLogSchema.CreatedAt, TimeRange{
+			TimeBetween(UserWalletLogSchema.CreatedAt, TimeRange{
 				From: mo.Some(time.Now()),
 				//To:    mo.Some(int64(222)),
 			}),

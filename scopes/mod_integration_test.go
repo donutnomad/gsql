@@ -178,7 +178,7 @@ func TestTimeBetween_TimeField_WithTimestampRange(t *testing.T) {
 	// 使用 TimeBetween 查询
 	query := gsql.SelectG[EventLog]().
 		From(eventLogSchema).
-		Scope(TimeBetween[time.Time](eventLogSchema.CreatedAt, TimestampRange{
+		Scope(TimeBetween(eventLogSchema.CreatedAt, TimestampRange{
 			From: mo.Some(fromTs),
 			To:   mo.Some(toTs),
 		}))
@@ -217,7 +217,7 @@ func TestTimeBetween_TimeField_WithTimeRange(t *testing.T) {
 	// 使用 TimeBetween 查询
 	query := gsql.SelectG[EventLog]().
 		From(eventLogSchema).
-		Scope(TimeBetween[time.Time](eventLogSchema.CreatedAt, TimeRange{
+		Scope(TimeBetween(eventLogSchema.CreatedAt, TimeRange{
 			From: mo.Some(fromTime),
 			To:   mo.Some(toTime),
 		}))
@@ -250,7 +250,7 @@ func TestTimeBetween_IntField_WithTimestampRange(t *testing.T) {
 	// 使用 TimeBetween 查询
 	query := gsql.SelectG[Transaction]().
 		From(transactionSchema).
-		Scope(TimeBetween[int64](transactionSchema.CreatedAt, TimestampRange{
+		Scope(TimeBetween(transactionSchema.CreatedAt, TimestampRange{
 			From: mo.Some(fromTs),
 			To:   mo.Some(toTs),
 		}))
@@ -290,7 +290,7 @@ func TestTimeBetween_IntField_WithTimeRange(t *testing.T) {
 	// 使用 TimeBetween 查询
 	query := gsql.SelectG[Transaction]().
 		From(transactionSchema).
-		Scope(TimeBetween[int64](transactionSchema.CreatedAt, TimeRange{
+		Scope(TimeBetween(transactionSchema.CreatedAt, TimeRange{
 			From: mo.Some(fromTime),
 			To:   mo.Some(toTime),
 		}))
@@ -325,7 +325,7 @@ func TestTimeBetween_CustomOperators(t *testing.T) {
 	// 使用自定义操作符 > 和 <=
 	query := gsql.SelectG[EventLog]().
 		From(eventLogSchema).
-		Scope(TimeBetween[time.Time](eventLogSchema.CreatedAt, TimestampRange{
+		Scope(TimeBetween(eventLogSchema.CreatedAt, TimestampRange{
 			From: mo.Some(fromTs),
 			To:   mo.Some(toTs),
 		}, ">", "<="))
@@ -358,7 +358,7 @@ func TestTimeBetween_OnlyFrom(t *testing.T) {
 	// 只设置 From
 	query := gsql.SelectG[EventLog]().
 		From(eventLogSchema).
-		Scope(TimeBetween[time.Time](eventLogSchema.CreatedAt, TimestampRange{
+		Scope(TimeBetween(eventLogSchema.CreatedAt, TimestampRange{
 			From: mo.Some(fromTs),
 		}))
 
@@ -387,7 +387,7 @@ func TestTimeBetween_OnlyTo(t *testing.T) {
 	// 只设置 To
 	query := gsql.SelectG[EventLog]().
 		From(eventLogSchema).
-		Scope(TimeBetween[time.Time](eventLogSchema.CreatedAt, TimestampRange{
+		Scope(TimeBetween(eventLogSchema.CreatedAt, TimestampRange{
 			To: mo.Some(toTs),
 		}))
 
@@ -414,7 +414,7 @@ func TestTimeBetween_EmptyRange(t *testing.T) {
 	// 空范围
 	query := gsql.SelectG[EventLog]().
 		From(eventLogSchema).
-		Scope(TimeBetween[time.Time](eventLogSchema.CreatedAt, TimestampRange{}))
+		Scope(TimeBetween(eventLogSchema.CreatedAt, TimestampRange{}))
 
 	results, err := query.Find(sharedDB)
 	require.NoError(t, err)
