@@ -47,8 +47,8 @@ func DateTimeE(sql string, vars ...any) DateTimeExpr[string] {
 }
 
 // DateTimeVal creates a DateTimeExpr from a datetime literal value.
-func DateTimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) DateTimeExpr[T] {
-	return DateTimeOf[T](NewLitExpr(val))
+func DateTimeVal[T string | time.Time | *time.Time | sql.NullTime | any](val T) DateTimeExpr[T] {
+	return DateTimeOf[T](anyToExpr(val))
 }
 
 // DateTimeOf creates a generic DateTimeExpr[T] from a clause expression.

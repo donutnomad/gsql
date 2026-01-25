@@ -34,8 +34,12 @@ func YearE(sql string, vars ...any) YearExpr[int64] {
 }
 
 // YearVal creates a YearExpr from an integer literal value.
-func YearVal[T ~int | ~int16 | ~int32 | ~int64](val T) YearExpr[T] {
-	return YearOf[T](NewLitExpr(val))
+func YearVal[T ~int | ~int16 | ~int32 | ~int64 | any](val T) YearExpr[T] {
+	return YearOf[T](anyToExpr(val))
+}
+
+func YearFromField[T any, Expr Expressions[T]](field Expr) YearExpr[T] {
+	return YearOf[T](anyToExpr(field))
 }
 
 // YearOf creates a generic YearExpr[T] from a clause expression.

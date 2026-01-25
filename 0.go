@@ -5,7 +5,7 @@ import (
 	"github.com/donutnomad/gsql/internal/types"
 )
 
-//go:generate go run ./cmd/export-types -src ./internal/fields -dst ./typed_field.go -pkg gsql -exclude "AsJson"
+//go:generate go run ./cmd/export-types -src ./internal/fields -dst ./typed_field.go -pkg gsql -exclude "JsonOf"
 //go:generate go run ./cmd/export-types -src ./internal/clauses/casewhen.go -dst ./clause_case.go -pkg gsql
 
 type IFieldType[T any] = types.IFieldType[T]

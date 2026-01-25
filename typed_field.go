@@ -72,11 +72,13 @@ func DateTimeOf[T any](expr clause.Expression) fields.DateTimeExpr[T] {
 	return fields.DateTimeOf[T](expr)
 }
 
-func DateTimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) fields.DateTimeExpr[T] {
+// DateTimeVal creates a DateTimeExpr from a datetime literal value.
+func DateTimeVal[T string | time.Time | *time.Time | sql.NullTime | any](val T) fields.DateTimeExpr[T] {
 	return fields.DateTimeVal[T](val)
 }
 
-func DateVal[T string | time.Time | *time.Time | sql.NullTime](val T) fields.DateExpr[T] {
+// DateVal creates a DateExpr from a date literal value.
+func DateVal[T ~string | time.Time | *time.Time | sql.NullTime | any](val T) fields.DateExpr[T] {
 	return fields.DateVal[T](val)
 }
 
@@ -104,7 +106,7 @@ func DecimalOf[T any](expr clause.Expression) fields.DecimalExpr[T] {
 }
 
 // DecimalVal creates a DecimalExpr from a floating-point literal value.
-func DecimalVal[T ~float32 | ~float64](val T) fields.DecimalExpr[T] {
+func DecimalVal[T ~float32 | ~float64 | any](val T) fields.DecimalExpr[T] {
 	return fields.DecimalVal[T](val)
 }
 
@@ -132,7 +134,7 @@ func FloatOf[T any](expr clause.Expression) fields.FloatExpr[T] {
 }
 
 // FloatVal creates a FloatExpr from a floating-point literal value.
-func FloatVal[T ~float32 | ~float64](val T) fields.FloatExpr[T] {
+func FloatVal[T ~float32 | ~float64 | any](val T) fields.FloatExpr[T] {
 	return fields.FloatVal[T](val)
 }
 
@@ -155,7 +157,7 @@ func IntOf[T any](expr clause.Expression) fields.IntExpr[T] {
 }
 
 // IntVal creates an IntExpr from a signed integer literal value.
-func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](val T) fields.IntExpr[T] {
+func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | any](val T) fields.IntExpr[T] {
 	return fields.IntVal[T](val)
 }
 
@@ -202,6 +204,11 @@ func ScalarOf[T any](expr clause.Expression) fields.ScalarExpr[T] {
 	return fields.ScalarOf[T](expr)
 }
 
+// IntVal creates an IntExpr from a signed integer literal value.
+func ScalarVal[T any](val T) fields.ScalarExpr[T] {
+	return fields.ScalarVal[T](val)
+}
+
 // String creates a StringExpr[string] from a clause expression.
 func String(expr clause.Expression) fields.StringExpr[string] {
 	return fields.String(expr)
@@ -226,7 +233,7 @@ func StringOf[T any](expr clause.Expression) fields.StringExpr[T] {
 }
 
 // StringVal creates a StringExpr from a string literal value.
-func StringVal[T ~string](val T) fields.StringExpr[T] {
+func StringVal[T ~string | any](val T) fields.StringExpr[T] {
 	return fields.StringVal[T](val)
 }
 
@@ -253,7 +260,8 @@ func TimeOf[T any](expr clause.Expression) fields.TimeExpr[T] {
 	return fields.TimeOf[T](expr)
 }
 
-func TimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) fields.TimeExpr[T] {
+// TimeVal creates a TimeExpr from a time literal value.
+func TimeVal[T ~string | time.Time | *time.Time | sql.NullTime | any](val T) fields.TimeExpr[T] {
 	return fields.TimeVal[T](val)
 }
 
@@ -278,7 +286,7 @@ func YearOf[T any](expr clause.Expression) fields.YearExpr[T] {
 }
 
 // YearVal creates a YearExpr from an integer literal value.
-func YearVal[T ~int | ~int16 | ~int32 | ~int64](val T) fields.YearExpr[T] {
+func YearVal[T ~int | ~int16 | ~int32 | ~int64 | any](val T) fields.YearExpr[T] {
 	return fields.YearVal[T](val)
 }
 

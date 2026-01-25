@@ -41,8 +41,8 @@ func DecimalE(sql string, vars ...any) DecimalExpr[float64] {
 }
 
 // DecimalVal creates a DecimalExpr from a floating-point literal value.
-func DecimalVal[T ~float32 | ~float64](val T) DecimalExpr[T] {
-	return DecimalOf[T](NewLitExpr(val))
+func DecimalVal[T ~float32 | ~float64 | any](val T) DecimalExpr[T] {
+	return DecimalOf[T](anyToExpr(val))
 }
 
 // DecimalOf creates a generic DecimalExpr[T] from a clause expression.

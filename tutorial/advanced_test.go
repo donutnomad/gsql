@@ -313,9 +313,9 @@ func TestAdv_JsonExtract(t *testing.T) {
 
 	// Use gsql.JSON_EXTRACT and JSON_UNQUOTE
 	// MySQL: JSON_EXTRACT(profile, '$.age') AS age
-	ageField := gsql.AsJson(u.Profile).Extract("$.age").As("age")
+	ageField := gsql.JsonOf(u.Profile).Extract("$.age").As("age")
 	// MySQL: JSON_UNQUOTE(JSON_EXTRACT(profile, '$.city')) AS city
-	cityField := gsql.AsJson(u.Profile).Extract("$.city").Unquote().As("city")
+	cityField := gsql.JsonOf(u.Profile).Extract("$.city").Unquote().As("city")
 
 	var results []Result
 	// MySQL: SELECT user_profiles.username,
@@ -355,7 +355,7 @@ func TestAdv_JsonModify(t *testing.T) {
 
 	// Use gsql.JSON_SET for update (Builder pattern)
 	// MySQL: JSON_SET(profile, '$.country', 'USA', '$.age', 26)
-	newProfile := gsql.AsJson(u.Profile).Set("$.country", gsql.Lit("USA")).Set("$.age", gsql.Lit(26))
+	newProfile := gsql.JsonOf(u.Profile).Set("$.country", gsql.Lit("USA")).Set("$.age", gsql.Lit(26))
 
 	// Update using gsql
 	// MySQL: UPDATE user_profiles SET profile = JSON_SET(...)
@@ -372,8 +372,8 @@ func TestAdv_JsonModify(t *testing.T) {
 	}
 
 	// Verify update using gsql
-	countryField := gsql.AsJson(u.Profile).Extract("$.country").Unquote().As("country")
-	ageField := gsql.AsJson(u.Profile).Extract("$.age").As("age")
+	countryField := gsql.JsonOf(u.Profile).Extract("$.country").Unquote().As("country")
+	ageField := gsql.JsonOf(u.Profile).Extract("$.age").As("age")
 
 	type VerifyResult struct {
 		Country string `gorm:"column:country"`
@@ -415,7 +415,7 @@ func TestAdv_JsonContains(t *testing.T) {
 	// JSON_CONTAINS - find users with specific skill using gsql
 	// JSON_CONTAINS(profile, '"go"', '$.skills')
 	// MySQL: JSON_CONTAINS(profile, '"go"', '$.skills')
-	hasGoSkill := gsql.AsJson(u.Profile).Contains(gsql.JsonLit(`"go"`), "$.skills")
+	hasGoSkill := gsql.JsonOf(u.Profile).Contains(gsql.JsonLit(`"go"`), "$.skills")
 
 	var results []UserProfile
 	// MySQL: SELECT user_profiles.* FROM user_profiles
@@ -447,7 +447,7 @@ func TestAdv_JsonArray(t *testing.T) {
 
 	// Use JSON_ARRAY with column data - demonstrates combining with other functions
 	// Get the length of the items array
-	itemsLen := gsql.AsJson(u.Profile).Length("$.items").As("items_count")
+	itemsLen := gsql.JsonOf(u.Profile).Length("$.items").As("items_count")
 
 	type Result struct {
 		Username   string `gorm:"column:username"`
@@ -515,7 +515,7 @@ func TestAdv_JsonKeys(t *testing.T) {
 	}
 
 	// JSON_KEYS - get all keys from JSON object
-	keysField := gsql.AsJson(u.Profile).Keys().As("keys")
+	keysField := gsql.JsonOf(u.Profile).Keys().As("keys")
 
 	var result string
 	err := gsql.Select(keysField).
@@ -542,7 +542,7 @@ func TestAdv_JsonLength(t *testing.T) {
 	}
 
 	// JSON_LENGTH - get length of skills array
-	skillsLen := gsql.AsJson(u.Profile).Length("$.skills").As("skills_count")
+	skillsLen := gsql.JsonOf(u.Profile).Length("$.skills").As("skills_count")
 
 	type Result struct {
 		SkillsCount int `gorm:"column:skills_count"`

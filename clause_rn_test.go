@@ -87,13 +87,13 @@ func TestGG(t *testing.T) {
 
 func TestDD(t *testing.T) {
 	b := utils.NewMemoryBuilder()
-	bookF := gsql.AsJson(gsql.Expr("book"))
+	bookF := gsql.JsonOf(gsql.Expr("book"))
 
 	bookF.Extract("$.name").Build(b)
 	fmt.Println(b.SQL.String())
 	fmt.Println(b.Vars)
 	f := gsql.String(
-		gsql.AsJson(bookF).Extract("$.name").As(""),
+		gsql.JsonOf(bookF).Extract("$.name").As(""),
 	)
 	_ = f
 	f1 := gsql.String(
@@ -101,7 +101,7 @@ func TestDD(t *testing.T) {
 	)
 	_ = f1
 	s := gsql.Select().From(gsql.TN("books")).Where(
-		gsql.AsJson(bookF).Extract("$.name").Eq("2"),
+		gsql.JsonOf(bookF).Extract("$.name").Eq("2"),
 	).ToSQL()
 	fmt.Println(s)
 

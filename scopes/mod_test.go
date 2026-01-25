@@ -13,13 +13,13 @@ import (
 type UserWalletLogSchemaType struct {
 	tableName  string
 	alias      string
-	UserID     fields.IntField[uint64]
-	BusinessID fields.IntField[uint64]
-	Address    fields.IntField[string]
-	CreatedAt  fields.IntField[time.Time]
-	UpdatedAt  fields.IntField[time.Time]
-	Bind       fields.IntField[bool]
-	UnbindAt   fields.IntField[time.Time]
+	UserID     gsql.IntField[uint64]
+	BusinessID gsql.IntField[uint64]
+	Address    gsql.IntField[string]
+	CreatedAt  gsql.IntField[time.Time]
+	UpdatedAt  gsql.IntField[time.Time]
+	Bind       gsql.IntField[bool]
+	UnbindAt   gsql.IntField[time.Time]
 }
 
 func (t UserWalletLogSchemaType) TableName() string {
@@ -55,7 +55,7 @@ func TestMod(t *testing.T) {
 		Where(M.UserID.BetweenPtr(lo.ToPtr[uint64](123), nil)).
 		OrderBy(ordersMapping.Map(orders)...).
 		Scope(
-			TimeBetween(M.CreatedAt, TimestampRange{
+			TimeBetween[time.Time](M.CreatedAt, TimestampRange{
 				//From: mo.Some(int64(123)),
 				To: mo.Some(int64(222)),
 			}, ">", "<="),
@@ -67,7 +67,7 @@ func TestMod2(t *testing.T) {
 	sql := gsql.SelectG[any]().
 		From(UserWalletLogSchema).
 		Scope(
-			TimeBetween(UserWalletLogSchema.CreatedAt, TimeRange{
+			TimeBetween[time.Time](UserWalletLogSchema.CreatedAt, TimeRange{
 				From: mo.Some(time.Now()),
 				//To:    mo.Some(int64(222)),
 			}),

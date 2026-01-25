@@ -6,18 +6,19 @@ import (
 
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 	"gorm.io/gorm"
 )
 
 // ================ gormgen ================
 
 type UserSchemaType struct {
-	ID        fields.IntField[uint]
-	CreatedAt fields.IntField[time.Time]
-	UpdatedAt fields.IntField[time.Time]
-	DeletedAt fields.IntField[gorm.DeletedAt]
-	Name      fields.StringField[string]
-	Age       fields.IntField[int32]
+	ID        gsql.IntField[uint]
+	CreatedAt gsql.IntField[time.Time]
+	UpdatedAt gsql.IntField[time.Time]
+	DeletedAt gsql.IntField[gorm.DeletedAt]
+	Name      gsql.StringField[string]
+	Age       gsql.IntField[int32]
 	fieldType User
 	alias     string
 	tableName string

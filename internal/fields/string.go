@@ -38,8 +38,8 @@ func StringE(sql string, vars ...any) StringExpr[string] {
 }
 
 // StringVal creates a StringExpr from a string literal value.
-func StringVal[T ~string](val T) StringExpr[T] {
-	return StringOf[T](NewLitExpr(val))
+func StringVal[T ~string | any](val T) StringExpr[T] {
+	return StringOf[T](anyToExpr(val))
 }
 
 // StringOf creates a generic StringExpr[T] from a clause expression.

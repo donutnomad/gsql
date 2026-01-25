@@ -33,6 +33,11 @@ func ScalarOf[T any](expr clause.Expression) ScalarExpr[T] {
 	}
 }
 
+// ScalarVal creates a ScalarExpr from a literal value.
+func ScalarVal[T any](val T) ScalarExpr[T] {
+	return ScalarOf[T](anyToExpr(val))
+}
+
 func (s ScalarExpr[T]) ToString() StringExpr[T] {
 	return StringOf[T](s)
 }

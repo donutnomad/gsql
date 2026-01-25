@@ -42,8 +42,8 @@ func TimeE(sql string, vars ...any) TimeExpr[string] {
 }
 
 // TimeVal creates a TimeExpr from a time literal value.
-func TimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) TimeExpr[T] {
-	return TimeOf[T](NewLitExpr(val))
+func TimeVal[T ~string | time.Time | *time.Time | sql.NullTime | any](val T) TimeExpr[T] {
+	return TimeOf[T](anyToExpr(val))
 }
 
 // TimeOf creates a generic TimeExpr[T] from a clause expression.

@@ -42,8 +42,8 @@ func FloatE(sql string, vars ...any) FloatExpr[float64] {
 }
 
 // FloatVal creates a FloatExpr from a floating-point literal value.
-func FloatVal[T ~float32 | ~float64](val T) FloatExpr[T] {
-	return FloatOf[T](NewLitExpr(val))
+func FloatVal[T ~float32 | ~float64 | any](val T) FloatExpr[T] {
+	return FloatOf[T](anyToExpr(val))
 }
 
 // FloatOf creates a generic FloatExpr[T] from a clause expression.

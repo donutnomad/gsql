@@ -164,7 +164,7 @@ func JSON_QUOTE(str Expression) fields.StringExpr[string] {
 //
 // 也可以使用方法调用:
 //
-//	gsql.AsJson(json1).MergePreserve(json2, json3)
+//	gsql.JsonOf(json1).MergePreserve(json2, json3)
 //
 //goland:noinspection ALL
 func JSON_MERGE_PRESERVE(json1, json2 fields.JsonInput) *jsonMergeBuilder {
@@ -181,7 +181,7 @@ func JSON_MERGE_PRESERVE(json1, json2 fields.JsonInput) *jsonMergeBuilder {
 //
 // 也可以使用方法调用:
 //
-//	gsql.AsJson(json1).MergePatch(json2, json3)
+//	gsql.JsonOf(json1).MergePatch(json2, json3)
 //
 //goland:noinspection ALL
 func JSON_MERGE_PATCH(json1, json2 fields.JsonInput) *jsonMergeBuilder {

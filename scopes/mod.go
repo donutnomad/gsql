@@ -6,6 +6,7 @@ import (
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/donutnomad/gsql/internal/types"
 	"github.com/samber/lo"
 )
@@ -45,8 +46,8 @@ func OrderBy(name string, asc bool) SortOrder {
 // TimeBetween
 // opFrom: >=,>,=,<=,<, default: >=
 // opTo: >=,>,=,<=,<, default: <
-func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange | TimeRange](
-	fieldComparable fields.IntField[F], value Value, op ...string,
+func TimeBetween[F any, ValExpr fields.Expressions[F], Value TimestampRange | TimeRange](
+	fieldComparable ValExpr, value Value, op ...string,
 ) gsql.ScopeFunc {
 	var opFrom = ">="
 	var opTo = "<"
@@ -68,7 +69,7 @@ func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange
 		if value == nil {
 			return clause.Expr{}
 		}
-		var left = fieldComparable.ToExpr()
+		var left = fieldComparable
 		var right clause.Expression = gsql.Lit(*value)
 		if fieldIsTimeStruct {
 			right = gsql.Int(right).ToDateTime()
@@ -79,10 +80,10 @@ func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange
 		if value == nil {
 			return clause.Expr{}
 		}
-		var left = fieldComparable.ToExpr()
+		var left any = fieldComparable
 		var right = value
 		if !fieldIsTimeStruct {
-			left = gsql.Int(left).ToDateTime()
+			left = gsql.IntVal(left).ToDateTime()
 		}
 		return gsql.Expr("? "+op+" ?", left, right)
 	}
