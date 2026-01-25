@@ -6,13 +6,14 @@ import (
 
 	gsql "github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 )
 
 type UserSchemaType struct {
-	ID        field.Comparable[uint64]
-	OrgID     field.Comparable[uint64]
-	Status    field.Pattern[string]
-	CreatedAt field.Comparable[time.Time]
+	ID        gsql.IntField[uint64]
+	OrgID     gsql.IntField[uint64]
+	Status    gsql.StringField[string]
+	CreatedAt gsql.IntField[time.Time]
 	fieldType User
 	alias     string
 	tableName string
@@ -67,18 +68,18 @@ func (t UserSchemaType) Star() field.IField {
 
 var UserSchema = UserSchemaType{
 	tableName: "users",
-	ID:        field.NewComparable[uint64]("users", "id", field.FlagPrimaryKey),
-	OrgID:     field.NewComparable[uint64]("users", "org_id", field.FlagIndex),
-	Status:    field.NewPattern[string]("users", "status", field.FlagIndex),
-	CreatedAt: field.NewComparable[time.Time]("users", "created_at", field.FlagIndex),
+	ID:        gsql.IntFieldOf[uint64]("users", "id", field.FlagPrimaryKey),
+	OrgID:     gsql.IntFieldOf[uint64]("users", "org_id", field.FlagIndex),
+	Status:    gsql.StringFieldOf[string]("users", "status", field.FlagIndex),
+	CreatedAt: gsql.IntFieldOf[time.Time]("users", "created_at", field.FlagIndex),
 	fieldType: User{},
 }
 
 type OrderSchemaType struct {
-	ID        field.Comparable[uint64]
-	UserID    field.Comparable[uint64]
-	Amount    field.Comparable[int64]
-	CreatedAt field.Comparable[time.Time]
+	ID        fields.IntField[uint64]
+	UserID    fields.IntField[uint64]
+	Amount    fields.IntField[int64]
+	CreatedAt fields.IntField[time.Time]
 	fieldType Order
 	alias     string
 	tableName string
@@ -133,9 +134,9 @@ func (t OrderSchemaType) Star() field.IField {
 
 var OrderSchema = OrderSchemaType{
 	tableName: "orders",
-	ID:        field.NewComparable[uint64]("orders", "id", field.FlagPrimaryKey),
-	UserID:    field.NewComparable[uint64]("orders", "user_id", field.FlagIndex),
-	Amount:    field.NewComparable[int64]("orders", "amount"),
-	CreatedAt: field.NewComparable[time.Time]("orders", "created_at", field.FlagIndex),
+	ID:        gsql.IntFieldOf[uint64]("orders", "id", field.FlagPrimaryKey),
+	UserID:    gsql.IntFieldOf[uint64]("orders", "user_id", field.FlagIndex),
+	Amount:    gsql.IntFieldOf[int64]("orders", "amount"),
+	CreatedAt: gsql.IntFieldOf[time.Time]("orders", "created_at", field.FlagIndex),
 	fieldType: Order{},
 }

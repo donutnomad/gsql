@@ -46,7 +46,7 @@ func OrderBy(name string, asc bool) SortOrder {
 // opFrom: >=,>,=,<=,<, default: >=
 // opTo: >=,>,=,<=,<, default: <
 func TimeBetween[F *time.Time | time.Time | int64 | *int64, Value TimestampRange | TimeRange](
-	fieldComparable field.Comparable[F], value Value, op ...string,
+	fieldComparable fields.IntField[F], value Value, op ...string,
 ) gsql.ScopeFunc {
 	var opFrom = ">="
 	var opTo = "<"

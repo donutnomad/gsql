@@ -78,9 +78,9 @@ func (EventLog) TableName() string {
 // EventLogSchema 字段定义
 type EventLogSchema struct {
 	tableName string
-	ID        field.Comparable[uint64]
-	EventName field.Comparable[string]
-	CreatedAt field.Comparable[time.Time]
+	ID        fields.IntField[uint64]
+	EventName fields.IntField[string]
+	CreatedAt fields.IntField[time.Time]
 }
 
 func (t EventLogSchema) TableName() string {
@@ -112,9 +112,9 @@ func (Transaction) TableName() string {
 // TransactionSchema 字段定义
 type TransactionSchema struct {
 	tableName string
-	ID        field.Comparable[uint64]
-	Amount    field.Comparable[int64]
-	CreatedAt field.Comparable[int64]
+	ID        fields.IntField[uint64]
+	Amount    fields.IntField[int64]
+	CreatedAt fields.IntField[int64]
 }
 
 func (t TransactionSchema) TableName() string {

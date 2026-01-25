@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/donutnomad/gsql/internal/genutils"
 )
 
 type Config struct {
@@ -174,7 +176,7 @@ func run(cfg Config) error {
 	code := generateCode(cfg, srcPkgName, srcImportPath, types, funcs, vars)
 
 	// 写入文件
-	if err := WriteFormat(cfg.DstFile, []byte(code)); err != nil {
+	if err := genutils.WriteFormat(cfg.DstFile, []byte(code)); err != nil {
 		return fmt.Errorf("failed to write output file: %w", err)
 	}
 

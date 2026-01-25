@@ -7,6 +7,7 @@ import (
 	"github.com/donutnomad/gsql/internal/clauses2"
 	"github.com/donutnomad/gsql/internal/fieldi"
 	"github.com/donutnomad/gsql/internal/types"
+	"github.com/samber/mo"
 )
 
 // ==================== IntField ====================
@@ -154,6 +155,475 @@ func (f IntField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+/////////////// re-exported methods from IntExpr ///////////////
+
+// AsFloat 转换为 FloatExpr（不生成 SQL，仅类型转换）
+func (f IntField[T]) AsFloat() FloatExpr[float64] {
+	return f.IntExpr.AsFloat()
+}
+
+// AsDecimal 转换为 DecimalExpr（不生成 SQL，仅类型转换）
+func (f IntField[T]) AsDecimal() DecimalExpr[float64] {
+	return f.IntExpr.AsDecimal()
+}
+
+// Cast 类型转换 (CAST)
+func (f IntField[T]) Cast(targetType string) clause.Expression {
+	return f.IntExpr.Cast(targetType)
+}
+
+// CastFloat 转换为浮点数 (CAST AS DECIMAL)
+func (f IntField[T]) CastFloat(precision int, scale int) FloatExpr[float64] {
+	return f.IntExpr.CastFloat(precision, scale)
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f IntField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.IntExpr.CastChar(length...)
+}
+
+// CastSigned 转换为有符号整数 (CAST AS SIGNED)
+func (f IntField[T]) CastSigned() IntExpr[int64] {
+	return f.IntExpr.CastSigned()
+}
+
+// CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
+func (f IntField[T]) CastUnsigned() IntExpr[uint64] {
+	return f.IntExpr.CastUnsigned()
+}
+
+// Hex 转换为十六进制字符串 (HEX)
+func (f IntField[T]) Hex() StringExpr[string] {
+	return f.IntExpr.Hex()
+}
+
+// Bin 转换为二进制字符串 (BIN)
+func (f IntField[T]) Bin() StringExpr[string] {
+	return f.IntExpr.Bin()
+}
+
+// Oct 转换为八进制字符串 (OCT)
+func (f IntField[T]) Oct() StringExpr[string] {
+	return f.IntExpr.Oct()
+}
+
+// InetNtoa 将整数形式的IP地址转换为点分十进制字符串 (INET_NTOA)
+// SELECT INET_NTOA(3232235777); -- 结果为 '192.168.1.1'
+// SELECT INET_NTOA(ip_address) FROM access_logs;
+func (f IntField[T]) InetNtoa() StringExpr[string] {
+	return f.IntExpr.InetNtoa()
+}
+
+// SecToTime 将秒数转换为时间 (SEC_TO_TIME)
+// 数据库支持: MySQL
+// SELECT SEC_TO_TIME(5400); -- 返回 '01:30:00'
+func (f IntField[T]) SecToTime() TimeExpr[string] {
+	return f.IntExpr.SecToTime()
+}
+
+// FromDays 将天数转换为日期 (FROM_DAYS)
+// 数据库支持: MySQL
+// SELECT FROM_DAYS(739259); -- 返回 '2024-01-15'
+func (f IntField[T]) FromDays() DateExpr[string] {
+	return f.IntExpr.FromDays()
+}
+
+// ToDateTime 将 Unix 时间戳转换为 DATETIME 类型 (FROM_UNIXTIME)
+// 数据库支持: MySQL
+// SELECT FROM_UNIXTIME(1698306600); -- 返回 '2023-10-26 10:30:00'
+// SELECT FROM_UNIXTIME(created_at) FROM users;
+// 可链式调用日期时间方法，如 .YearExpr(), .Format() 等
+func (f IntField[T]) ToDateTime() DateTimeExpr[string] {
+	return f.IntExpr.ToDateTime()
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f IntField[T]) Count() IntExpr[int64] {
+	return f.IntExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f IntField[T]) CountDistinct() IntExpr[int64] {
+	return f.IntExpr.CountDistinct()
+}
+
+// Add 加法 (+)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price + 100 FROM products;
+// SELECT users.age + 1 FROM users;
+func (f IntField[T]) Add(value any) IntExpr[T] {
+	return f.IntExpr.Add(value)
+}
+
+// Sub 减法 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price - discount FROM products;
+// SELECT stock - sold FROM inventory;
+func (f IntField[T]) Sub(value any) IntExpr[T] {
+	return f.IntExpr.Sub(value)
+}
+
+// Mul 乘法 (*)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price * quantity FROM order_items;
+// SELECT users.level * 10 as points FROM users;
+func (f IntField[T]) Mul(value any) IntExpr[T] {
+	return f.IntExpr.Mul(value)
+}
+
+// Div 除法 (/)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT total / count FROM stats;
+// SELECT points / 100 as level FROM users;
+func (f IntField[T]) Div(value any) FloatExpr[float64] {
+	return f.IntExpr.Div(value)
+}
+
+// Neg 取负 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT -price FROM products;
+func (f IntField[T]) Neg() IntExpr[T] {
+	return f.IntExpr.Neg()
+}
+
+// Mod 取模 (MOD)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 % 操作符)
+// SELECT MOD(10, 3); -- 结果为 1
+// SELECT MOD(234, 10); -- 结果为 4
+// SELECT * FROM users WHERE MOD(id, 2) = 0; -- 偶数ID
+func (f IntField[T]) Mod(value any) IntExpr[T] {
+	return f.IntExpr.Mod(value)
+}
+
+// Abs 返回绝对值 (ABS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ABS(-10); -- 结果为 10
+// SELECT ABS(price - cost) FROM products;
+func (f IntField[T]) Abs() IntExpr[T] {
+	return f.IntExpr.Abs()
+}
+
+// Sign 返回符号 (SIGN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIGN(-10); -- 结果为 -1
+// SELECT SIGN(0); -- 结果为 0
+// SELECT SIGN(10); -- 结果为 1
+func (f IntField[T]) Sign() IntExpr[int8] {
+	return f.IntExpr.Sign()
+}
+
+// Ceil 向上取整 (CEIL)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT CEIL(1.5); -- 结果为 2
+// SELECT CEIL(-1.5); -- 结果为 -1
+func (f IntField[T]) Ceil() IntExpr[T] {
+	return f.IntExpr.Ceil()
+}
+
+// Floor 向下取整 (FLOOR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT FLOOR(1.5); -- 结果为 1
+// SELECT FLOOR(-1.5); -- 结果为 -2
+func (f IntField[T]) Floor() IntExpr[T] {
+	return f.IntExpr.Floor()
+}
+
+// Pow 幂运算 (POW)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT POW(2, 3); -- 结果为 8
+// SELECT POW(price, 2) FROM products;
+func (f IntField[T]) Pow(exponent float64) FloatExpr[float64] {
+	return f.IntExpr.Pow(exponent)
+}
+
+// Sqrt 平方根 (SQRT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SQRT(16); -- 结果为 4
+// SELECT SQRT(variance) FROM stats;
+func (f IntField[T]) Sqrt() FloatExpr[float64] {
+	return f.IntExpr.Sqrt()
+}
+
+// Log 自然对数 (LOG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG(10); -- 结果为 2.302585...
+func (f IntField[T]) Log() FloatExpr[float64] {
+	return f.IntExpr.Log()
+}
+
+// Log10 以10为底的对数 (LOG10)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG10(100); -- 结果为 2
+func (f IntField[T]) Log10() FloatExpr[float64] {
+	return f.IntExpr.Log10()
+}
+
+// Log2 以2为底的对数 (LOG2)
+// 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
+// SELECT LOG2(8); -- 结果为 3
+func (f IntField[T]) Log2() FloatExpr[float64] {
+	return f.IntExpr.Log2()
+}
+
+// Exp 指数函数 (EXP)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT EXP(1); -- 结果为 2.718281828...
+func (f IntField[T]) Exp() FloatExpr[float64] {
+	return f.IntExpr.Exp()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f IntField[T]) IfNull(defaultValue any) IntExpr[T] {
+	return f.IntExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f IntField[T]) Coalesce(values ...any) IntExpr[T] {
+	return f.IntExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f IntField[T]) NullIf(value any) IntExpr[T] {
+	return f.IntExpr.NullIf(value)
+}
+
+// Greatest 返回参数列表中的最大值 (GREATEST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT GREATEST(10, 20, 30); -- 返回 30
+// SELECT GREATEST(price, min_price) FROM products;
+func (f IntField[T]) Greatest(values ...any) IntExpr[T] {
+	return f.IntExpr.Greatest(values...)
+}
+
+// Least 返回参数列表中的最小值 (LEAST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT LEAST(10, 20, 30); -- 返回 10
+// SELECT LEAST(price, max_price) FROM products;
+func (f IntField[T]) Least(values ...any) IntExpr[T] {
+	return f.IntExpr.Least(values...)
+}
+
+// BitAnd 按位与 (&)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 5 & 3; -- 结果为 1
+// SELECT flags & 0x0F FROM settings;
+func (f IntField[T]) BitAnd(value any) IntExpr[T] {
+	return f.IntExpr.BitAnd(value)
+}
+
+// BitOr 按位或 (|)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 5 | 3; -- 结果为 7
+// SELECT flags | 0x10 FROM settings;
+func (f IntField[T]) BitOr(value any) IntExpr[T] {
+	return f.IntExpr.BitOr(value)
+}
+
+// BitXor 按位异或 (^)
+// 数据库支持: MySQL, PostgreSQL (使用 #), SQLite
+// SELECT 5 ^ 3; -- 结果为 6
+// SELECT flags ^ mask FROM settings;
+func (f IntField[T]) BitXor(value any) IntExpr[T] {
+	return f.IntExpr.BitXor(value)
+}
+
+// BitNot 按位取反 (~)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ~5; -- 结果为 -6 (有符号整数)
+// SELECT ~flags FROM settings;
+func (f IntField[T]) BitNot() IntExpr[T] {
+	return f.IntExpr.BitNot()
+}
+
+// LeftShift 左移 (<<)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 1 << 4; -- 结果为 16
+// SELECT value << 2 FROM data;
+func (f IntField[T]) LeftShift(n int) IntExpr[T] {
+	return f.IntExpr.LeftShift(n)
+}
+
+// RightShift 右移 (>>)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT 16 >> 2; -- 结果为 4
+// SELECT value >> 1 FROM data;
+func (f IntField[T]) RightShift(n int) IntExpr[T] {
+	return f.IntExpr.RightShift(n)
+}
+
+// IntDiv 整数除法 (DIV)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 / 或 TRUNC)
+// SELECT 10 DIV 3; -- 结果为 3
+// SELECT total DIV page_size as pages FROM posts;
+func (f IntField[T]) IntDiv(value any) IntExpr[T] {
+	return f.IntExpr.IntDiv(value)
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (f IntField[T]) Sum() DecimalExpr[T] {
+	return f.IntExpr.Sum()
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (f IntField[T]) Avg() FloatExpr[float64] {
+	return f.IntExpr.Avg()
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (f IntField[T]) Max() IntExpr[T] {
+	return f.IntExpr.Max()
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (f IntField[T]) Min() IntExpr[T] {
+	return f.IntExpr.Min()
+}
+
+func (f IntField[T]) Gt(value T) Condition {
+	return f.IntExpr.Gt(value)
+}
+
+func (f IntField[T]) GtOpt(value mo.Option[T]) Condition {
+	return f.IntExpr.GtOpt(value)
+}
+
+func (f IntField[T]) GtF(other clause.Expression) Condition {
+	return f.IntExpr.GtF(other)
+}
+
+func (f IntField[T]) Gte(value T) Condition {
+	return f.IntExpr.Gte(value)
+}
+
+func (f IntField[T]) GteOpt(value mo.Option[T]) Condition {
+	return f.IntExpr.GteOpt(value)
+}
+
+func (f IntField[T]) GteF(other clause.Expression) Condition {
+	return f.IntExpr.GteF(other)
+}
+
+func (f IntField[T]) Lt(value T) Condition {
+	return f.IntExpr.Lt(value)
+}
+
+func (f IntField[T]) LtOpt(value mo.Option[T]) Condition {
+	return f.IntExpr.LtOpt(value)
+}
+
+func (f IntField[T]) LtF(other clause.Expression) Condition {
+	return f.IntExpr.LtF(other)
+}
+
+func (f IntField[T]) Lte(value T) Condition {
+	return f.IntExpr.Lte(value)
+}
+
+func (f IntField[T]) LteOpt(value mo.Option[T]) Condition {
+	return f.IntExpr.LteOpt(value)
+}
+
+func (f IntField[T]) LteF(other clause.Expression) Condition {
+	return f.IntExpr.LteF(other)
+}
+
+func (f IntField[T]) Between(from T, to T) Condition {
+	return f.IntExpr.Between(from, to)
+}
+
+func (f IntField[T]) NotBetween(from T, to T) Condition {
+	return f.IntExpr.NotBetween(from, to)
+}
+
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f IntField[T]) BetweenPtr(from *T, to *T) Condition {
+	return f.IntExpr.BetweenPtr(from, to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f IntField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.IntExpr.BetweenOpt(from, to)
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f IntField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
+	return f.IntExpr.BetweenF(from, to)
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f IntField[T]) NotBetweenPtr(from *T, to *T) Condition {
+	return f.IntExpr.NotBetweenPtr(from, to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f IntField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.IntExpr.NotBetweenOpt(from, to)
+}
+
+func (f IntField[T]) Eq(value T) Condition {
+	return f.IntExpr.Eq(value)
+}
+
+func (f IntField[T]) EqF(other clause.Expression) Condition {
+	return f.IntExpr.EqF(other)
+}
+
+func (f IntField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.IntExpr.EqOpt(value)
+}
+
+func (f IntField[T]) Not(value T) Condition {
+	return f.IntExpr.Not(value)
+}
+
+func (f IntField[T]) NotF(other clause.Expression) Condition {
+	return f.IntExpr.NotF(other)
+}
+
+func (f IntField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.IntExpr.NotOpt(value)
+}
+
+func (f IntField[T]) In(values ...T) Condition {
+	return f.IntExpr.In(values...)
+}
+
+func (f IntField[T]) NotIn(values ...T) Condition {
+	return f.IntExpr.NotIn(values...)
+}
+
+func (f IntField[T]) IsNull() Condition {
+	return f.IntExpr.IsNull()
+}
+
+func (f IntField[T]) IsNotNull() Condition {
+	return f.IntExpr.IsNotNull()
+}
+
 // ==================== FloatField ====================
 
 type FloatField[T any] struct {
@@ -297,6 +767,449 @@ func (f FloatField[T]) Asc() types.OrderItem {
 
 func (f FloatField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+/////////////// re-exported methods from FloatExpr ///////////////
+
+// Cast 类型转换 (CAST)
+func (f FloatField[T]) Cast(targetType string) clause.Expression {
+	return f.FloatExpr.Cast(targetType)
+}
+
+// CastSigned 转换为有符号整数 (CAST AS SIGNED)
+func (f FloatField[T]) CastSigned() IntExpr[int64] {
+	return f.FloatExpr.CastSigned()
+}
+
+// CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
+func (f FloatField[T]) CastUnsigned() IntExpr[uint64] {
+	return f.FloatExpr.CastUnsigned()
+}
+
+// CastDecimal 转换为指定精度的小数 (CAST AS DECIMAL)
+func (f FloatField[T]) CastDecimal(precision int, scale int) DecimalExpr[float64] {
+	return f.FloatExpr.CastDecimal(precision, scale)
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f FloatField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.FloatExpr.CastChar(length...)
+}
+
+// Format 格式化数字 (FORMAT)
+func (f FloatField[T]) Format(decimals int) StringExpr[string] {
+	return f.FloatExpr.Format(decimals)
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f FloatField[T]) Count() IntExpr[int64] {
+	return f.FloatExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f FloatField[T]) CountDistinct() IntExpr[int64] {
+	return f.FloatExpr.CountDistinct()
+}
+
+// Add 加法 (+)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price + 100 FROM products;
+// SELECT users.age + 1 FROM users;
+func (f FloatField[T]) Add(value any) FloatExpr[T] {
+	return f.FloatExpr.Add(value)
+}
+
+// Sub 减法 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price - discount FROM products;
+// SELECT stock - sold FROM inventory;
+func (f FloatField[T]) Sub(value any) FloatExpr[T] {
+	return f.FloatExpr.Sub(value)
+}
+
+// Mul 乘法 (*)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price * quantity FROM order_items;
+// SELECT users.level * 10 as points FROM users;
+func (f FloatField[T]) Mul(value any) FloatExpr[T] {
+	return f.FloatExpr.Mul(value)
+}
+
+// Div 除法 (/)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT total / count FROM stats;
+// SELECT points / 100 as level FROM users;
+func (f FloatField[T]) Div(value any) FloatExpr[T] {
+	return f.FloatExpr.Div(value)
+}
+
+// Neg 取负 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT -price FROM products;
+func (f FloatField[T]) Neg() FloatExpr[T] {
+	return f.FloatExpr.Neg()
+}
+
+// Mod 取模 (MOD)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 % 操作符)
+// SELECT MOD(10, 3); -- 结果为 1
+// SELECT MOD(234, 10); -- 结果为 4
+// SELECT * FROM users WHERE MOD(id, 2) = 0; -- 偶数ID
+func (f FloatField[T]) Mod(value any) FloatExpr[T] {
+	return f.FloatExpr.Mod(value)
+}
+
+// Abs 返回绝对值 (ABS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ABS(-10); -- 结果为 10
+// SELECT ABS(price - cost) FROM products;
+func (f FloatField[T]) Abs() FloatExpr[T] {
+	return f.FloatExpr.Abs()
+}
+
+// Sign 返回符号 (SIGN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIGN(-10); -- 结果为 -1
+// SELECT SIGN(0); -- 结果为 0
+// SELECT SIGN(10); -- 结果为 1
+func (f FloatField[T]) Sign() IntExpr[int8] {
+	return f.FloatExpr.Sign()
+}
+
+// Ceil 向上取整 (CEIL)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT CEIL(1.5); -- 结果为 2
+// SELECT CEIL(-1.5); -- 结果为 -1
+func (f FloatField[T]) Ceil() IntExpr[int64] {
+	return f.FloatExpr.Ceil()
+}
+
+// Floor 向下取整 (FLOOR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT FLOOR(1.5); -- 结果为 1
+// SELECT FLOOR(-1.5); -- 结果为 -2
+func (f FloatField[T]) Floor() IntExpr[int64] {
+	return f.FloatExpr.Floor()
+}
+
+// Round 四舍五入 (ROUND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ROUND(1.567); -- 结果为 2
+// SELECT ROUND(1.567, 2); -- 结果为 1.57
+func (f FloatField[T]) Round(decimals ...int) FloatExpr[T] {
+	return f.FloatExpr.Round(decimals...)
+}
+
+// Truncate 截断小数 (TRUNCATE)
+// 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
+// SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
+// SELECT TRUNCATE(1.567, 0); -- 结果为 1
+func (f FloatField[T]) Truncate(decimals int) FloatExpr[T] {
+	return f.FloatExpr.Truncate(decimals)
+}
+
+// Pow 幂运算 (POW)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT POW(2, 3); -- 结果为 8
+// SELECT POW(price, 2) FROM products;
+func (f FloatField[T]) Pow(exponent float64) FloatExpr[T] {
+	return f.FloatExpr.Pow(exponent)
+}
+
+// Sqrt 平方根 (SQRT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SQRT(16); -- 结果为 4
+// SELECT SQRT(variance) FROM stats;
+func (f FloatField[T]) Sqrt() FloatExpr[T] {
+	return f.FloatExpr.Sqrt()
+}
+
+// Log 自然对数 (LOG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG(10); -- 结果为 2.302585...
+func (f FloatField[T]) Log() FloatExpr[T] {
+	return f.FloatExpr.Log()
+}
+
+// Log10 以10为底的对数 (LOG10)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG10(100); -- 结果为 2
+func (f FloatField[T]) Log10() FloatExpr[T] {
+	return f.FloatExpr.Log10()
+}
+
+// Log2 以2为底的对数 (LOG2)
+// 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
+// SELECT LOG2(8); -- 结果为 3
+func (f FloatField[T]) Log2() FloatExpr[T] {
+	return f.FloatExpr.Log2()
+}
+
+// Exp 指数函数 (EXP)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT EXP(1); -- 结果为 2.718281828...
+func (f FloatField[T]) Exp() FloatExpr[T] {
+	return f.FloatExpr.Exp()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f FloatField[T]) IfNull(defaultValue any) FloatExpr[T] {
+	return f.FloatExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f FloatField[T]) Coalesce(values ...any) FloatExpr[T] {
+	return f.FloatExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f FloatField[T]) NullIf(value any) FloatExpr[T] {
+	return f.FloatExpr.NullIf(value)
+}
+
+// Greatest 返回参数列表中的最大值 (GREATEST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT GREATEST(10, 20, 30); -- 返回 30
+// SELECT GREATEST(price, min_price) FROM products;
+func (f FloatField[T]) Greatest(values ...any) FloatExpr[T] {
+	return f.FloatExpr.Greatest(values...)
+}
+
+// Least 返回参数列表中的最小值 (LEAST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT LEAST(10, 20, 30); -- 返回 10
+// SELECT LEAST(price, max_price) FROM products;
+func (f FloatField[T]) Least(values ...any) FloatExpr[T] {
+	return f.FloatExpr.Least(values...)
+}
+
+// Sin 正弦 (SIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIN(0); -- 结果为 0
+// SELECT SIN(PI()/2); -- 结果为 1
+func (f FloatField[T]) Sin() FloatExpr[T] {
+	return f.FloatExpr.Sin()
+}
+
+// Cos 余弦 (COS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COS(0); -- 结果为 1
+// SELECT COS(PI()); -- 结果为 -1
+func (f FloatField[T]) Cos() FloatExpr[T] {
+	return f.FloatExpr.Cos()
+}
+
+// Tan 正切 (TAN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT TAN(0); -- 结果为 0
+// SELECT TAN(PI()/4); -- 结果约为 1
+func (f FloatField[T]) Tan() FloatExpr[T] {
+	return f.FloatExpr.Tan()
+}
+
+// Asin 反正弦 (ASIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ASIN(0); -- 结果为 0
+// SELECT ASIN(1); -- 结果为 PI()/2
+func (f FloatField[T]) Asin() FloatExpr[T] {
+	return f.FloatExpr.Asin()
+}
+
+// Acos 反余弦 (ACOS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ACOS(1); -- 结果为 0
+// SELECT ACOS(0); -- 结果为 PI()/2
+func (f FloatField[T]) Acos() FloatExpr[T] {
+	return f.FloatExpr.Acos()
+}
+
+// Atan 反正切 (ATAN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ATAN(0); -- 结果为 0
+// SELECT ATAN(1); -- 结果为 PI()/4
+func (f FloatField[T]) Atan() FloatExpr[T] {
+	return f.FloatExpr.Atan()
+}
+
+// Radians 角度转弧度 (RADIANS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT RADIANS(180); -- 结果为 PI()
+// SELECT RADIANS(90); -- 结果为 PI()/2
+func (f FloatField[T]) Radians() FloatExpr[T] {
+	return f.FloatExpr.Radians()
+}
+
+// Degrees 弧度转角度 (DEGREES)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT DEGREES(PI()); -- 结果为 180
+// SELECT DEGREES(PI()/2); -- 结果为 90
+func (f FloatField[T]) Degrees() FloatExpr[T] {
+	return f.FloatExpr.Degrees()
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (f FloatField[T]) Sum() FloatExpr[T] {
+	return f.FloatExpr.Sum()
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (f FloatField[T]) Avg() FloatExpr[float64] {
+	return f.FloatExpr.Avg()
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (f FloatField[T]) Max() FloatExpr[T] {
+	return f.FloatExpr.Max()
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (f FloatField[T]) Min() FloatExpr[T] {
+	return f.FloatExpr.Min()
+}
+
+func (f FloatField[T]) Gt(value T) Condition {
+	return f.FloatExpr.Gt(value)
+}
+
+func (f FloatField[T]) GtOpt(value mo.Option[T]) Condition {
+	return f.FloatExpr.GtOpt(value)
+}
+
+func (f FloatField[T]) GtF(other clause.Expression) Condition {
+	return f.FloatExpr.GtF(other)
+}
+
+func (f FloatField[T]) Gte(value T) Condition {
+	return f.FloatExpr.Gte(value)
+}
+
+func (f FloatField[T]) GteOpt(value mo.Option[T]) Condition {
+	return f.FloatExpr.GteOpt(value)
+}
+
+func (f FloatField[T]) GteF(other clause.Expression) Condition {
+	return f.FloatExpr.GteF(other)
+}
+
+func (f FloatField[T]) Lt(value T) Condition {
+	return f.FloatExpr.Lt(value)
+}
+
+func (f FloatField[T]) LtOpt(value mo.Option[T]) Condition {
+	return f.FloatExpr.LtOpt(value)
+}
+
+func (f FloatField[T]) LtF(other clause.Expression) Condition {
+	return f.FloatExpr.LtF(other)
+}
+
+func (f FloatField[T]) Lte(value T) Condition {
+	return f.FloatExpr.Lte(value)
+}
+
+func (f FloatField[T]) LteOpt(value mo.Option[T]) Condition {
+	return f.FloatExpr.LteOpt(value)
+}
+
+func (f FloatField[T]) LteF(other clause.Expression) Condition {
+	return f.FloatExpr.LteF(other)
+}
+
+func (f FloatField[T]) Between(from T, to T) Condition {
+	return f.FloatExpr.Between(from, to)
+}
+
+func (f FloatField[T]) NotBetween(from T, to T) Condition {
+	return f.FloatExpr.NotBetween(from, to)
+}
+
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f FloatField[T]) BetweenPtr(from *T, to *T) Condition {
+	return f.FloatExpr.BetweenPtr(from, to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f FloatField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.FloatExpr.BetweenOpt(from, to)
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f FloatField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
+	return f.FloatExpr.BetweenF(from, to)
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f FloatField[T]) NotBetweenPtr(from *T, to *T) Condition {
+	return f.FloatExpr.NotBetweenPtr(from, to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f FloatField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.FloatExpr.NotBetweenOpt(from, to)
+}
+
+func (f FloatField[T]) Eq(value T) Condition {
+	return f.FloatExpr.Eq(value)
+}
+
+func (f FloatField[T]) EqF(other clause.Expression) Condition {
+	return f.FloatExpr.EqF(other)
+}
+
+func (f FloatField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.FloatExpr.EqOpt(value)
+}
+
+func (f FloatField[T]) Not(value T) Condition {
+	return f.FloatExpr.Not(value)
+}
+
+func (f FloatField[T]) NotF(other clause.Expression) Condition {
+	return f.FloatExpr.NotF(other)
+}
+
+func (f FloatField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.FloatExpr.NotOpt(value)
+}
+
+func (f FloatField[T]) In(values ...T) Condition {
+	return f.FloatExpr.In(values...)
+}
+
+func (f FloatField[T]) NotIn(values ...T) Condition {
+	return f.FloatExpr.NotIn(values...)
+}
+
+func (f FloatField[T]) IsNull() Condition {
+	return f.FloatExpr.IsNull()
+}
+
+func (f FloatField[T]) IsNotNull() Condition {
+	return f.FloatExpr.IsNotNull()
 }
 
 // ==================== DecimalField ====================
@@ -444,6 +1357,390 @@ func (f DecimalField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+/////////////// re-exported methods from DecimalExpr ///////////////
+
+// Cast 类型转换 (CAST)
+func (f DecimalField[T]) Cast(targetType string) clause.Expression {
+	return f.DecimalExpr.Cast(targetType)
+}
+
+// CastSigned 转换为有符号整数 (CAST AS SIGNED)
+func (f DecimalField[T]) CastSigned() IntExpr[int64] {
+	return f.DecimalExpr.CastSigned()
+}
+
+// CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
+func (f DecimalField[T]) CastUnsigned() IntExpr[uint64] {
+	return f.DecimalExpr.CastUnsigned()
+}
+
+// CastDecimal 转换为指定精度的 DECIMAL (CAST AS DECIMAL)
+func (f DecimalField[T]) CastDecimal(precision int, scale int) DecimalExpr[T] {
+	return f.DecimalExpr.CastDecimal(precision, scale)
+}
+
+// CastFloat 转换为浮点数 (CAST AS DOUBLE)
+func (f DecimalField[T]) CastFloat() FloatExpr[float64] {
+	return f.DecimalExpr.CastFloat()
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f DecimalField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.DecimalExpr.CastChar(length...)
+}
+
+// Format 格式化数字 (FORMAT)
+func (f DecimalField[T]) Format(decimals int) StringExpr[string] {
+	return f.DecimalExpr.Format(decimals)
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f DecimalField[T]) Count() IntExpr[int64] {
+	return f.DecimalExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f DecimalField[T]) CountDistinct() IntExpr[int64] {
+	return f.DecimalExpr.CountDistinct()
+}
+
+// Add 加法 (+)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price + 100 FROM products;
+// SELECT users.age + 1 FROM users;
+func (f DecimalField[T]) Add(value any) DecimalExpr[T] {
+	return f.DecimalExpr.Add(value)
+}
+
+// Sub 减法 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price - discount FROM products;
+// SELECT stock - sold FROM inventory;
+func (f DecimalField[T]) Sub(value any) DecimalExpr[T] {
+	return f.DecimalExpr.Sub(value)
+}
+
+// Mul 乘法 (*)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT price * quantity FROM order_items;
+// SELECT users.level * 10 as points FROM users;
+func (f DecimalField[T]) Mul(value any) DecimalExpr[T] {
+	return f.DecimalExpr.Mul(value)
+}
+
+// Div 除法 (/)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT total / count FROM stats;
+// SELECT points / 100 as level FROM users;
+func (f DecimalField[T]) Div(value any) DecimalExpr[T] {
+	return f.DecimalExpr.Div(value)
+}
+
+// Neg 取负 (-)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT -price FROM products;
+func (f DecimalField[T]) Neg() DecimalExpr[T] {
+	return f.DecimalExpr.Neg()
+}
+
+// Mod 取模 (MOD)
+// 数据库支持: MySQL (PostgreSQL/SQLite 使用 % 操作符)
+// SELECT MOD(10, 3); -- 结果为 1
+// SELECT MOD(234, 10); -- 结果为 4
+// SELECT * FROM users WHERE MOD(id, 2) = 0; -- 偶数ID
+func (f DecimalField[T]) Mod(value any) DecimalExpr[T] {
+	return f.DecimalExpr.Mod(value)
+}
+
+// Abs 返回绝对值 (ABS)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ABS(-10); -- 结果为 10
+// SELECT ABS(price - cost) FROM products;
+func (f DecimalField[T]) Abs() DecimalExpr[T] {
+	return f.DecimalExpr.Abs()
+}
+
+// Sign 返回符号 (SIGN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SIGN(-10); -- 结果为 -1
+// SELECT SIGN(0); -- 结果为 0
+// SELECT SIGN(10); -- 结果为 1
+func (f DecimalField[T]) Sign() IntExpr[int8] {
+	return f.DecimalExpr.Sign()
+}
+
+// Ceil 向上取整 (CEIL)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT CEIL(1.5); -- 结果为 2
+// SELECT CEIL(-1.5); -- 结果为 -1
+func (f DecimalField[T]) Ceil() IntExpr[int64] {
+	return f.DecimalExpr.Ceil()
+}
+
+// Floor 向下取整 (FLOOR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT FLOOR(1.5); -- 结果为 1
+// SELECT FLOOR(-1.5); -- 结果为 -2
+func (f DecimalField[T]) Floor() IntExpr[int64] {
+	return f.DecimalExpr.Floor()
+}
+
+// Round 四舍五入 (ROUND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT ROUND(1.567); -- 结果为 2
+// SELECT ROUND(1.567, 2); -- 结果为 1.57
+func (f DecimalField[T]) Round(decimals ...int) DecimalExpr[T] {
+	return f.DecimalExpr.Round(decimals...)
+}
+
+// Truncate 截断小数 (TRUNCATE)
+// 数据库支持: MySQL (PostgreSQL 使用 TRUNC, SQLite 不支持)
+// SELECT TRUNCATE(1.567, 2); -- 结果为 1.56
+// SELECT TRUNCATE(1.567, 0); -- 结果为 1
+func (f DecimalField[T]) Truncate(decimals int) DecimalExpr[T] {
+	return f.DecimalExpr.Truncate(decimals)
+}
+
+// Pow 幂运算 (POW)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT POW(2, 3); -- 结果为 8
+// SELECT POW(price, 2) FROM products;
+func (f DecimalField[T]) Pow(exponent float64) FloatExpr[float64] {
+	return f.DecimalExpr.Pow(exponent)
+}
+
+// Sqrt 平方根 (SQRT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SQRT(16); -- 结果为 4
+// SELECT SQRT(variance) FROM stats;
+func (f DecimalField[T]) Sqrt() FloatExpr[float64] {
+	return f.DecimalExpr.Sqrt()
+}
+
+// Log 自然对数 (LOG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG(10); -- 结果为 2.302585...
+func (f DecimalField[T]) Log() FloatExpr[float64] {
+	return f.DecimalExpr.Log()
+}
+
+// Log10 以10为底的对数 (LOG10)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT LOG10(100); -- 结果为 2
+func (f DecimalField[T]) Log10() FloatExpr[float64] {
+	return f.DecimalExpr.Log10()
+}
+
+// Log2 以2为底的对数 (LOG2)
+// 数据库支持: MySQL (PostgreSQL/SQLite 不直接支持)
+// SELECT LOG2(8); -- 结果为 3
+func (f DecimalField[T]) Log2() FloatExpr[float64] {
+	return f.DecimalExpr.Log2()
+}
+
+// Exp 指数函数 (EXP)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT EXP(1); -- 结果为 2.718281828...
+func (f DecimalField[T]) Exp() FloatExpr[float64] {
+	return f.DecimalExpr.Exp()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f DecimalField[T]) IfNull(defaultValue any) DecimalExpr[T] {
+	return f.DecimalExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f DecimalField[T]) Coalesce(values ...any) DecimalExpr[T] {
+	return f.DecimalExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f DecimalField[T]) NullIf(value any) DecimalExpr[T] {
+	return f.DecimalExpr.NullIf(value)
+}
+
+// Greatest 返回参数列表中的最大值 (GREATEST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT GREATEST(10, 20, 30); -- 返回 30
+// SELECT GREATEST(price, min_price) FROM products;
+func (f DecimalField[T]) Greatest(values ...any) DecimalExpr[T] {
+	return f.DecimalExpr.Greatest(values...)
+}
+
+// Least 返回参数列表中的最小值 (LEAST)
+// 数据库支持: MySQL, PostgreSQL (SQLite 不支持)
+// SELECT LEAST(10, 20, 30); -- 返回 10
+// SELECT LEAST(price, max_price) FROM products;
+func (f DecimalField[T]) Least(values ...any) DecimalExpr[T] {
+	return f.DecimalExpr.Least(values...)
+}
+
+// Sum 计算数值的总和 (SUM)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT SUM(quantity) FROM orders;
+// SELECT user_id, SUM(points) FROM transactions GROUP BY user_id;
+func (f DecimalField[T]) Sum() DecimalExpr[T] {
+	return f.DecimalExpr.Sum()
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (f DecimalField[T]) Avg() FloatExpr[float64] {
+	return f.DecimalExpr.Avg()
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (f DecimalField[T]) Max() DecimalExpr[T] {
+	return f.DecimalExpr.Max()
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (f DecimalField[T]) Min() DecimalExpr[T] {
+	return f.DecimalExpr.Min()
+}
+
+func (f DecimalField[T]) Gt(value T) Condition {
+	return f.DecimalExpr.Gt(value)
+}
+
+func (f DecimalField[T]) GtOpt(value mo.Option[T]) Condition {
+	return f.DecimalExpr.GtOpt(value)
+}
+
+func (f DecimalField[T]) GtF(other clause.Expression) Condition {
+	return f.DecimalExpr.GtF(other)
+}
+
+func (f DecimalField[T]) Gte(value T) Condition {
+	return f.DecimalExpr.Gte(value)
+}
+
+func (f DecimalField[T]) GteOpt(value mo.Option[T]) Condition {
+	return f.DecimalExpr.GteOpt(value)
+}
+
+func (f DecimalField[T]) GteF(other clause.Expression) Condition {
+	return f.DecimalExpr.GteF(other)
+}
+
+func (f DecimalField[T]) Lt(value T) Condition {
+	return f.DecimalExpr.Lt(value)
+}
+
+func (f DecimalField[T]) LtOpt(value mo.Option[T]) Condition {
+	return f.DecimalExpr.LtOpt(value)
+}
+
+func (f DecimalField[T]) LtF(other clause.Expression) Condition {
+	return f.DecimalExpr.LtF(other)
+}
+
+func (f DecimalField[T]) Lte(value T) Condition {
+	return f.DecimalExpr.Lte(value)
+}
+
+func (f DecimalField[T]) LteOpt(value mo.Option[T]) Condition {
+	return f.DecimalExpr.LteOpt(value)
+}
+
+func (f DecimalField[T]) LteF(other clause.Expression) Condition {
+	return f.DecimalExpr.LteF(other)
+}
+
+func (f DecimalField[T]) Between(from T, to T) Condition {
+	return f.DecimalExpr.Between(from, to)
+}
+
+func (f DecimalField[T]) NotBetween(from T, to T) Condition {
+	return f.DecimalExpr.NotBetween(from, to)
+}
+
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f DecimalField[T]) BetweenPtr(from *T, to *T) Condition {
+	return f.DecimalExpr.BetweenPtr(from, to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f DecimalField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.DecimalExpr.BetweenOpt(from, to)
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f DecimalField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
+	return f.DecimalExpr.BetweenF(from, to)
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f DecimalField[T]) NotBetweenPtr(from *T, to *T) Condition {
+	return f.DecimalExpr.NotBetweenPtr(from, to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f DecimalField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.DecimalExpr.NotBetweenOpt(from, to)
+}
+
+func (f DecimalField[T]) Eq(value T) Condition {
+	return f.DecimalExpr.Eq(value)
+}
+
+func (f DecimalField[T]) EqF(other clause.Expression) Condition {
+	return f.DecimalExpr.EqF(other)
+}
+
+func (f DecimalField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.DecimalExpr.EqOpt(value)
+}
+
+func (f DecimalField[T]) Not(value T) Condition {
+	return f.DecimalExpr.Not(value)
+}
+
+func (f DecimalField[T]) NotF(other clause.Expression) Condition {
+	return f.DecimalExpr.NotF(other)
+}
+
+func (f DecimalField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.DecimalExpr.NotOpt(value)
+}
+
+func (f DecimalField[T]) In(values ...T) Condition {
+	return f.DecimalExpr.In(values...)
+}
+
+func (f DecimalField[T]) NotIn(values ...T) Condition {
+	return f.DecimalExpr.NotIn(values...)
+}
+
+func (f DecimalField[T]) IsNull() Condition {
+	return f.DecimalExpr.IsNull()
+}
+
+func (f DecimalField[T]) IsNotNull() Condition {
+	return f.DecimalExpr.IsNotNull()
+}
+
 // ==================== StringField ====================
 
 type StringField[T any] struct {
@@ -587,6 +1884,318 @@ func (f StringField[T]) Asc() types.OrderItem {
 
 func (f StringField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+/////////////// re-exported methods from StringExpr ///////////////
+
+// Cast 类型转换 (CAST)
+// SELECT CAST(price AS SIGNED) FROM products;
+// SELECT CAST(amount AS DECIMAL(10,2)) FROM orders;
+// targetType: SIGNED, UNSIGNED, DECIMAL(m,n), CHAR, DATE, DATETIME, TIME, BINARY 等
+func (f StringField[T]) Cast(targetType string) clause.Expression {
+	return f.StringExpr.Cast(targetType)
+}
+
+// CastSigned 转换为有符号整数 (CAST AS SIGNED)
+func (f StringField[T]) CastSigned() IntExpr[int64] {
+	return f.StringExpr.CastSigned()
+}
+
+// CastUnsigned 转换为无符号整数 (CAST AS UNSIGNED)
+func (f StringField[T]) CastUnsigned() IntExpr[uint64] {
+	return f.StringExpr.CastUnsigned()
+}
+
+// CastDecimal 转换为小数 (CAST AS DECIMAL)
+// precision: 总位数, scale: 小数位数
+func (f StringField[T]) CastDecimal(precision int, scale int) DecimalExpr[float64] {
+	return f.StringExpr.CastDecimal(precision, scale)
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f StringField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.StringExpr.CastChar(length...)
+}
+
+// Upper 将字符串转换为大写 (UPPER)，只对英文字母有效
+// SELECT UPPER('hello world');
+// SELECT UPPER(users.username) FROM users;
+// SELECT * FROM products WHERE UPPER(product_code) = 'ABC123';
+// UPDATE users SET username = UPPER(username) WHERE id = 1;
+func (f StringField[T]) Upper() StringExpr[T] {
+	return f.StringExpr.Upper()
+}
+
+// Lower 将字符串转换为小写 (LOWER)，只对英文字母有效
+// SELECT LOWER('HELLO WORLD');
+// SELECT LOWER(users.email) FROM users;
+// SELECT * FROM users WHERE LOWER(username) = 'admin';
+// UPDATE users SET email = LOWER(email);
+func (f StringField[T]) Lower() StringExpr[T] {
+	return f.StringExpr.Lower()
+}
+
+// Trim 去除字符串两端的空格 (TRIM)
+// SELECT TRIM('  Hello World  ');
+// SELECT TRIM(users.username) FROM users;
+// UPDATE users SET email = TRIM(email);
+func (f StringField[T]) Trim() StringExpr[T] {
+	return f.StringExpr.Trim()
+}
+
+// LTrim 去除字符串左侧的空格 (LTRIM)
+// SELECT LTRIM('  Hello World  ');
+// SELECT LTRIM(users.name) FROM users;
+// SELECT * FROM products WHERE LTRIM(code) != code;
+// UPDATE users SET username = LTRIM(username);
+func (f StringField[T]) LTrim() StringExpr[T] {
+	return f.StringExpr.LTrim()
+}
+
+// RTrim 去除字符串右侧的空格 (RTRIM)
+// SELECT RTRIM('  Hello World  ');
+// SELECT RTRIM(description) FROM products;
+// SELECT * FROM users WHERE RTRIM(email) != email;
+// UPDATE articles SET title = RTRIM(title);
+func (f StringField[T]) RTrim() StringExpr[T] {
+	return f.StringExpr.RTrim()
+}
+
+// Substring 从字符串中提取子字符串 (SUBSTRING)，位置从1开始
+// SELECT SUBSTRING('Hello World', 1, 5);
+// SELECT SUBSTRING(users.email, 1, LOCATE('@', users.email) - 1) FROM users;
+// SELECT SUBSTRING(product_code, 4, 3) FROM products;
+// pos: 起始位置（从1开始）, length: 长度
+func (f StringField[T]) Substring(pos int, length int) StringExpr[T] {
+	return f.StringExpr.Substring(pos, length)
+}
+
+// Left 从字符串左侧提取指定长度的子字符串 (LEFT)
+// SELECT LEFT('Hello World', 5);
+// SELECT LEFT(users.name, 1) as initial FROM users;
+// SELECT * FROM products WHERE LEFT(product_code, 2) = 'AB';
+// SELECT LEFT(email, LOCATE('@', email) - 1) FROM users;
+func (f StringField[T]) Left(length int) StringExpr[T] {
+	return f.StringExpr.Left(length)
+}
+
+// Right 从字符串右侧提取指定长度的子字符串 (RIGHT)
+// SELECT RIGHT('Hello World', 5);
+// SELECT RIGHT(phone, 4) as last_four FROM users;
+// SELECT * FROM files WHERE RIGHT(filename, 4) = '.pdf';
+// SELECT RIGHT(product_code, 3) FROM products;
+func (f StringField[T]) Right(length int) StringExpr[T] {
+	return f.StringExpr.Right(length)
+}
+
+// Length 返回字符串的字节长度 (LENGTH)
+// SELECT LENGTH('Hello');
+// SELECT LENGTH('你好');
+// SELECT users.name, LENGTH(users.name) FROM users;
+// SELECT * FROM products WHERE LENGTH(product_code) = 8;
+// 注意: UTF-8编码中一个中文字符通常占3个字节
+func (f StringField[T]) Length() IntExpr[int64] {
+	return f.StringExpr.Length()
+}
+
+// CharLength 返回字符串的字符长度 (CHAR_LENGTH)，多字节字符按一个字符计算
+// SELECT CHAR_LENGTH('Hello');
+// SELECT CHAR_LENGTH('你好');
+// SELECT users.name, CHAR_LENGTH(users.name) FROM users;
+// SELECT * FROM articles WHERE CHAR_LENGTH(content) > 1000;
+func (f StringField[T]) CharLength() IntExpr[int64] {
+	return f.StringExpr.CharLength()
+}
+
+// Concat 拼接多个字符串 (CONCAT)，任意参数为NULL则返回NULL
+// SELECT CONCAT('Hello', ' ', 'World');
+// SELECT CONCAT(users.first_name, ' ', users.last_name) as full_name FROM users;
+// SELECT CONCAT('User:', users.id) FROM users;
+// SELECT CONCAT(YEAR(NOW()), '-', MONTH(NOW()));
+func (f StringField[T]) Concat(args ...clause.Expression) StringExpr[T] {
+	return f.StringExpr.Concat(args...)
+}
+
+// ConcatWS 用指定分隔符拼接多个字符串 (CONCAT_WS)，自动跳过NULL值
+// SELECT CONCAT_WS(',', 'A', 'B', 'C'); -- 结果为 'A,B,C'
+// SELECT CONCAT_WS('-', users.last_name, users.first_name) FROM users;
+// SELECT CONCAT_WS('/', YEAR(date), MONTH(date), DAY(date)) FROM logs;
+// SELECT CONCAT_WS(', ', city, state, country) FROM addresses;
+// 注意：分隔符为NULL则返回NULL，但参数中的NULL会被跳过
+func (f StringField[T]) ConcatWS(separator string, args ...clause.Expression) StringExpr[T] {
+	return f.StringExpr.ConcatWS(separator, args...)
+}
+
+// Replace 替换字符串中所有出现的子字符串 (REPLACE)
+// SELECT REPLACE('Hello World', 'World', 'MySQL');
+// SELECT REPLACE('www.example.com', 'www', 'mail');
+// SELECT REPLACE(phone, '-', ”) FROM users;
+// UPDATE products SET description = REPLACE(description, 'old', 'new');
+func (f StringField[T]) Replace(from string, to string) StringExpr[T] {
+	return f.StringExpr.Replace(from, to)
+}
+
+// Locate 查找子字符串位置 (LOCATE)
+// SELECT LOCATE('@', email) FROM users;
+// 返回子字符串第一次出现的位置（从1开始），未找到返回0
+func (f StringField[T]) Locate(substr string) IntExpr[int64] {
+	return f.StringExpr.Locate(substr)
+}
+
+// Reverse 反转字符串 (REVERSE)
+// SELECT REVERSE(name) FROM users;
+func (f StringField[T]) Reverse() StringExpr[T] {
+	return f.StringExpr.Reverse()
+}
+
+// Repeat 重复字符串 (REPEAT)
+// SELECT REPEAT('*', 10);
+func (f StringField[T]) Repeat(count int) StringExpr[T] {
+	return f.StringExpr.Repeat(count)
+}
+
+// LPad 左侧填充 (LPAD)
+// SELECT LPAD(id, 5, '0') FROM users; -- 结果如 "00001"
+func (f StringField[T]) LPad(length int, padStr string) StringExpr[T] {
+	return f.StringExpr.LPad(length, padStr)
+}
+
+// RPad 右侧填充 (RPAD)
+// SELECT RPAD(name, 20, ' ') FROM users;
+func (f StringField[T]) RPad(length int, padStr string) StringExpr[T] {
+	return f.StringExpr.RPad(length, padStr)
+}
+
+// ToDate 将字符串按照指定格式转换为日期/时间 (STR_TO_DATE)
+// SELECT STR_TO_DATE('2023-10-26', '%Y-%m-%d');
+// SELECT STR_TO_DATE('2023年10月26日', '%Y年%m月%d日');
+// SELECT STR_TO_DATE('10/26/2023 10:30:45', '%m/%d/%Y %H:%i:%s');
+// SELECT * FROM orders WHERE order_date = STR_TO_DATE('20231026', '%Y%m%d');
+func (f StringField[T]) ToDate(format string) DateTimeExpr[string] {
+	return f.StringExpr.ToDate(format)
+}
+
+// InetAton 将点分十进制的IPv4地址转换为整数形式 (INET_ATON)
+// SELECT INET_ATON('192.168.1.1'); -- 结果为 3232235777
+// INSERT INTO ip_logs (ip_num) VALUES (INET_ATON('192.168.1.100'));
+func (f StringField[T]) InetAton() IntExpr[uint32] {
+	return f.StringExpr.InetAton()
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f StringField[T]) Count() IntExpr[int64] {
+	return f.StringExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f StringField[T]) CountDistinct() IntExpr[int64] {
+	return f.StringExpr.CountDistinct()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f StringField[T]) IfNull(defaultValue any) StringExpr[T] {
+	return f.StringExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f StringField[T]) Coalesce(values ...any) StringExpr[T] {
+	return f.StringExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f StringField[T]) NullIf(value any) StringExpr[T] {
+	return f.StringExpr.NullIf(value)
+}
+
+func (f StringField[T]) Eq(value T) Condition {
+	return f.StringExpr.Eq(value)
+}
+
+func (f StringField[T]) EqF(other clause.Expression) Condition {
+	return f.StringExpr.EqF(other)
+}
+
+func (f StringField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.StringExpr.EqOpt(value)
+}
+
+func (f StringField[T]) Not(value T) Condition {
+	return f.StringExpr.Not(value)
+}
+
+func (f StringField[T]) NotF(other clause.Expression) Condition {
+	return f.StringExpr.NotF(other)
+}
+
+func (f StringField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.StringExpr.NotOpt(value)
+}
+
+func (f StringField[T]) In(values ...T) Condition {
+	return f.StringExpr.In(values...)
+}
+
+func (f StringField[T]) NotIn(values ...T) Condition {
+	return f.StringExpr.NotIn(values...)
+}
+
+func (f StringField[T]) Like(value T, escape ...byte) clause.Expression {
+	return f.StringExpr.Like(value, escape...)
+}
+
+func (f StringField[T]) LikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
+	return f.StringExpr.LikeOpt(value, escape...)
+}
+
+func (f StringField[T]) NotLike(value T, escape ...byte) clause.Expression {
+	return f.StringExpr.NotLike(value, escape...)
+}
+
+func (f StringField[T]) NotLikeOpt(value mo.Option[T], escape ...byte) clause.Expression {
+	return f.StringExpr.NotLikeOpt(value, escape...)
+}
+
+func (f StringField[T]) Contains(value string) clause.Expression {
+	return f.StringExpr.Contains(value)
+}
+
+func (f StringField[T]) ContainsOpt(value mo.Option[string]) clause.Expression {
+	return f.StringExpr.ContainsOpt(value)
+}
+
+func (f StringField[T]) HasPrefix(value string) clause.Expression {
+	return f.StringExpr.HasPrefix(value)
+}
+
+func (f StringField[T]) HasPrefixOpt(value mo.Option[string]) clause.Expression {
+	return f.StringExpr.HasPrefixOpt(value)
+}
+
+func (f StringField[T]) HasSuffix(value string) clause.Expression {
+	return f.StringExpr.HasSuffix(value)
+}
+
+func (f StringField[T]) HasSuffixOpt(value mo.Option[string]) clause.Expression {
+	return f.StringExpr.HasSuffixOpt(value)
+}
+
+func (f StringField[T]) IsNull() Condition {
+	return f.StringExpr.IsNull()
+}
+
+func (f StringField[T]) IsNotNull() Condition {
+	return f.StringExpr.IsNotNull()
 }
 
 // ==================== DateTimeField ====================
@@ -734,6 +2343,404 @@ func (f DateTimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+/////////////// re-exported methods from DateTimeExpr ///////////////
+
+// Cast 类型转换 (CAST)
+func (f DateTimeField[T]) Cast(targetType string) clause.Expression {
+	return f.DateTimeExpr.Cast(targetType)
+}
+
+// CastDate 转换为 DATE 类型 (CAST AS DATE)
+func (f DateTimeField[T]) CastDate() DateExpr[string] {
+	return f.DateTimeExpr.CastDate()
+}
+
+// CastTime 转换为 TIME 类型 (CAST AS TIME)
+func (f DateTimeField[T]) CastTime() TimeExpr[string] {
+	return f.DateTimeExpr.CastTime()
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f DateTimeField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.DateTimeExpr.CastChar(length...)
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f DateTimeField[T]) Count() IntExpr[int64] {
+	return f.DateTimeExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f DateTimeField[T]) CountDistinct() IntExpr[int64] {
+	return f.DateTimeExpr.CountDistinct()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f DateTimeField[T]) IfNull(defaultValue any) DateTimeExpr[T] {
+	return f.DateTimeExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f DateTimeField[T]) Coalesce(values ...any) DateTimeExpr[T] {
+	return f.DateTimeExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f DateTimeField[T]) NullIf(value any) DateTimeExpr[T] {
+	return f.DateTimeExpr.NullIf(value)
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (f DateTimeField[T]) Avg() FloatExpr[float64] {
+	return f.DateTimeExpr.Avg()
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (f DateTimeField[T]) Max() DateTimeExpr[T] {
+	return f.DateTimeExpr.Max()
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (f DateTimeField[T]) Min() DateTimeExpr[T] {
+	return f.DateTimeExpr.Min()
+}
+
+// YearExpr 提取年份部分 (YEAR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT YEAR(date_column) FROM table;
+func (f DateTimeField[T]) Year() IntExpr[int] {
+	return f.DateTimeExpr.Year()
+}
+
+// Month 提取月份部分 (MONTH)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MONTH(date_column) FROM table;
+func (f DateTimeField[T]) Month() IntExpr[int] {
+	return f.DateTimeExpr.Month()
+}
+
+// Day 提取天数部分 (DAY)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT DAY(date_column) FROM table;
+func (f DateTimeField[T]) Day() IntExpr[int] {
+	return f.DateTimeExpr.Day()
+}
+
+// DayOfMonth 提取一月中的天数 (DAYOFMONTH)
+// 数据库支持: MySQL
+// 与 DAY() 等价
+func (f DateTimeField[T]) DayOfMonth() IntExpr[int] {
+	return f.DateTimeExpr.DayOfMonth()
+}
+
+// DayOfWeek 返回一周中的索引 (DAYOFWEEK)
+// 数据库支持: MySQL
+// 1=周日, 2=周一, ..., 7=周六
+func (f DateTimeField[T]) DayOfWeek() IntExpr[int] {
+	return f.DateTimeExpr.DayOfWeek()
+}
+
+// DayOfYear 返回一年中的天数 (DAYOFYEAR)
+// 数据库支持: MySQL
+// 范围: 1-366
+func (f DateTimeField[T]) DayOfYear() IntExpr[int] {
+	return f.DateTimeExpr.DayOfYear()
+}
+
+// Week 提取周数 (WEEK)
+// 数据库支持: MySQL
+// 范围: 0-53
+func (f DateTimeField[T]) Week() IntExpr[int] {
+	return f.DateTimeExpr.Week()
+}
+
+// WeekOfYear 提取周数 (WEEKOFYEAR)
+// 数据库支持: MySQL
+// 范围: 1-53，相当于 WEEK(date, 3)
+func (f DateTimeField[T]) WeekOfYear() IntExpr[int] {
+	return f.DateTimeExpr.WeekOfYear()
+}
+
+// Quarter 提取季度 (QUARTER)
+// 数据库支持: MySQL
+// 范围: 1-4
+func (f DateTimeField[T]) Quarter() IntExpr[int] {
+	return f.DateTimeExpr.Quarter()
+}
+
+// LastDay 返回指定日期所在月份的最后一天 (LAST_DAY)
+// 数据库支持: MySQL
+// SELECT LAST_DAY('2024-02-15'); -- 返回 '2024-02-29'
+func (f DateTimeField[T]) LastDay() DateExpr[string] {
+	return f.DateTimeExpr.LastDay()
+}
+
+// DayName 返回日期的星期名称 (DAYNAME)
+// 数据库支持: MySQL
+// SELECT DAYNAME('2024-01-15'); -- 返回 'Monday'
+func (f DateTimeField[T]) DayName() StringExpr[string] {
+	return f.DateTimeExpr.DayName()
+}
+
+// MonthName 返回日期的月份名称 (MONTHNAME)
+// 数据库支持: MySQL
+// SELECT MONTHNAME('2024-01-15'); -- 返回 'January'
+func (f DateTimeField[T]) MonthName() StringExpr[string] {
+	return f.DateTimeExpr.MonthName()
+}
+
+// ToDays 将日期转换为天数（从公元0年开始）(TO_DAYS)
+// 数据库支持: MySQL
+// SELECT TO_DAYS('2024-01-15'); -- 返回 739259
+func (f DateTimeField[T]) ToDays() IntExpr[int] {
+	return f.DateTimeExpr.ToDays()
+}
+
+// Hour 提取小时部分 (HOUR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-23
+func (f DateTimeField[T]) Hour() IntExpr[int] {
+	return f.DateTimeExpr.Hour()
+}
+
+// Minute 提取分钟部分 (MINUTE)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-59
+func (f DateTimeField[T]) Minute() IntExpr[int] {
+	return f.DateTimeExpr.Minute()
+}
+
+// Second 提取秒数部分 (SECOND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-59
+func (f DateTimeField[T]) Second() IntExpr[int] {
+	return f.DateTimeExpr.Second()
+}
+
+// Microsecond 提取微秒部分 (MICROSECOND)
+// 数据库支持: MySQL
+// 范围: 0-999999
+func (f DateTimeField[T]) Microsecond() IntExpr[int] {
+	return f.DateTimeExpr.Microsecond()
+}
+
+// TimeToSec 将时间转换为秒数 (TIME_TO_SEC)
+// 数据库支持: MySQL
+// SELECT TIME_TO_SEC('01:30:00'); -- 返回 5400
+func (f DateTimeField[T]) TimeToSec() IntExpr[int] {
+	return f.DateTimeExpr.TimeToSec()
+}
+
+// AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
+// SELECT DATE_ADD(date_column, INTERVAL 1 DAY) FROM table;
+func (f DateTimeField[T]) AddInterval(interval string) DateTimeExpr[T] {
+	return f.DateTimeExpr.AddInterval(interval)
+}
+
+// SubInterval 从日期/时间中减去时间间隔 (DATE_SUB)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// SELECT DATE_SUB(date_column, INTERVAL 1 MONTH) FROM table;
+func (f DateTimeField[T]) SubInterval(interval string) DateTimeExpr[T] {
+	return f.DateTimeExpr.SubInterval(interval)
+}
+
+// DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
+// 数据库支持: MySQL
+// 返回 this - other 的天数
+// SELECT DATEDIFF(end_date, start_date) FROM events;
+func (f DateTimeField[T]) DateDiff(other clause.Expression) IntExpr[int] {
+	return f.DateTimeExpr.DateDiff(other)
+}
+
+// TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
+// 数据库支持: MySQL
+// SELECT TIMEDIFF(end_time, start_time) FROM events;
+func (f DateTimeField[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
+	return f.DateTimeExpr.TimeDiff(other)
+}
+
+// TimestampDiff 计算与另一个日期时间的差值（指定单位）(TIMESTAMPDIFF)
+// 数据库支持: MySQL
+// unit: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
+// SELECT TIMESTAMPDIFF(DAY, start_date, end_date) FROM events;
+func (f DateTimeField[T]) TimestampDiff(unit string, other clause.Expression) IntExpr[int64] {
+	return f.DateTimeExpr.TimestampDiff(unit, other)
+}
+
+// DateFormat 格式化日期为字符串 (DATE_FORMAT)
+// 数据库支持: MySQL
+// SELECT DATE_FORMAT(date_column, '%Y年%m月%d日') FROM table;
+func (f DateTimeField[T]) Format(format string) StringExpr[string] {
+	return f.DateTimeExpr.Format(format)
+}
+
+// DateExpr 提取日期部分 (DATE)
+// 数据库支持: MySQL
+// SELECT DATE(datetime_column) FROM table;
+func (f DateTimeField[T]) Date() DateExpr[string] {
+	return f.DateTimeExpr.Date()
+}
+
+// TimeExpr 提取时间部分 (TIME)
+// 数据库支持: MySQL
+// SELECT TIME(datetime_column) FROM table;
+func (f DateTimeField[T]) Time() TimeExpr[string] {
+	return f.DateTimeExpr.Time()
+}
+
+// UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
+// 数据库支持: MySQL
+// SELECT UNIX_TIMESTAMP(date_column) FROM table;
+func (f DateTimeField[T]) UnixTimestamp() IntExpr[int64] {
+	return f.DateTimeExpr.UnixTimestamp()
+}
+
+func (f DateTimeField[T]) Gt(value T) Condition {
+	return f.DateTimeExpr.Gt(value)
+}
+
+func (f DateTimeField[T]) GtOpt(value mo.Option[T]) Condition {
+	return f.DateTimeExpr.GtOpt(value)
+}
+
+func (f DateTimeField[T]) GtF(other clause.Expression) Condition {
+	return f.DateTimeExpr.GtF(other)
+}
+
+func (f DateTimeField[T]) Gte(value T) Condition {
+	return f.DateTimeExpr.Gte(value)
+}
+
+func (f DateTimeField[T]) GteOpt(value mo.Option[T]) Condition {
+	return f.DateTimeExpr.GteOpt(value)
+}
+
+func (f DateTimeField[T]) GteF(other clause.Expression) Condition {
+	return f.DateTimeExpr.GteF(other)
+}
+
+func (f DateTimeField[T]) Lt(value T) Condition {
+	return f.DateTimeExpr.Lt(value)
+}
+
+func (f DateTimeField[T]) LtOpt(value mo.Option[T]) Condition {
+	return f.DateTimeExpr.LtOpt(value)
+}
+
+func (f DateTimeField[T]) LtF(other clause.Expression) Condition {
+	return f.DateTimeExpr.LtF(other)
+}
+
+func (f DateTimeField[T]) Lte(value T) Condition {
+	return f.DateTimeExpr.Lte(value)
+}
+
+func (f DateTimeField[T]) LteOpt(value mo.Option[T]) Condition {
+	return f.DateTimeExpr.LteOpt(value)
+}
+
+func (f DateTimeField[T]) LteF(other clause.Expression) Condition {
+	return f.DateTimeExpr.LteF(other)
+}
+
+func (f DateTimeField[T]) Between(from T, to T) Condition {
+	return f.DateTimeExpr.Between(from, to)
+}
+
+func (f DateTimeField[T]) NotBetween(from T, to T) Condition {
+	return f.DateTimeExpr.NotBetween(from, to)
+}
+
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f DateTimeField[T]) BetweenPtr(from *T, to *T) Condition {
+	return f.DateTimeExpr.BetweenPtr(from, to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f DateTimeField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.DateTimeExpr.BetweenOpt(from, to)
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f DateTimeField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
+	return f.DateTimeExpr.BetweenF(from, to)
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f DateTimeField[T]) NotBetweenPtr(from *T, to *T) Condition {
+	return f.DateTimeExpr.NotBetweenPtr(from, to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f DateTimeField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.DateTimeExpr.NotBetweenOpt(from, to)
+}
+
+func (f DateTimeField[T]) Eq(value T) Condition {
+	return f.DateTimeExpr.Eq(value)
+}
+
+func (f DateTimeField[T]) EqF(other clause.Expression) Condition {
+	return f.DateTimeExpr.EqF(other)
+}
+
+func (f DateTimeField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.DateTimeExpr.EqOpt(value)
+}
+
+func (f DateTimeField[T]) Not(value T) Condition {
+	return f.DateTimeExpr.Not(value)
+}
+
+func (f DateTimeField[T]) NotF(other clause.Expression) Condition {
+	return f.DateTimeExpr.NotF(other)
+}
+
+func (f DateTimeField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.DateTimeExpr.NotOpt(value)
+}
+
+func (f DateTimeField[T]) In(values ...T) Condition {
+	return f.DateTimeExpr.In(values...)
+}
+
+func (f DateTimeField[T]) NotIn(values ...T) Condition {
+	return f.DateTimeExpr.NotIn(values...)
+}
+
+func (f DateTimeField[T]) IsNull() Condition {
+	return f.DateTimeExpr.IsNull()
+}
+
+func (f DateTimeField[T]) IsNotNull() Condition {
+	return f.DateTimeExpr.IsNotNull()
+}
+
 // ==================== DateField ====================
 
 type DateField[T any] struct {
@@ -877,6 +2884,335 @@ func (f DateField[T]) Asc() types.OrderItem {
 
 func (f DateField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+/////////////// re-exported methods from DateExpr ///////////////
+
+// Cast 类型转换 (CAST)
+func (f DateField[T]) Cast(targetType string) clause.Expression {
+	return f.DateExpr.Cast(targetType)
+}
+
+// CastDatetime 转换为 DATETIME 类型 (CAST AS DATETIME)
+func (f DateField[T]) CastDatetime() DateTimeExpr[string] {
+	return f.DateExpr.CastDatetime()
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f DateField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.DateExpr.CastChar(length...)
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f DateField[T]) Count() IntExpr[int64] {
+	return f.DateExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f DateField[T]) CountDistinct() IntExpr[int64] {
+	return f.DateExpr.CountDistinct()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f DateField[T]) IfNull(defaultValue any) DateExpr[T] {
+	return f.DateExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f DateField[T]) Coalesce(values ...any) DateExpr[T] {
+	return f.DateExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f DateField[T]) NullIf(value any) DateExpr[T] {
+	return f.DateExpr.NullIf(value)
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (f DateField[T]) Avg() FloatExpr[float64] {
+	return f.DateExpr.Avg()
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (f DateField[T]) Max() DateExpr[T] {
+	return f.DateExpr.Max()
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (f DateField[T]) Min() DateExpr[T] {
+	return f.DateExpr.Min()
+}
+
+// YearExpr 提取年份部分 (YEAR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT YEAR(date_column) FROM table;
+func (f DateField[T]) Year() IntExpr[int] {
+	return f.DateExpr.Year()
+}
+
+// Month 提取月份部分 (MONTH)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MONTH(date_column) FROM table;
+func (f DateField[T]) Month() IntExpr[int] {
+	return f.DateExpr.Month()
+}
+
+// Day 提取天数部分 (DAY)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT DAY(date_column) FROM table;
+func (f DateField[T]) Day() IntExpr[int] {
+	return f.DateExpr.Day()
+}
+
+// DayOfMonth 提取一月中的天数 (DAYOFMONTH)
+// 数据库支持: MySQL
+// 与 DAY() 等价
+func (f DateField[T]) DayOfMonth() IntExpr[int] {
+	return f.DateExpr.DayOfMonth()
+}
+
+// DayOfWeek 返回一周中的索引 (DAYOFWEEK)
+// 数据库支持: MySQL
+// 1=周日, 2=周一, ..., 7=周六
+func (f DateField[T]) DayOfWeek() IntExpr[int] {
+	return f.DateExpr.DayOfWeek()
+}
+
+// DayOfYear 返回一年中的天数 (DAYOFYEAR)
+// 数据库支持: MySQL
+// 范围: 1-366
+func (f DateField[T]) DayOfYear() IntExpr[int] {
+	return f.DateExpr.DayOfYear()
+}
+
+// Week 提取周数 (WEEK)
+// 数据库支持: MySQL
+// 范围: 0-53
+func (f DateField[T]) Week() IntExpr[int] {
+	return f.DateExpr.Week()
+}
+
+// WeekOfYear 提取周数 (WEEKOFYEAR)
+// 数据库支持: MySQL
+// 范围: 1-53，相当于 WEEK(date, 3)
+func (f DateField[T]) WeekOfYear() IntExpr[int] {
+	return f.DateExpr.WeekOfYear()
+}
+
+// Quarter 提取季度 (QUARTER)
+// 数据库支持: MySQL
+// 范围: 1-4
+func (f DateField[T]) Quarter() IntExpr[int] {
+	return f.DateExpr.Quarter()
+}
+
+// LastDay 返回指定日期所在月份的最后一天 (LAST_DAY)
+// 数据库支持: MySQL
+// SELECT LAST_DAY('2024-02-15'); -- 返回 '2024-02-29'
+func (f DateField[T]) LastDay() DateExpr[string] {
+	return f.DateExpr.LastDay()
+}
+
+// DayName 返回日期的星期名称 (DAYNAME)
+// 数据库支持: MySQL
+// SELECT DAYNAME('2024-01-15'); -- 返回 'Monday'
+func (f DateField[T]) DayName() StringExpr[string] {
+	return f.DateExpr.DayName()
+}
+
+// MonthName 返回日期的月份名称 (MONTHNAME)
+// 数据库支持: MySQL
+// SELECT MONTHNAME('2024-01-15'); -- 返回 'January'
+func (f DateField[T]) MonthName() StringExpr[string] {
+	return f.DateExpr.MonthName()
+}
+
+// ToDays 将日期转换为天数（从公元0年开始）(TO_DAYS)
+// 数据库支持: MySQL
+// SELECT TO_DAYS('2024-01-15'); -- 返回 739259
+func (f DateField[T]) ToDays() IntExpr[int] {
+	return f.DateExpr.ToDays()
+}
+
+// AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
+// SELECT DATE_ADD(date_column, INTERVAL 1 DAY) FROM table;
+func (f DateField[T]) AddInterval(interval string) DateExpr[T] {
+	return f.DateExpr.AddInterval(interval)
+}
+
+// SubInterval 从日期/时间中减去时间间隔 (DATE_SUB)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// SELECT DATE_SUB(date_column, INTERVAL 1 MONTH) FROM table;
+func (f DateField[T]) SubInterval(interval string) DateExpr[T] {
+	return f.DateExpr.SubInterval(interval)
+}
+
+// DateDiff 计算与另一个日期的差值（天数）(DATEDIFF)
+// 数据库支持: MySQL
+// 返回 this - other 的天数
+// SELECT DATEDIFF(end_date, start_date) FROM events;
+func (f DateField[T]) DateDiff(other clause.Expression) IntExpr[int] {
+	return f.DateExpr.DateDiff(other)
+}
+
+// DateFormat 格式化日期为字符串 (DATE_FORMAT)
+// 数据库支持: MySQL
+// SELECT DATE_FORMAT(date_column, '%Y年%m月%d日') FROM table;
+func (f DateField[T]) Format(format string) StringExpr[string] {
+	return f.DateExpr.Format(format)
+}
+
+// UnixTimestamp 转换为 Unix 时间戳（秒）(UNIX_TIMESTAMP)
+// 数据库支持: MySQL
+// SELECT UNIX_TIMESTAMP(date_column) FROM table;
+func (f DateField[T]) UnixTimestamp() IntExpr[int64] {
+	return f.DateExpr.UnixTimestamp()
+}
+
+func (f DateField[T]) Gt(value T) Condition {
+	return f.DateExpr.Gt(value)
+}
+
+func (f DateField[T]) GtOpt(value mo.Option[T]) Condition {
+	return f.DateExpr.GtOpt(value)
+}
+
+func (f DateField[T]) GtF(other clause.Expression) Condition {
+	return f.DateExpr.GtF(other)
+}
+
+func (f DateField[T]) Gte(value T) Condition {
+	return f.DateExpr.Gte(value)
+}
+
+func (f DateField[T]) GteOpt(value mo.Option[T]) Condition {
+	return f.DateExpr.GteOpt(value)
+}
+
+func (f DateField[T]) GteF(other clause.Expression) Condition {
+	return f.DateExpr.GteF(other)
+}
+
+func (f DateField[T]) Lt(value T) Condition {
+	return f.DateExpr.Lt(value)
+}
+
+func (f DateField[T]) LtOpt(value mo.Option[T]) Condition {
+	return f.DateExpr.LtOpt(value)
+}
+
+func (f DateField[T]) LtF(other clause.Expression) Condition {
+	return f.DateExpr.LtF(other)
+}
+
+func (f DateField[T]) Lte(value T) Condition {
+	return f.DateExpr.Lte(value)
+}
+
+func (f DateField[T]) LteOpt(value mo.Option[T]) Condition {
+	return f.DateExpr.LteOpt(value)
+}
+
+func (f DateField[T]) LteF(other clause.Expression) Condition {
+	return f.DateExpr.LteF(other)
+}
+
+func (f DateField[T]) Between(from T, to T) Condition {
+	return f.DateExpr.Between(from, to)
+}
+
+func (f DateField[T]) NotBetween(from T, to T) Condition {
+	return f.DateExpr.NotBetween(from, to)
+}
+
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f DateField[T]) BetweenPtr(from *T, to *T) Condition {
+	return f.DateExpr.BetweenPtr(from, to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f DateField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.DateExpr.BetweenOpt(from, to)
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f DateField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
+	return f.DateExpr.BetweenF(from, to)
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f DateField[T]) NotBetweenPtr(from *T, to *T) Condition {
+	return f.DateExpr.NotBetweenPtr(from, to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f DateField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.DateExpr.NotBetweenOpt(from, to)
+}
+
+func (f DateField[T]) Eq(value T) Condition {
+	return f.DateExpr.Eq(value)
+}
+
+func (f DateField[T]) EqF(other clause.Expression) Condition {
+	return f.DateExpr.EqF(other)
+}
+
+func (f DateField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.DateExpr.EqOpt(value)
+}
+
+func (f DateField[T]) Not(value T) Condition {
+	return f.DateExpr.Not(value)
+}
+
+func (f DateField[T]) NotF(other clause.Expression) Condition {
+	return f.DateExpr.NotF(other)
+}
+
+func (f DateField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.DateExpr.NotOpt(value)
+}
+
+func (f DateField[T]) In(values ...T) Condition {
+	return f.DateExpr.In(values...)
+}
+
+func (f DateField[T]) NotIn(values ...T) Condition {
+	return f.DateExpr.NotIn(values...)
+}
+
+func (f DateField[T]) IsNull() Condition {
+	return f.DateExpr.IsNull()
+}
+
+func (f DateField[T]) IsNotNull() Condition {
+	return f.DateExpr.IsNotNull()
 }
 
 // ==================== TimeField ====================
@@ -1024,6 +3360,272 @@ func (f TimeField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
 }
 
+/////////////// re-exported methods from TimeExpr ///////////////
+
+// Cast 类型转换 (CAST)
+func (f TimeField[T]) Cast(targetType string) clause.Expression {
+	return f.TimeExpr.Cast(targetType)
+}
+
+// CastDatetime 转换为 DATETIME 类型 (CAST AS DATETIME)
+// 注意：TIME 转 DATETIME 时，日期部分为当前日期
+func (f TimeField[T]) CastDatetime() DateTimeExpr[string] {
+	return f.TimeExpr.CastDatetime()
+}
+
+// CastChar 转换为字符串 (CAST AS CHAR)
+func (f TimeField[T]) CastChar(length ...int) StringExpr[string] {
+	return f.TimeExpr.CastChar(length...)
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f TimeField[T]) Count() IntExpr[int64] {
+	return f.TimeExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f TimeField[T]) CountDistinct() IntExpr[int64] {
+	return f.TimeExpr.CountDistinct()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f TimeField[T]) IfNull(defaultValue any) TimeExpr[T] {
+	return f.TimeExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f TimeField[T]) Coalesce(values ...any) TimeExpr[T] {
+	return f.TimeExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f TimeField[T]) NullIf(value any) TimeExpr[T] {
+	return f.TimeExpr.NullIf(value)
+}
+
+// Avg 计算数值的平均值 (AVG)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT AVG(score) FROM students;
+// SELECT class_id, AVG(grade) FROM exams GROUP BY class_id;
+func (f TimeField[T]) Avg() FloatExpr[float64] {
+	return f.TimeExpr.Avg()
+}
+
+// Max 返回最大值 (MAX)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MAX(price) FROM products;
+// SELECT category, MAX(stock) FROM inventory GROUP BY category;
+func (f TimeField[T]) Max() TimeExpr[T] {
+	return f.TimeExpr.Max()
+}
+
+// Min 返回最小值 (MIN)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT MIN(price) FROM products;
+// SELECT category, MIN(stock) FROM inventory GROUP BY category;
+func (f TimeField[T]) Min() TimeExpr[T] {
+	return f.TimeExpr.Min()
+}
+
+// Hour 提取小时部分 (HOUR)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-23
+func (f TimeField[T]) Hour() IntExpr[int] {
+	return f.TimeExpr.Hour()
+}
+
+// Minute 提取分钟部分 (MINUTE)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-59
+func (f TimeField[T]) Minute() IntExpr[int] {
+	return f.TimeExpr.Minute()
+}
+
+// Second 提取秒数部分 (SECOND)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// 范围: 0-59
+func (f TimeField[T]) Second() IntExpr[int] {
+	return f.TimeExpr.Second()
+}
+
+// Microsecond 提取微秒部分 (MICROSECOND)
+// 数据库支持: MySQL
+// 范围: 0-999999
+func (f TimeField[T]) Microsecond() IntExpr[int] {
+	return f.TimeExpr.Microsecond()
+}
+
+// TimeToSec 将时间转换为秒数 (TIME_TO_SEC)
+// 数据库支持: MySQL
+// SELECT TIME_TO_SEC('01:30:00'); -- 返回 5400
+func (f TimeField[T]) TimeToSec() IntExpr[int] {
+	return f.TimeExpr.TimeToSec()
+}
+
+// AddInterval 在日期/时间上增加时间间隔 (DATE_ADD)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// 支持单位: MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR
+// SELECT DATE_ADD(date_column, INTERVAL 1 DAY) FROM table;
+func (f TimeField[T]) AddInterval(interval string) TimeExpr[T] {
+	return f.TimeExpr.AddInterval(interval)
+}
+
+// SubInterval 从日期/时间中减去时间间隔 (DATE_SUB)
+// 数据库支持: MySQL
+// interval 格式: "1 DAY", "2 MONTH", "1 YEAR" 等
+// SELECT DATE_SUB(date_column, INTERVAL 1 MONTH) FROM table;
+func (f TimeField[T]) SubInterval(interval string) TimeExpr[T] {
+	return f.TimeExpr.SubInterval(interval)
+}
+
+// TimeDiff 计算与另一个时间的差值 (TIMEDIFF)
+// 数据库支持: MySQL
+// SELECT TIMEDIFF(end_time, start_time) FROM events;
+func (f TimeField[T]) TimeDiff(other clause.Expression) TimeExpr[T] {
+	return f.TimeExpr.TimeDiff(other)
+}
+
+// TimeFormat 格式化时间为字符串 (TIME_FORMAT)
+// 数据库支持: MySQL
+// SELECT TIME_FORMAT(time_column, '%H:%i:%s') FROM table;
+func (f TimeField[T]) Format(format string) StringExpr[string] {
+	return f.TimeExpr.Format(format)
+}
+
+func (f TimeField[T]) Gt(value T) Condition {
+	return f.TimeExpr.Gt(value)
+}
+
+func (f TimeField[T]) GtOpt(value mo.Option[T]) Condition {
+	return f.TimeExpr.GtOpt(value)
+}
+
+func (f TimeField[T]) GtF(other clause.Expression) Condition {
+	return f.TimeExpr.GtF(other)
+}
+
+func (f TimeField[T]) Gte(value T) Condition {
+	return f.TimeExpr.Gte(value)
+}
+
+func (f TimeField[T]) GteOpt(value mo.Option[T]) Condition {
+	return f.TimeExpr.GteOpt(value)
+}
+
+func (f TimeField[T]) GteF(other clause.Expression) Condition {
+	return f.TimeExpr.GteF(other)
+}
+
+func (f TimeField[T]) Lt(value T) Condition {
+	return f.TimeExpr.Lt(value)
+}
+
+func (f TimeField[T]) LtOpt(value mo.Option[T]) Condition {
+	return f.TimeExpr.LtOpt(value)
+}
+
+func (f TimeField[T]) LtF(other clause.Expression) Condition {
+	return f.TimeExpr.LtF(other)
+}
+
+func (f TimeField[T]) Lte(value T) Condition {
+	return f.TimeExpr.Lte(value)
+}
+
+func (f TimeField[T]) LteOpt(value mo.Option[T]) Condition {
+	return f.TimeExpr.LteOpt(value)
+}
+
+func (f TimeField[T]) LteF(other clause.Expression) Condition {
+	return f.TimeExpr.LteF(other)
+}
+
+func (f TimeField[T]) Between(from T, to T) Condition {
+	return f.TimeExpr.Between(from, to)
+}
+
+func (f TimeField[T]) NotBetween(from T, to T) Condition {
+	return f.TimeExpr.NotBetween(from, to)
+}
+
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f TimeField[T]) BetweenPtr(from *T, to *T) Condition {
+	return f.TimeExpr.BetweenPtr(from, to)
+}
+
+// BetweenOpt 使用 Option 参数的范围查询
+func (f TimeField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.TimeExpr.BetweenOpt(from, to)
+}
+
+// BetweenF 使用字段参数的范围查询
+func (f TimeField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
+	return f.TimeExpr.BetweenF(from, to)
+}
+
+// NotBetweenPtr 使用指针参数的范围排除查询
+func (f TimeField[T]) NotBetweenPtr(from *T, to *T) Condition {
+	return f.TimeExpr.NotBetweenPtr(from, to)
+}
+
+// NotBetweenOpt 使用 Option 参数的范围排除查询
+func (f TimeField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
+	return f.TimeExpr.NotBetweenOpt(from, to)
+}
+
+func (f TimeField[T]) Eq(value T) Condition {
+	return f.TimeExpr.Eq(value)
+}
+
+func (f TimeField[T]) EqF(other clause.Expression) Condition {
+	return f.TimeExpr.EqF(other)
+}
+
+func (f TimeField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.TimeExpr.EqOpt(value)
+}
+
+func (f TimeField[T]) Not(value T) Condition {
+	return f.TimeExpr.Not(value)
+}
+
+func (f TimeField[T]) NotF(other clause.Expression) Condition {
+	return f.TimeExpr.NotF(other)
+}
+
+func (f TimeField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.TimeExpr.NotOpt(value)
+}
+
+func (f TimeField[T]) In(values ...T) Condition {
+	return f.TimeExpr.In(values...)
+}
+
+func (f TimeField[T]) NotIn(values ...T) Condition {
+	return f.TimeExpr.NotIn(values...)
+}
+
+func (f TimeField[T]) IsNull() Condition {
+	return f.TimeExpr.IsNull()
+}
+
+func (f TimeField[T]) IsNotNull() Condition {
+	return f.TimeExpr.IsNotNull()
+}
+
 // ==================== ScalarField ====================
 
 type ScalarField[T any] struct {
@@ -1167,4 +3769,106 @@ func (f ScalarField[T]) Asc() types.OrderItem {
 
 func (f ScalarField[T]) Desc() types.OrderItem {
 	return types.NewOrder(f, false)
+}
+
+/////////////// re-exported methods from ScalarExpr ///////////////
+
+func (f ScalarField[T]) ToString() StringExpr[T] {
+	return f.ScalarExpr.ToString()
+}
+
+func (f ScalarField[T]) ToInt() IntExpr[T] {
+	return f.ScalarExpr.ToInt()
+}
+
+func (f ScalarField[T]) ToFloat() FloatExpr[T] {
+	return f.ScalarExpr.ToFloat()
+}
+
+func (f ScalarField[T]) ToDecimal() DecimalExpr[T] {
+	return f.ScalarExpr.ToDecimal()
+}
+
+func (f ScalarField[T]) ToTime() TimeExpr[T] {
+	return f.ScalarExpr.ToTime()
+}
+
+func (f ScalarField[T]) ToDate() DateExpr[T] {
+	return f.ScalarExpr.ToDate()
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f ScalarField[T]) Count() IntExpr[int64] {
+	return f.ScalarExpr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f ScalarField[T]) CountDistinct() IntExpr[int64] {
+	return f.ScalarExpr.CountDistinct()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f ScalarField[T]) IfNull(defaultValue any) ScalarExpr[T] {
+	return f.ScalarExpr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f ScalarField[T]) Coalesce(values ...any) ScalarExpr[T] {
+	return f.ScalarExpr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f ScalarField[T]) NullIf(value any) ScalarExpr[T] {
+	return f.ScalarExpr.NullIf(value)
+}
+
+func (f ScalarField[T]) Eq(value T) Condition {
+	return f.ScalarExpr.Eq(value)
+}
+
+func (f ScalarField[T]) EqF(other clause.Expression) Condition {
+	return f.ScalarExpr.EqF(other)
+}
+
+func (f ScalarField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.ScalarExpr.EqOpt(value)
+}
+
+func (f ScalarField[T]) Not(value T) Condition {
+	return f.ScalarExpr.Not(value)
+}
+
+func (f ScalarField[T]) NotF(other clause.Expression) Condition {
+	return f.ScalarExpr.NotF(other)
+}
+
+func (f ScalarField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.ScalarExpr.NotOpt(value)
+}
+
+func (f ScalarField[T]) In(values ...T) Condition {
+	return f.ScalarExpr.In(values...)
+}
+
+func (f ScalarField[T]) NotIn(values ...T) Condition {
+	return f.ScalarExpr.NotIn(values...)
+}
+
+func (f ScalarField[T]) IsNull() Condition {
+	return f.ScalarExpr.IsNull()
+}
+
+func (f ScalarField[T]) IsNotNull() Condition {
+	return f.ScalarExpr.IsNotNull()
 }

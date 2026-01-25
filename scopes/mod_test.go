@@ -13,13 +13,13 @@ import (
 type UserWalletLogSchemaType struct {
 	tableName  string
 	alias      string
-	UserID     field.Comparable[uint64]
-	BusinessID field.Comparable[uint64]
-	Address    field.Comparable[string]
-	CreatedAt  field.Comparable[time.Time]
-	UpdatedAt  field.Comparable[time.Time]
-	Bind       field.Comparable[bool]
-	UnbindAt   field.Comparable[time.Time]
+	UserID     fields.IntField[uint64]
+	BusinessID fields.IntField[uint64]
+	Address    fields.IntField[string]
+	CreatedAt  fields.IntField[time.Time]
+	UpdatedAt  fields.IntField[time.Time]
+	Bind       fields.IntField[bool]
+	UnbindAt   fields.IntField[time.Time]
 }
 
 func (t UserWalletLogSchemaType) TableName() string {

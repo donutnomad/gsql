@@ -12,12 +12,12 @@ import (
 // ================ gormgen ================
 
 type UserSchemaType struct {
-	ID        field.Comparable[uint]
-	CreatedAt field.Comparable[time.Time]
-	UpdatedAt field.Comparable[time.Time]
-	DeletedAt field.Comparable[gorm.DeletedAt]
-	Name      field.Pattern[string]
-	Age       field.Comparable[int32]
+	ID        fields.IntField[uint]
+	CreatedAt fields.IntField[time.Time]
+	UpdatedAt fields.IntField[time.Time]
+	DeletedAt fields.IntField[gorm.DeletedAt]
+	Name      fields.StringField[string]
+	Age       fields.IntField[int32]
 	fieldType User
 	alias     string
 	tableName string
@@ -86,13 +86,13 @@ var UserSchema = UserSchemaType{
 }
 
 type User2SchemaType struct {
-	ID        field.Comparable[uint]
-	CreatedAt field.Comparable[time.Time]
-	UpdatedAt field.Comparable[time.Time]
-	DeletedAt field.Comparable[gorm.DeletedAt]
-	Name      field.Pattern[string]
-	Age       field.Comparable[int32]
-	OrderTime field.Comparable[time.Time]
+	ID        fields.IntField[uint]
+	CreatedAt fields.IntField[time.Time]
+	UpdatedAt fields.IntField[time.Time]
+	DeletedAt fields.IntField[gorm.DeletedAt]
+	Name      fields.StringField[string]
+	Age       fields.IntField[int32]
+	OrderTime fields.IntField[time.Time]
 	fieldType User2
 	alias     string
 	tableName string

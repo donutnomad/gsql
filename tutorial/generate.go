@@ -19,8 +19,8 @@ type ProductSchemaType struct {
 	Price       fields.FloatField[float64]
 	Stock       fields.IntField[int]
 	Description fields.StringField[sql.NullString]
-	CreatedAt   field.Comparable[time.Time]
-	UpdatedAt   field.Comparable[time.Time]
+	CreatedAt   fields.IntField[time.Time]
+	UpdatedAt   fields.IntField[time.Time]
 	fieldType   Product
 	alias       string
 	tableName   string
@@ -104,7 +104,7 @@ type EmployeeSchemaType struct {
 	Salary     fields.FloatField[float64]
 	HireDate   fields.DateTimeField[time.Time]
 	BirthDate  fields.DateTimeField[time.Time]
-	IsActive   field.Comparable[bool]
+	IsActive   fields.IntField[bool]
 	fieldType  Employee
 	alias      string
 	tableName  string
@@ -185,7 +185,7 @@ type CustomerSchemaType struct {
 	Name      fields.StringField[string]
 	Email     fields.StringField[string]
 	Phone     fields.StringField[string]
-	CreatedAt field.Comparable[time.Time]
+	CreatedAt fields.IntField[time.Time]
 	fieldType Customer
 	alias     string
 	tableName string
@@ -255,7 +255,7 @@ var CustomerSchema = CustomerSchemaType{
 type OrderSchemaType struct {
 	ID         fields.IntField[uint64]
 	CustomerID fields.IntField[uint64]
-	OrderDate  field.Comparable[time.Time]
+	OrderDate  fields.IntField[time.Time]
 	TotalPrice fields.FloatField[float64]
 	Status     fields.StringField[string]
 	fieldType  Order
@@ -401,7 +401,7 @@ type SalesRecordSchemaType struct {
 	Region      fields.StringField[string]
 	Salesperson fields.StringField[string]
 	Amount      fields.FloatField[float64]
-	SaleDate    field.Comparable[time.Time]
+	SaleDate    fields.IntField[time.Time]
 	fieldType   SalesRecord
 	alias       string
 	tableName   string
@@ -605,7 +605,7 @@ type TransactionSchemaType struct {
 	AccountID fields.IntField[uint64]
 	Amount    fields.FloatField[float64]
 	Type      fields.StringField[string]
-	CreatedAt field.Comparable[time.Time]
+	CreatedAt fields.IntField[time.Time]
 	fieldType Transaction
 	alias     string
 	tableName string

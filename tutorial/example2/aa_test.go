@@ -320,8 +320,8 @@ func TestD(t *testing.T) {
 
 		userNameTable := gsql.DefineTempTable[tmpRet](
 			struct {
-				Name field.Pattern[string]
-				ID   field.Comparable[uint]
+				Name fields.StringField[string]
+				ID   fields.IntField[uint]
 			}{
 				Name: u.Name,
 				ID:   u.ID,
@@ -331,8 +331,8 @@ func TestD(t *testing.T) {
 		_ = userNameTable
 		userNameTable2 := gsql.DefineTempTable[uint](
 			struct {
-				Name field.Pattern[string]
-				ID   field.Comparable[uint]
+				Name fields.StringField[string]
+				ID   fields.IntField[uint]
 			}{
 				Name: u.Name,
 				ID:   u.ID,
@@ -514,7 +514,7 @@ func TestD(t *testing.T) {
 		//tmp2 := gsql.DefineTempTableAny(
 		//	struct {
 		//		RORRequestSchemaType
-		//		Rn field.Comparable[uint64]
+		//		Rn fields.IntField[uint64]
 		//	}{
 		//		RORRequestSchemaType: RORRequestSchema,
 		//		Rn:                   field.NewComparable[uint64]("", "rn"),
