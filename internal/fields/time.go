@@ -1,6 +1,9 @@
 package fields
 
 import (
+	"database/sql"
+	"time"
+
 	"github.com/donutnomad/gsql/clause"
 )
 
@@ -29,13 +32,18 @@ type TimeExpr[T any] struct {
 }
 
 // Time creates a TimeExpr[string] from a clause expression.
-func Time(expr clause.Expression) TimeExpr[string] {
-	return TimeOf[string](expr)
+func Time(expr clause.Expression) TimeExpr[time.Time] {
+	return TimeOf[time.Time](expr)
 }
 
 // TimeE creates a TimeExpr[string] from raw SQL with optional variables.
 func TimeE(sql string, vars ...any) TimeExpr[string] {
-	return Time(clause.Expr{SQL: sql, Vars: vars})
+	return TimeOf[string](clause.Expr{SQL: sql, Vars: vars})
+}
+
+// TimeVal creates a TimeExpr from a time literal value.
+func TimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) TimeExpr[T] {
+	return TimeOf[T](NewLitExpr(val))
 }
 
 // TimeOf creates a generic TimeExpr[T] from a clause expression.

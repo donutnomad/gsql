@@ -4,6 +4,9 @@
 package gsql
 
 import (
+	"database/sql"
+	"time"
+
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/donutnomad/gsql/internal/types"
@@ -24,7 +27,7 @@ func Column[T any](name string) fields.ScalarColumnBuilder[T] {
 }
 
 // Date creates a DateExpr[string] from a clause expression.
-func Date(expr clause.Expression) fields.DateExpr[string] {
+func Date(expr clause.Expression) fields.DateExpr[time.Time] {
 	return fields.Date(expr)
 }
 
@@ -47,7 +50,7 @@ func DateOf[T any](expr clause.Expression) fields.DateExpr[T] {
 }
 
 // DateTime creates a DateTimeExpr[string] from a clause expression.
-func DateTime(expr clause.Expression) fields.DateTimeExpr[string] {
+func DateTime(expr clause.Expression) fields.DateTimeExpr[time.Time] {
 	return fields.DateTime(expr)
 }
 
@@ -67,6 +70,14 @@ func DateTimeFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fi
 // DateTimeOf creates a generic DateTimeExpr[T] from a clause expression.
 func DateTimeOf[T any](expr clause.Expression) fields.DateTimeExpr[T] {
 	return fields.DateTimeOf[T](expr)
+}
+
+func DateTimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) fields.DateTimeExpr[T] {
+	return fields.DateTimeVal[T](val)
+}
+
+func DateVal[T string | time.Time | *time.Time | sql.NullTime](val T) fields.DateExpr[T] {
+	return fields.DateVal[T](val)
 }
 
 // Decimal creates a DecimalExpr[float64] from a clause expression.
@@ -220,7 +231,7 @@ func StringVal[T ~string](val T) fields.StringExpr[T] {
 }
 
 // Time creates a TimeExpr[string] from a clause expression.
-func Time(expr clause.Expression) fields.TimeExpr[string] {
+func Time(expr clause.Expression) fields.TimeExpr[time.Time] {
 	return fields.Time(expr)
 }
 
@@ -240,6 +251,10 @@ func TimeFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields
 // TimeOf creates a generic TimeExpr[T] from a clause expression.
 func TimeOf[T any](expr clause.Expression) fields.TimeExpr[T] {
 	return fields.TimeOf[T](expr)
+}
+
+func TimeVal[T string | time.Time | *time.Time | sql.NullTime](val T) fields.TimeExpr[T] {
+	return fields.TimeVal[T](val)
 }
 
 // Uint creates an IntExpr[uint64] from a clause expression.

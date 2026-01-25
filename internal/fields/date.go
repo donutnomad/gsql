@@ -1,6 +1,9 @@
 package fields
 
 import (
+	"database/sql"
+	"time"
+
 	"github.com/donutnomad/gsql/clause"
 )
 
@@ -30,13 +33,18 @@ type DateExpr[T any] struct {
 }
 
 // Date creates a DateExpr[string] from a clause expression.
-func Date(expr clause.Expression) DateExpr[string] {
-	return DateOf[string](expr)
+func Date(expr clause.Expression) DateExpr[time.Time] {
+	return DateOf[time.Time](expr)
 }
 
 // DateE creates a DateExpr[string] from raw SQL with optional variables.
 func DateE(sql string, vars ...any) DateExpr[string] {
-	return Date(clause.Expr{SQL: sql, Vars: vars})
+	return DateOf[string](clause.Expr{SQL: sql, Vars: vars})
+}
+
+// DateVal creates a DateExpr from a date literal value.
+func DateVal[T string | time.Time | *time.Time | sql.NullTime](val T) DateExpr[T] {
+	return DateOf[T](NewLitExpr(val))
 }
 
 // DateOf creates a generic DateExpr[T] from a clause expression.
