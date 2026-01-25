@@ -2,7 +2,6 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/cgg2"
 )
 
 var _ clause.Expression = (*FloatExpr[float64])(nil)
@@ -44,7 +43,7 @@ func FloatE(sql string, vars ...any) FloatExpr[float64] {
 
 // FloatVal creates a FloatExpr from a floating-point literal value.
 func FloatVal[T ~float32 | ~float64](val T) FloatExpr[T] {
-	return FloatOf[T](cgg2.NewLitExpr(val))
+	return FloatOf[T](NewLitExpr(val))
 }
 
 // FloatOf creates a generic FloatExpr[T] from a clause expression.

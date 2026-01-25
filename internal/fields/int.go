@@ -2,7 +2,6 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/cgg2"
 )
 
 var _ clause.Expression = (*IntExpr[int64])(nil)
@@ -51,7 +50,7 @@ func Uint(expr clause.Expression) IntExpr[uint64] {
 
 // IntVal creates an IntExpr from a signed integer literal value.
 func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64](val T) IntExpr[T] {
-	return IntOf[T](cgg2.NewLitExpr(val))
+	return IntOf[T](NewLitExpr(val))
 }
 
 // IntOf creates a generic IntExpr[T] from a clause expression.

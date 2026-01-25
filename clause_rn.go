@@ -3,7 +3,6 @@ package gsql
 import (
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/utils"
 )
 
 var _ clause.Expression = (*WindowFunctionBuilder)(nil)
@@ -102,7 +101,7 @@ func (w *WindowFunctionBuilder) ToExpr() clause.Expression {
 	return w
 }
 
-// AsF 创建带别名的字段
-func (w *WindowFunctionBuilder) AsF(name ...string) field.IField {
-	return FieldExpr(w.ToExpr(), utils.Optional(name, ""))
+// As 创建带别名的字段
+func (w *WindowFunctionBuilder) As(name string) field.IField {
+	return FieldExpr(w.ToExpr(), name)
 }

@@ -214,11 +214,10 @@ func TestD1(t *testing.T) {
 	//	}
 
 	// 调用gorm.Scan
-
 	//var all []User
 	//all, err := gsql.SelectG[User](
 	//	u.AllFields().As("token_"),
-	//	//gsql.NULL().AsF(),
+	//	//gsql.Null.As("n"),
 	//	//u.Name.As("token_"+u.Name.Name()),
 	//	//gsql.NOW().AsF(u.Name.Name()),
 	//	//gsql.Lit(0).AsF("id"),

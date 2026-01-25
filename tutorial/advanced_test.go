@@ -157,7 +157,7 @@ func TestAdv_RowNumber(t *testing.T) {
 	rn := gsql.RowNumber().
 		PartitionBy(s.Region).
 		OrderBy(s.Amount.Desc()).
-		AsF("row_num")
+		As("row_num")
 
 	type Result struct {
 		Region      string  `gorm:"column:region"`
@@ -213,12 +213,12 @@ func TestAdv_RankDenseRank(t *testing.T) {
 	// RANK()
 	rank := gsql.Rank().
 		OrderBy(s.Amount.Desc()).
-		AsF("rank_num")
+		As("rank_num")
 
 	// DENSE_RANK()
 	denseRank := gsql.DenseRank().
 		OrderBy(s.Amount.Desc()).
-		AsF("dense_rank_num")
+		As("dense_rank_num")
 
 	type Result struct {
 		Salesperson  string  `gorm:"column:salesperson"`
@@ -259,7 +259,7 @@ func TestAdv_NthValue(t *testing.T) {
 	// ROW_NUMBER with ORDER BY to get ranked results
 	rn := gsql.RowNumber().
 		OrderBy(s.Amount.Desc()). // DESC
-		AsF("rank_num")
+		As("rank_num")
 
 	type Result struct {
 		Salesperson string  `gorm:"column:salesperson"`
@@ -487,7 +487,7 @@ func TestAdv_JsonObject(t *testing.T) {
 		Add("age", gsql.Lit(25))
 
 	var result string
-	err := gsql.Select(jsonObj.AsF("obj")).
+	err := gsql.Select(jsonObj.As("obj")).
 		From(&u).
 		Limit(1).
 		First(db, &result)

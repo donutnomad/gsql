@@ -369,7 +369,9 @@ func (e Json) Value(path string) StringExpr[string] {
 }
 
 func (e Json) As(alias string) fieldi.IField {
-	return fieldi.NewBaseFromSql(e.Expression, alias)
+	return baseExprSql{
+		Expr: e.Expression,
+	}.asExpr(alias)
 }
 
 // ==================== JSON 聚合函数 ====================

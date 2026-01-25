@@ -2,7 +2,6 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/cgg2"
 )
 
 var _ clause.Expression = (*YearExpr[int64])(nil)
@@ -36,7 +35,7 @@ func YearE(sql string, vars ...any) YearExpr[int64] {
 
 // YearVal creates a YearExpr from an integer literal value.
 func YearVal[T ~int | ~int16 | ~int32 | ~int64](val T) YearExpr[T] {
-	return YearOf[T](cgg2.NewLitExpr(val))
+	return YearOf[T](NewLitExpr(val))
 }
 
 // YearOf creates a generic YearExpr[T] from a clause expression.

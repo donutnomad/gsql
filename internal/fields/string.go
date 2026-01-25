@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/cgg2"
 )
 
 var _ clause.Expression = (*StringExpr[string])(nil)
@@ -40,7 +39,7 @@ func StringE(sql string, vars ...any) StringExpr[string] {
 
 // StringVal creates a StringExpr from a string literal value.
 func StringVal[T ~string](val T) StringExpr[T] {
-	return StringOf[T](cgg2.NewLitExpr(val))
+	return StringOf[T](NewLitExpr(val))
 }
 
 // StringOf creates a generic StringExpr[T] from a clause expression.

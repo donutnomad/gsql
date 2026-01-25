@@ -33,14 +33,6 @@ func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) IntFie
 	return ret
 }
 
-// func NewIntFieldFrom[T any](f fieldi.IField) IntField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return IntField[T]{
-// 		IntExpr: IntOf[T](expr),
-// 	}
-// }
-
 /////////////// base ///////////////
 
 func (f IntField[T]) Build(builder clause.Builder) {
@@ -175,14 +167,6 @@ func NewFloatField[T any](tableName, name string, flags ...types.FieldFlag) Floa
 	}
 	return ret
 }
-
-// func NewFloatFieldFrom[T any](f fieldi.IField) FloatField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return FloatField[T]{
-// 		FloatExpr: FloatOf[T](expr),
-// 	}
-// }
 
 /////////////// base ///////////////
 
@@ -319,14 +303,6 @@ func NewDecimalField[T any](tableName, name string, flags ...types.FieldFlag) De
 	return ret
 }
 
-// func NewDecimalFieldFrom[T any](f fieldi.IField) DecimalField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return DecimalField[T]{
-// 		DecimalExpr: DecimalOf[T](expr),
-// 	}
-// }
-
 /////////////// base ///////////////
 
 func (f DecimalField[T]) Build(builder clause.Builder) {
@@ -461,14 +437,6 @@ func NewStringField[T any](tableName, name string, flags ...types.FieldFlag) Str
 	}
 	return ret
 }
-
-// func NewStringFieldFrom[T any](f fieldi.IField) StringField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return StringField[T]{
-// 		StringExpr: StringOf[T](expr),
-// 	}
-// }
 
 /////////////// base ///////////////
 
@@ -605,14 +573,6 @@ func NewDateTimeField[T any](tableName, name string, flags ...types.FieldFlag) D
 	return ret
 }
 
-// func NewDateTimeFieldFrom[T any](f fieldi.IField) DateTimeField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return DateTimeField[T]{
-// 		DateTimeExpr: DateTimeOf[T](expr),
-// 	}
-// }
-
 /////////////// base ///////////////
 
 func (f DateTimeField[T]) Build(builder clause.Builder) {
@@ -747,14 +707,6 @@ func NewDateField[T any](tableName, name string, flags ...types.FieldFlag) DateF
 	}
 	return ret
 }
-
-// func NewDateFieldFrom[T any](f fieldi.IField) DateField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return DateField[T]{
-// 		DateExpr: DateOf[T](expr),
-// 	}
-// }
 
 /////////////// base ///////////////
 
@@ -891,14 +843,6 @@ func NewTimeField[T any](tableName, name string, flags ...types.FieldFlag) TimeF
 	return ret
 }
 
-// func NewTimeFieldFrom[T any](f fieldi.IField) TimeField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return TimeField[T]{
-// 		TimeExpr: TimeOf[T](expr),
-// 	}
-// }
-
 /////////////// base ///////////////
 
 func (f TimeField[T]) Build(builder clause.Builder) {
@@ -1033,14 +977,6 @@ func NewScalarField[T any](tableName, name string, flags ...types.FieldFlag) Sca
 	}
 	return ret
 }
-
-// func NewScalarFieldFrom[T any](f fieldi.IField) ScalarField[T] {
-// 	base := fieldi.IFieldToBase(f)
-// 	expr := base.ToExpr()
-// 	return ScalarField[T]{
-// 		ScalarExpr: ScalarOf[T](expr),
-// 	}
-// }
 
 /////////////// base ///////////////
 

@@ -42,7 +42,11 @@ func (c *ColumnQuote) Build(builder clause.Builder) {
 		builder.WriteString(".")
 	}
 	if len(c.ColumnName) > 0 {
-		builder.WriteQuoted(c.ColumnName)
+		if c.ColumnName == "*" {
+			builder.WriteString(c.ColumnName)
+		} else {
+			builder.WriteQuoted(c.ColumnName)
+		}
 	} else {
 		panic("[ColumnQuote] required column name")
 	}

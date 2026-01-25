@@ -74,7 +74,44 @@ func (b baseExprSql) toExprExpr() clause.Expression {
 // @gen public=As return=fieldi.IField direct=true
 // asExpr 创建一个别名字段
 func (b baseExprSql) asExpr(alias string) fieldi.IField {
-	return fieldi.NewBaseFromSql(b.Expr, alias)
+	return fieldImpl{
+		expr:  b.Expr,
+		alias: alias,
+	}
+}
+
+type fieldImpl struct {
+	expr  clause.Expression
+	alias string
+}
+
+func (f fieldImpl) Build(builder clause.Builder) {
+	f.expr.Build(builder)
+	builder.WriteString(" AS ")
+	builder.WriteQuoted(f.alias)
+}
+
+func (f fieldImpl) ToExpr() clause.Expression {
+	return f
+}
+
+func (f fieldImpl) FullName() string {
+	return f.Alias()
+}
+
+func (f fieldImpl) Name() string {
+	return f.Alias()
+}
+
+func (f fieldImpl) As(alias string) fieldi.IField {
+	return fieldImpl{
+		expr:  f.expr,
+		alias: alias,
+	}
+}
+
+func (f fieldImpl) Alias() string {
+	return f.alias
 }
 
 // ==================== 基础比较操作实现（等于/不等于/In/NotIn）====================

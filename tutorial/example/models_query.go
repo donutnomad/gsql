@@ -93,7 +93,7 @@ func (t OrderSchemaType) Alias() string {
 }
 
 func (t *OrderSchemaType) WithTable(tableName string) {
-	tn := gsql.TableName(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.UserID = t.UserID.WithTable(&tn)
 	t.Amount = t.Amount.WithTable(&tn)

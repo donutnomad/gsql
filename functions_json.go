@@ -12,13 +12,6 @@ import (
 
 // ==================== JSON 函数 ====================
 
-// 接口一致性检查 - 确保 builder 实现了所需接口
-var (
-	_ field.ExpressionTo = (*jsonObjectBuilder)(nil)
-	_ field.ExpressionTo = (*jsonArrayBuilder)(nil)
-	_ field.ExpressionTo = (*jsonMergeBuilder)(nil)
-)
-
 // PathValue 表示 JSON 路径和值的配对
 type PathValue struct {
 	Path  string
@@ -96,12 +89,8 @@ func (j *jsonObjectBuilder) Build(builder clause.Builder) {
 	j.toExpr().Build(builder)
 }
 
-func (j *jsonObjectBuilder) AsF(name ...string) field.IField {
-	var alias = ""
-	if len(name) > 0 {
-		alias = name[0]
-	}
-	return field.NewBaseFromSql(j.toExpr(), alias)
+func (j *jsonObjectBuilder) As(name string) field.IField {
+	return fields.ScalarOf[any](j.toExpr()).As(name)
 }
 
 func (j *jsonObjectBuilder) ToExpr() Expression {
@@ -152,12 +141,8 @@ func (b *jsonArrayBuilder) Build(builder clause.Builder) {
 	b.toExpr().Build(builder)
 }
 
-func (b *jsonArrayBuilder) AsF(name ...string) field.IField {
-	var alias = ""
-	if len(name) > 0 {
-		alias = name[0]
-	}
-	return field.NewBaseFromSql(b.toExpr(), alias)
+func (b *jsonArrayBuilder) As(name string) field.IField {
+	return fields.ScalarOf[any](b.toExpr()).As(name)
 }
 
 func (b *jsonArrayBuilder) ToExpr() Expression {
@@ -244,12 +229,8 @@ func (b *jsonMergeBuilder) Build(builder clause.Builder) {
 	b.toExpr().Build(builder)
 }
 
-func (b *jsonMergeBuilder) AsF(name ...string) field.IField {
-	var alias = ""
-	if len(name) > 0 {
-		alias = name[0]
-	}
-	return field.NewBaseFromSql(b.toExpr(), alias)
+func (b *jsonMergeBuilder) As(name string) field.IField {
+	return fields.ScalarOf[any](b.toExpr()).As(name)
 }
 
 func (b *jsonMergeBuilder) ToExpr() Expression {

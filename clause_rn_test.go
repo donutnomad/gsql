@@ -133,7 +133,7 @@ func ExampleRowNumber() {
 	// 示例 1: 简单的 ROW_NUMBER，按价格降序排列
 	rn1 := gsql.RowNumber().
 		OrderBy(price.Desc()). // 按价格降序
-		AsF("row_num")
+		As("row_num")
 
 	query1 := gsql.Select(name, price, rn1).
 		From(products)
@@ -145,7 +145,7 @@ func ExampleRowNumber() {
 	rn2 := gsql.RowNumber().
 		PartitionBy(category). // 按类别分组
 		OrderBy(price.Desc()). // 每组内按价格降序
-		AsF("row_num")
+		As("row_num")
 
 	query2 := gsql.Select(category, name, price, rn2).
 		From(products)
@@ -158,7 +158,7 @@ func ExampleRowNumber() {
 	rn3 := gsql.RowNumber().
 		PartitionBy(category, createdAt). // 按多个字段分组
 		OrderBy(price.Asc()).             // 升序排序
-		AsF("row_num")
+		As("row_num")
 
 	query3 := gsql.Select(category, createdAt, name, price, rn3).
 		From(products)
@@ -190,7 +190,7 @@ func ExampleRank() {
 	rank := gsql.Rank().
 		PartitionBy(category).
 		OrderBy(price.Desc()).
-		AsF("price_rank")
+		As("price_rank")
 
 	query := gsql.Select(category, name, price, rank).
 		From(products)
@@ -214,7 +214,7 @@ func ExampleDenseRank() {
 	// DENSE_RANK() 会为相同的值分配相同的排名，下一个排名连续
 	denseRank := gsql.DenseRank().
 		OrderBy(score.Desc()).
-		AsF("score_rank")
+		As("score_rank")
 
 	query := gsql.Select(name, score, denseRank).
 		From(students)

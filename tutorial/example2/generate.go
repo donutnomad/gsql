@@ -32,7 +32,7 @@ func (t UserSchemaType) Alias() string {
 }
 
 func (t *UserSchemaType) WithTable(tableName string) {
-	tn := gsql.TableName(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.CreatedAt = t.CreatedAt.WithTable(&tn)
 	t.UpdatedAt = t.UpdatedAt.WithTable(&tn)
@@ -107,7 +107,7 @@ func (t User2SchemaType) Alias() string {
 }
 
 func (t *User2SchemaType) WithTable(tableName string) {
-	tn := gsql.TableName(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.CreatedAt = t.CreatedAt.WithTable(&tn)
 	t.UpdatedAt = t.UpdatedAt.WithTable(&tn)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/cgg2"
 	"github.com/donutnomad/gsql/internal/fields"
 )
 
@@ -17,14 +16,10 @@ var allowedCharsets = map[string]bool{
 	"ucs2": true, "utf16": true, "utf32": true,
 }
 
-var Star field.IField = field.NewBase("", "*")
+var Star field.IField = fields.NewScalarField[any]("", "*")
 
-func Lit[T primitive](value T) *cgg2.LitExpr {
-	return cgg2.NewLitExpr(value)
-}
-
-type litExpr struct {
-	ExprTo
+func Lit[T primitive](value T) *fields.LitExpr {
+	return fields.NewLitExpr(value)
 }
 
 func Val[T any](value T) field.ExpressionTo {
@@ -44,34 +39,24 @@ func Not(val1 field.ExpressionTo, val2 field.ExpressionTo) Expression {
 }
 
 func StarWith(tableName string) field.IField {
-	return field.NewBaseFromSql(Expr("?.*", quoteClause{
-		name: tableName,
-	}), "")
-}
-
-type quoteClause struct {
-	name string
-}
-
-func (q quoteClause) Build(builder clause.Builder) {
-	builder.WriteQuoted(q.name)
+	return fields.NewScalarField[any](tableName, "*")
 }
 
 // False 返回布尔值假
 // SELECT FALSE;
 // SELECT FALSE = 0;
 // SELECT users.* FROM users WHERE users.is_active = FALSE;
-var False field.ExpressionTo = ExprTo{Expression: clause.Expr{
+var False = fields.IntOf[bool](clause.Expr{
 	SQL: "FALSE",
-}}
+})
 
 // Null 返回空值
 // SELECT NULL;
 // SELECT IFNULL(users.nickname, NULL) FROM users;
 // UPDATE users SET deleted_at = NULL WHERE id = 1;
-var Null field.ExpressionTo = ExprTo{Expression: clause.Expr{
+var Null = fields.ScalarOf[any](clause.Expr{
 	SQL: "NULL",
-}}
+})
 
 // RAND 返回0到1之间的随机浮点数，可选种子参数
 // 数据库支持: MySQL

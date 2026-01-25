@@ -406,8 +406,7 @@ func (b *QueryBuilderG[T]) Find(db IDB) ([]*T, error) {
 	return dest, ret.Error
 }
 
-// AsF as field
-func (b *QueryBuilderG[T]) AsF(asName ...string) field.IField {
+func (b *QueryBuilderG[T]) As(asName string) field.IField {
 	if len(b.selects) == 0 {
 		panic("selects is empty")
 		//if v, ok := b.from.(interface{ ModelType() *T }); ok {
@@ -417,7 +416,21 @@ func (b *QueryBuilderG[T]) AsF(asName ...string) field.IField {
 		//}
 	}
 	b.selects = b.selects[0:1]
-	return FieldExpr(b.ToExpr(), utils.Optional(asName, ""))
+	return FieldExpr(b.ToExpr(), asName)
+}
+
+// AsF as field
+func (b *QueryBuilderG[T]) AsF(asName string) field.IField {
+	if len(b.selects) == 0 {
+		panic("selects is empty")
+		//if v, ok := b.from.(interface{ ModelType() *T }); ok {
+		//
+		//} else {
+		//	panic("")
+		//}
+	}
+	b.selects = b.selects[0:1]
+	return FieldExpr(b.ToExpr(), asName)
 }
 
 func (b *QueryBuilderG[T]) firstLast(db IDB, order, desc bool) (*T, error) {

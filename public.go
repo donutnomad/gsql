@@ -9,6 +9,7 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/samber/lo"
 )
 
@@ -17,22 +18,18 @@ func TableName(name string) Table {
 	return Table{Name: name}
 }
 
-// Deprecated: 使用 TN 替代。
-func TableName2(name string) Table2 {
-	return TN(name)
-}
-
 // TN TableName
 func TN(tableName string) Table2 {
 	return Table2{Name: tableName}
 }
 
-func Field(sql string, args ...any) field.IField {
-	return field.NewBaseFromSql(Expr(sql, args...), "")
+func Field(columnName string) field.IField {
+	return fields.NewScalarField[any]("", columnName)
 }
 
+// FieldExpr TODO: 修复问题
 func FieldExpr(expr clause.Expression, alias string) field.IField {
-	return field.NewBaseFromSql(expr, alias)
+	return fields.ScalarOf[any](expr).As(alias)
 }
 
 func Expr(sql string, args ...any) clause.Expression {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/utils"
 	"golang.org/x/exp/constraints"
 )
 
@@ -90,16 +89,9 @@ func (b *QueryBuilder) build(db IDB) *GormDB {
 }
 
 func (b *QueryBuilder) Order(column clause.Expression, asc ...bool) *QueryBuilder {
-	var c clause.Expression
-	switch v := column.(type) {
-	case field.IField:
-		if v.Alias() != "" {
-			c = field.NewBase("", v.Alias()).ToExpr()
-		} else {
-			c = v.ToExpr()
-		}
-	default:
-		c = v
+	var c = column
+	if v, ok := column.(field.IField); ok && v.Alias() != "" { // 有别名，直接引用别名即可
+		c = Field(v.Alias())
 	}
 	b.as().Order(c, asc...)
 	return b
@@ -326,12 +318,21 @@ func (b *QueryBuilder) Find(db IDB, dest any) error {
 	return ret.Error
 }
 
-// AsF as field
-func (b *QueryBuilder) AsF(asName ...string) field.IField {
+func (b *QueryBuilder) As(asName string) field.IField {
 	if len(b.selects) == 0 {
 		panic("selects is empty")
 	} else {
 		b.selects = b.selects[0:1]
 	}
-	return FieldExpr(b.ToExpr(), utils.Optional(asName, ""))
+	return FieldExpr(b.ToExpr(), asName)
+}
+
+// AsF as field
+func (b *QueryBuilder) AsF(asName string) field.IField {
+	if len(b.selects) == 0 {
+		panic("selects is empty")
+	} else {
+		b.selects = b.selects[0:1]
+	}
+	return FieldExpr(b.ToExpr(), asName)
 }

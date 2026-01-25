@@ -8,7 +8,6 @@ type ExpressionTo interface {
 	clause.Expression
 	// AsF as field
 	AsF(name ...string) IField
-	//ToField(name string) IField
 }
 
 type IToExpr interface {

@@ -2,7 +2,6 @@ package fields
 
 import (
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/internal/cgg2"
 )
 
 var _ clause.Expression = (*DecimalExpr[float64])(nil)
@@ -43,7 +42,7 @@ func DecimalE(sql string, vars ...any) DecimalExpr[float64] {
 
 // DecimalVal creates a DecimalExpr from a floating-point literal value.
 func DecimalVal[T ~float32 | ~float64](val T) DecimalExpr[T] {
-	return DecimalOf[T](cgg2.NewLitExpr(val))
+	return DecimalOf[T](NewLitExpr(val))
 }
 
 // DecimalOf creates a generic DecimalExpr[T] from a clause expression.
