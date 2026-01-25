@@ -43,6 +43,12 @@ func NewIntField[T any](tableName, name string, flags ...types.FieldFlag) IntFie
 
 /////////////// base ///////////////
 
+// BetweenPtr 使用指针参数的范围查询
+// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
+func (f IntField[T]) BetweenPtr(from, to *T) Condition {
+	return f.Expr().BetweenPtr(from, to)
+}
+
 func (f IntField[T]) Build(builder clause.Builder) {
 	f.IntExpr.Build(builder)
 }

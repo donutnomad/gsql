@@ -52,7 +52,7 @@ func TestMod(t *testing.T) {
 	}
 	sql := gsql.SelectG[any]().
 		From(M).
-		Where(M.UserID.Between(lo.ToPtr(uint64(123)), nil)).
+		Where(M.UserID.BetweenPtr(lo.ToPtr[uint64](123), nil)).
 		OrderBy(ordersMapping.Map(orders)...).
 		Scope(
 			TimeBetween(M.CreatedAt, TimestampRange{

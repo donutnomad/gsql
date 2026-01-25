@@ -716,6 +716,12 @@ func TestInter_Union(t *testing.T) {
 	})
 }
 
+type string1 string
+
+func (s string1) String() string {
+	return ""
+}
+
 // ==================== CASE WHEN Tests ====================
 
 // TestInter_CaseWhen tests CASE WHEN expressions
@@ -788,7 +794,7 @@ func TestInter_CaseWhen(t *testing.T) {
 		//          WHEN 'shipped' THEN 'On the way'
 		//          ELSE 'Unknown'
 		//        END AS status_desc
-		statusDesc := gsql.CaseValue[string, gsql.StringExpr[string], string, gsql.StringExpr[string]](o.Status.StringExpr).
+		statusDesc := gsql.CaseValue[string, string, gsql.StringExpr[string]](o.Status.Expr()).
 			When(gsql.StringVal("pending"), gsql.StringVal("Waiting")).
 			When(gsql.StringVal("completed"), gsql.StringVal("Done")).
 			When(gsql.StringVal("shipped"), gsql.StringVal("On the way")).

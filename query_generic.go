@@ -95,7 +95,7 @@ func (b *QueryBuilderG[T]) Join(clauses ...JoinClause) *QueryBuilderG[T] {
 	return b
 }
 
-func (b *QueryBuilderG[T]) Where(exprs ...field.Expression) *QueryBuilderG[T] {
+func (b *QueryBuilderG[T]) Where(exprs ...clause.Expression) *QueryBuilderG[T] {
 	for _, expr := range exprs {
 		if lo.IsNil(expr) {
 			continue

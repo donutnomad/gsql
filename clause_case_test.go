@@ -35,7 +35,7 @@ func TestCaseExample_SimpleCaseValue(t *testing.T) {
 	// 场景：将状态码转换为中文描述
 	status := gsql.NewIntField[int]("", "status")
 
-	statusDesc := gsql.CaseValue[string, gsql.StringExpr[string], int](status.Expr()).
+	statusDesc := gsql.CaseValue[int, string, gsql.StringExpr[string]](status.Expr()).
 		When(gsql.IntVal(0), gsql.StringVal("待处理")).
 		When(gsql.IntVal(1), gsql.StringVal("处理中")).
 		When(gsql.IntVal(2), gsql.StringVal("已完成")).

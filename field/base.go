@@ -20,7 +20,7 @@ type (
 	IToExpr           = fieldi.IToExpr
 	IField            = fieldi.IField
 	Range[T any]      = types.Range[T]
-	Comparable[T any] = fields.ScalarField[T]
+	Comparable[T any] = fields.IntField[T]
 	ExpressionTo      = fieldi.ExpressionTo
 	Base              = fieldi.Base
 	BaseFields        = fieldi.BaseFields
@@ -35,10 +35,10 @@ func NewBaseFromSql(expr clause.Expression, alias string) *Base {
 	return fieldi.NewBaseFromSql(expr, alias)
 }
 
-func NewComparable[T any](tableName, name string, flags ...types.FieldFlag) fields.ScalarField[T] {
-	return fields.NewScalarField[T](tableName, name, flags...)
+func NewComparable[T any](tableName, name string, flags ...types.FieldFlag) Comparable[T] {
+	return fields.NewIntField[T](tableName, name, flags...)
 }
 
-func NewPattern[T any](tableName, name string, flags ...types.FieldFlag) fields.StringField[T] {
+func NewPattern[T any](tableName, name string, flags ...types.FieldFlag) Pattern[T] {
 	return fields.NewStringField[T](tableName, name, flags...)
 }

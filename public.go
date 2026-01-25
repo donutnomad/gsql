@@ -31,7 +31,7 @@ func Field(sql string, args ...any) field.IField {
 	return field.NewBaseFromSql(Expr(sql, args...), "")
 }
 
-func FieldExpr(expr field.Expression, alias string) field.IField {
+func FieldExpr(expr clause.Expression, alias string) field.IField {
 	return field.NewBaseFromSql(expr, alias)
 }
 

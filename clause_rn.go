@@ -38,15 +38,15 @@ func DenseRank() *WindowFunctionBuilder {
 
 // WindowFunctionBuilder 窗口函数构建器
 type WindowFunctionBuilder struct {
-	function    string             // ROW_NUMBER(), RANK(), DENSE_RANK() 等
-	partitionBy []field.Expression // PARTITION BY 子句
-	orderBy     []FieldOrder       // ORDER BY 子句
+	function    string              // ROW_NUMBER(), RANK(), DENSE_RANK() 等
+	partitionBy []clause.Expression // PARTITION BY 子句
+	orderBy     []FieldOrder        // ORDER BY 子句
 }
 
 // PartitionBy 添加 PARTITION BY 子句，支持多个字段
 // RowNumber().PartitionBy(category).OrderBy(price, true)
 // RowNumber().PartitionBy(user_id, status).OrderBy(created_at, false)
-func (w *WindowFunctionBuilder) PartitionBy(exprs ...field.Expression) *WindowFunctionBuilder {
+func (w *WindowFunctionBuilder) PartitionBy(exprs ...clause.Expression) *WindowFunctionBuilder {
 	w.partitionBy = append(w.partitionBy, exprs...)
 	return w
 }
