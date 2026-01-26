@@ -369,7 +369,15 @@ func (b *QueryBuilderG[T]) Delete(db IDB) DBResult {
 }
 
 func (b *QueryBuilderG[T]) Count(db IDB) (count int64, _ error) {
-	ret := b.build(db).Count(&count)
+	tx := b.build(db)
+	// 设置 Model 以支持软删除过滤
+	// GORM 的软删除机制需要 Model 来解析 schema 并添加 deleted_at IS NULL 条件
+	if lo.IsNil(tx.Statement.Model) {
+		if v, ok := b.from.(interface{ ModelTypeAny() any }); ok {
+			tx.Statement.Model = v.ModelTypeAny()
+		}
+	}
+	ret := tx.Count(&count)
 	return count, ret.Error
 }
 
