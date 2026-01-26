@@ -87,7 +87,8 @@ func (expr Expr) Build(builder Builder) {
 					}
 				}
 			} else {
-				builder.AddVar(builder, expr.Vars[idx])
+				// 使用 AddVarWithParens 自动为复杂表达式添加括号
+				AddVarWithParens(builder, expr.Vars[idx])
 			}
 
 			idx++

@@ -311,7 +311,7 @@ func TestInter_SubqueryInWhere(t *testing.T) {
 		//        WHERE id IN (SELECT orders.customer_id FROM orders WHERE orders.total_price > 200)
 		err := gsql.Select(c.AllFields()...).
 			From(&c).
-			Where(gsql.Expr("id IN (?)", subquery.ToExpr())).
+			Where(c.ID.InSubquery(subquery.ToExpr())).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -337,7 +337,7 @@ func TestInter_SubqueryInWhere(t *testing.T) {
 		//        WHERE total_price > (SELECT AVG(orders.total_price) AS avg_price FROM orders)
 		err := gsql.Select(o.AllFields()...).
 			From(o).
-			Where(gsql.Expr("total_price > (?)", avgSubquery.ToExpr())).
+			Where(o.TotalPrice.GtF(avgSubquery.ToExpr())).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)

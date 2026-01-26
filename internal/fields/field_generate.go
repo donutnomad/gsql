@@ -616,6 +616,14 @@ func (f IntField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+func (f IntField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+func (f IntField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
+}
+
 func (f IntField[T]) IsNull() Condition {
 	return f.expr.IsNull()
 }
@@ -1204,6 +1212,14 @@ func (f FloatField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+func (f FloatField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+func (f FloatField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
+}
+
 func (f FloatField[T]) IsNull() Condition {
 	return f.expr.IsNull()
 }
@@ -1733,6 +1749,14 @@ func (f DecimalField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+func (f DecimalField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+func (f DecimalField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
+}
+
 func (f DecimalField[T]) IsNull() Condition {
 	return f.expr.IsNull()
 }
@@ -2153,6 +2177,14 @@ func (f StringField[T]) In(values ...T) Condition {
 
 func (f StringField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
+}
+
+func (f StringField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+func (f StringField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
 }
 
 func (f StringField[T]) Like(value T, escape ...byte) clause.Expression {

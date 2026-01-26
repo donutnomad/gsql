@@ -116,6 +116,12 @@ func (f fieldImpl) Alias() string {
 
 // ==================== 基础比较操作实现（等于/不等于/In/NotIn）====================
 
+type Condition struct {
+	clause.Expression
+}
+
+var emptyCondition = Condition{clause.Expr{}}
+
 // baseComparableImpl 基础比较操作实现
 // 适用于所有类型（包括字符串），只包含等于、不等于、In、NotIn
 type baseComparableImpl[T any] struct {
@@ -127,11 +133,11 @@ func (f baseComparableImpl[T]) ExprType() T {
 }
 
 func (f baseComparableImpl[T]) Eq(value T) Condition {
-	return cond("? = ?", f.Expression, value)
+	return Condition{clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, value}}}
 }
 
 func (f baseComparableImpl[T]) EqF(other clause.Expression) Condition {
-	return cond("? = ?", f.Expression, other)
+	return Condition{clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, other}}}
 }
 
 func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) Condition {
@@ -142,11 +148,11 @@ func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) Condition {
 }
 
 func (f baseComparableImpl[T]) Not(value T) Condition {
-	return cond("? != ?", f.Expression, value)
+	return Condition{clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, value}}}
 }
 
 func (f baseComparableImpl[T]) NotF(other clause.Expression) Condition {
-	return cond("? != ?", f.Expression, other)
+	return Condition{clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, other}}}
 }
 
 func (f baseComparableImpl[T]) NotOpt(value mo.Option[T]) Condition {
@@ -160,37 +166,36 @@ func (f baseComparableImpl[T]) In(values ...T) Condition {
 	if len(values) == 0 {
 		return emptyCondition
 	}
-	return cond("? IN ?", f.Expression, values)
+	return Condition{clause.Expr{SQL: "? IN ?", Vars: []any{f.Expression, values}}}
 }
 
 func (f baseComparableImpl[T]) NotIn(values ...T) Condition {
 	if len(values) == 0 {
 		return emptyCondition
 	}
-	return cond("? NOT IN ?", f.Expression, values)
+	return Condition{clause.Expr{SQL: "? NOT IN ?", Vars: []any{f.Expression, values}}}
+}
+
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
+func (f baseComparableImpl[T]) InSubquery(subquery clause.Expression) Condition {
+	return Condition{clause.Expr{SQL: "? IN (?)", Vars: []any{f.Expression, subquery}}}
+}
+
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
+func (f baseComparableImpl[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return Condition{clause.Expr{SQL: "? NOT IN (?)", Vars: []any{f.Expression, subquery}}}
 }
 
 // ==================== 数值比较操作的通用实现 ====================
 
-type Condition struct {
-	clause.Expression
-}
-
-func cond(sql string, vars ...any) Condition {
-	return Condition{clause.Expr{SQL: sql, Vars: vars}}
-}
-
-var emptyCondition = Condition{clause.Expr{}}
-
 // numericComparableImpl 数值类型的比较操作通用实现
 // 适用于 IntExpr, FloatExpr, DecimalExpr
-// 嵌入 baseComparableImpl 获得基础比较操作，额外添加大于、小于、Between 等操作
+// 嵌入 baseComparableImpl 获得基础比较操作（包括 ExprType, Eq, Not, In 等），
+// 额外添加大于、小于、Between 等数值比较操作
 type numericComparableImpl[T any] struct {
 	baseComparableImpl[T]
-}
-
-func (f numericComparableImpl[T]) ExprType() T {
-	return lo.Empty[T]()
 }
 
 func (f numericComparableImpl[T]) Gt(value T) Condition {
@@ -254,11 +259,11 @@ func (f numericComparableImpl[T]) LteF(other clause.Expression) Condition {
 }
 
 func (f numericComparableImpl[T]) Between(from, to T) Condition {
-	return cond("? BETWEEN ? AND ?", f.Expression, from, to)
+	return Condition{clause.Expr{SQL: "? BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}}
 }
 
 func (f numericComparableImpl[T]) NotBetween(from, to T) Condition {
-	return cond("? NOT BETWEEN ? AND ?", f.Expression, from, to)
+	return Condition{clause.Expr{SQL: "? NOT BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}}
 }
 
 // BetweenPtr 使用指针参数的范围查询
@@ -292,7 +297,7 @@ func (f numericComparableImpl[T]) BetweenF(from, to clause.Expression) Condition
 	if to == nil {
 		return f.GteF(from)
 	}
-	return cond("? BETWEEN ? AND ?", f.Expression, from, to)
+	return Condition{clause.Expr{SQL: "? BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}}
 }
 
 // NotBetweenPtr 使用指针参数的范围排除查询

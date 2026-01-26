@@ -110,10 +110,12 @@ func COUNT_DISTINCT(expr field.IField) fields.IntExpr[int64] {
 // SELECT category, GROUP_CONCAT(DISTINCT tag ORDER BY tag) FROM products GROUP BY category;
 func GROUP_CONCAT(expr Expression, separator ...string) fields.StringExpr[string] {
 	if len(separator) > 0 {
-		// 使用参数化查询代替字符串拼接
+		// SEPARATOR 后面必须是字面值，不能使用参数占位符
+		// 使用 strings.ReplaceAll 转义单引号防止 SQL 注入
+		escaped := strings.ReplaceAll(separator[0], "'", "''")
 		return fields.StringOf[string](clause.Expr{
-			SQL:  "GROUP_CONCAT(? SEPARATOR ?)",
-			Vars: []any{expr, separator[0]},
+			SQL:  "GROUP_CONCAT(? SEPARATOR '" + escaped + "')",
+			Vars: []any{expr},
 		})
 	}
 	return fields.StringOf[string](clause.Expr{
