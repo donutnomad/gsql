@@ -133,11 +133,11 @@ func (f baseComparableImpl[T]) ExprType() T {
 }
 
 func (f baseComparableImpl[T]) Eq(value T) Condition {
-	return Condition{clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, value}}}
+	return f.operateValue(value, "=")
 }
 
 func (f baseComparableImpl[T]) EqF(other clause.Expression) Condition {
-	return Condition{clause.Expr{SQL: "? = ?", Vars: []any{f.Expression, other}}}
+	return f.operateValue(other, "=")
 }
 
 func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) Condition {
@@ -148,11 +148,11 @@ func (f baseComparableImpl[T]) EqOpt(value mo.Option[T]) Condition {
 }
 
 func (f baseComparableImpl[T]) Not(value T) Condition {
-	return Condition{clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, value}}}
+	return f.operateValue(value, "!=")
 }
 
 func (f baseComparableImpl[T]) NotF(other clause.Expression) Condition {
-	return Condition{clause.Expr{SQL: "? != ?", Vars: []any{f.Expression, other}}}
+	return f.operateValue(other, "!=")
 }
 
 func (f baseComparableImpl[T]) NotOpt(value mo.Option[T]) Condition {
@@ -166,26 +166,30 @@ func (f baseComparableImpl[T]) In(values ...T) Condition {
 	if len(values) == 0 {
 		return emptyCondition
 	}
-	return Condition{clause.Expr{SQL: "? IN ?", Vars: []any{f.Expression, values}}}
+	return f.operateValue(values, "IN")
 }
 
 func (f baseComparableImpl[T]) NotIn(values ...T) Condition {
 	if len(values) == 0 {
 		return emptyCondition
 	}
-	return Condition{clause.Expr{SQL: "? NOT IN ?", Vars: []any{f.Expression, values}}}
+	return f.operateValue(values, "NOT IN")
 }
 
 // InSubquery 用于子查询的 IN 条件
 // 示例: WHERE id IN (SELECT customer_id FROM orders)
 func (f baseComparableImpl[T]) InSubquery(subquery clause.Expression) Condition {
-	return Condition{clause.Expr{SQL: "? IN (?)", Vars: []any{f.Expression, subquery}}}
+	return f.operateValue(subquery, "IN")
 }
 
 // NotInSubquery 用于子查询的 NOT IN 条件
 // 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
 func (f baseComparableImpl[T]) NotInSubquery(subquery clause.Expression) Condition {
-	return Condition{clause.Expr{SQL: "? NOT IN (?)", Vars: []any{f.Expression, subquery}}}
+	return f.operateValue(subquery, "NOT IN")
+}
+
+func (f baseComparableImpl[T]) operateValue(value any, operator string) Condition {
+	return Condition{clause.Expr{SQL: "? " + operator + " ?", Vars: []any{f.Expression, value}}}
 }
 
 // ==================== 数值比较操作的通用实现 ====================
@@ -317,35 +321,6 @@ func (f numericComparableImpl[T]) NotBetweenPtr(from, to *T) Condition {
 // NotBetweenOpt 使用 Option 参数的范围排除查询
 func (f numericComparableImpl[T]) NotBetweenOpt(from, to mo.Option[T]) Condition {
 	return f.NotBetweenPtr(from.ToPointer(), to.ToPointer())
-}
-
-func (f numericComparableImpl[T]) operateValue(value any, operator string) Condition {
-	return f.operateValue2(f.Expression, value, operator)
-}
-
-func (f numericComparableImpl[T]) operateValue2(column clause.Expression, value any, operator string) Condition {
-	var expr clause.Expression
-	switch operator {
-	case "=":
-		expr = clause.Eq{Column: column, Value: value}
-	case "!=":
-		expr = clause.Neq{Column: column, Value: value}
-	case ">":
-		expr = clause.Gt{Column: column, Value: value}
-	case ">=":
-		expr = clause.Gte{Column: column, Value: value}
-	case "<":
-		expr = clause.Lt{Column: column, Value: value}
-	case "<=":
-		expr = clause.Lte{Column: column, Value: value}
-	case "IN":
-		expr = clause.IN{Column: column, Values: []any{value}}
-	case "NOT IN":
-		expr = clause.Not(clause.IN{Column: column, Values: []any{value}})
-	default:
-		panic(fmt.Sprintf("invalid operator %s", operator))
-	}
-	return Condition{expr}
 }
 
 // ==================== 算术运算的 SQL 生成 ====================

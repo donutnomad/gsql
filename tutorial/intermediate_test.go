@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	gsql "github.com/donutnomad/gsql"
+	"github.com/donutnomad/gsql"
 )
 
 // ==================== JOIN Tests ====================
