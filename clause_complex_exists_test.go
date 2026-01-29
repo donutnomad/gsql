@@ -468,7 +468,7 @@ func TestComplexWhereWithMultipleConditionTypes(t *testing.T) {
 	checks := []string{
 		"`bb`.`block_number` = 12345",
 		"`bb`.`account` IN ('0xabc','0xdef')",
-		"`bb`.`total_hold` BETWEEN 100 AND 1000",
+		"`bb`.`total_hold` >= 100 AND `bb`.`total_hold` < 1000",
 		"EXISTS",
 		" OR ",
 	}

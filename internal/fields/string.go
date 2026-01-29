@@ -87,8 +87,8 @@ func (e StringExpr[T]) CastUnsigned() IntExpr[uint64] {
 }
 
 // CastJson 转换为JSON (CAST AS JSON)
-func (e StringExpr[T]) CastJson() JsonExpr {
-	return JsonOf(clause.Expr{
+func (e StringExpr[T]) CastJson() JsonExpr[string] {
+	return JsonOf[string](clause.Expr{
 		SQL:  "CAST(? AS JSON)",
 		Vars: []any{e.Unwrap()},
 	})

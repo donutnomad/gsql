@@ -13,7 +13,7 @@ import (
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT COUNT(id) FROM users;
 // SELECT status, COUNT(id) FROM orders GROUP BY status;
-func (e JsonExpr) Count() IntExpr[int64] {
+func (e JsonExpr[T]) Count() IntExpr[int64] {
 	return IntOf[int64](e.countExpr())
 }
 
@@ -21,42 +21,41 @@ func (e JsonExpr) Count() IntExpr[int64] {
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT COUNT(DISTINCT status) FROM orders;
 // SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
-func (e JsonExpr) CountDistinct() IntExpr[int64] {
+func (e JsonExpr[T]) CountDistinct() IntExpr[int64] {
 	return IntOf[int64](e.countDistinctExpr())
 }
 
 // buildExpr 实现 clause.Expression 接口的 Build 方法
-func (e JsonExpr) Build(builder clause.Builder) {
+func (e JsonExpr[T]) Build(builder clause.Builder) {
 	e.buildExpr(builder)
 }
 
 // toExprExpr 返回内部的 Expression
-func (e JsonExpr) ToExpr() clause.Expression {
+func (e JsonExpr[T]) ToExpr() clause.Expression {
 	return e.toExprExpr()
 }
 
 // asExpr 创建一个别名字段
-func (e JsonExpr) As(alias string) fieldi.IField {
+func (e JsonExpr[T]) As(alias string) fieldi.IField {
 	return e.asExpr(alias)
 }
 
 // IfNull 如果表达式为NULL则返回默认值
 // 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
-func (e JsonExpr) IfNull(defaultValue any) JsonExpr {
-	return JsonOf(e.ifNullExpr(defaultValue))
+func (e JsonExpr[T]) IfNull(defaultValue any) JsonExpr[T] {
+	return JsonOf[T](e.ifNullExpr(defaultValue))
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (e JsonExpr) Coalesce(values ...any) JsonExpr {
-	return JsonOf(e.coalesceExpr(values...))
+func (e JsonExpr[T]) Coalesce(values ...any) JsonExpr[T] {
+	return JsonOf[T](e.coalesceExpr(values...))
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (e JsonExpr) NullIf(value any) JsonExpr {
-	return JsonOf(e.nullifExpr(value))
+func (e JsonExpr[T]) NullIf(value any) JsonExpr[T] {
+	return JsonOf[T](e.nullifExpr(value))
 }
-

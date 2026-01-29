@@ -185,7 +185,7 @@ func IntVal[T ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16
 	return fields.IntVal[T](val)
 }
 
-func Json[T any](val T) fields.JsonExpr {
+func Json[T any](val T) fields.JsonExpr[T] {
 	return fields.Json[T](val)
 }
 
@@ -193,7 +193,7 @@ func Json[T any](val T) fields.JsonExpr {
 // SELECT JSON_ARRAYAGG(name) FROM users;
 // SELECT department, JSON_ARRAYAGG(name) FROM users GROUP BY department;
 // 示例: fields.JsonArrayAgg(u.Name)
-func JsonArrayAgg(expr clause.Expression) fields.JsonExpr {
+func JsonArrayAgg(expr clause.Expression) fields.JsonExpr[string] {
 	return fields.JsonArrayAgg(expr)
 }
 
@@ -205,7 +205,7 @@ func JsonFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields
 	return fields.JsonFieldOf[T](tableName, name, flags...)
 }
 
-func JsonFrom[T any](field interface{ FieldType() T }) fields.JsonExpr {
+func JsonFrom[T any](field interface{ FieldType() T }) fields.JsonExpr[T] {
 	return fields.JsonFrom[T](field)
 }
 
@@ -216,7 +216,7 @@ func JsonFrom[T any](field interface{ FieldType() T }) fields.JsonExpr {
 //  1. 键必须唯一 - 如果同一组内有重复的键，后面的值会覆盖前面的
 //  2. 键必须是字符串 - MySQL 会自动将非字符串键转换为字符串
 //  3. NULL 值 - 如果键为 NULL，该行会被忽略
-func JsonObjectAgg(key, value clause.Expression) fields.JsonExpr {
+func JsonObjectAgg(key, value clause.Expression) fields.JsonExpr[string] {
 	return fields.JsonObjectAgg(key, value)
 }
 
@@ -358,7 +358,7 @@ type (
 	IntExpr[T any]               = fields.IntExpr[T]
 	IntField[T any]              = fields.IntField[T]
 	JsonColumnBuilder[T any]     = fields.JsonColumnBuilder[T]
-	JsonExpr                     = fields.JsonExpr
+	JsonExpr[T any]              = fields.JsonExpr[T]
 	JsonField[T any]             = fields.JsonField[T]
 	JsonInput                    = fields.JsonInput
 	LitExpr                      = fields.LitExpr

@@ -2039,7 +2039,7 @@ func (f StringField[T]) CastUnsigned() IntExpr[uint64] {
 }
 
 // CastJson 转换为JSON (CAST AS JSON)
-func (f StringField[T]) CastJson() JsonExpr {
+func (f StringField[T]) CastJson() JsonExpr[string] {
 	return f.expr.CastJson()
 }
 
@@ -4317,7 +4317,7 @@ func (f JsonField[T]) Desc() types.OrderItem {
 // SELECT JSON_EXTRACT('{"name":"John","age":30}', '$.name');
 // SELECT JSON_EXTRACT(data, '$.user.email') FROM profiles;
 // 示例: gsql.JsonOf(u.Profile).Extract("$.name", "$.age")
-func (f JsonField[T]) Extract(paths ...string) JsonExpr {
+func (f JsonField[T]) Extract(paths ...string) JsonExpr[T] {
 	return f.expr.Extract(paths...)
 }
 
@@ -4342,7 +4342,7 @@ func (f JsonField[T]) Quote() StringExpr[string] {
 // SELECT JSON_KEYS('{"a":{"x":1,"y":2},"b":3}', '$.a');
 // 示例: gsql.JsonOf(u.Profile).Keys()
 // 独立函数: gsql.JSON_KEYS(gsql.JsonOf(u.Profile))
-func (f JsonField[T]) Keys(path ...string) JsonExpr {
+func (f JsonField[T]) Keys(path ...string) JsonExpr[T] {
 	return f.expr.Keys(path...)
 }
 
@@ -4438,7 +4438,7 @@ func (f JsonField[T]) Search(mode string, searchStr any, escapePath ...any) Stri
 // Set 设置 JSON 值 (JSON_SET) - 返回 JsonExpr，支持链式设置
 // SELECT JSON_SET('{"a":1}', '$.b', 2);
 // 示例: gsql.JsonOf(u.Profile).Set("$.name", "John").Set("$.age", 18)
-func (f JsonField[T]) Set(path string, value any) JsonExpr {
+func (f JsonField[T]) Set(path string, value any) JsonExpr[T] {
 	return f.expr.Set(path, value)
 }
 
@@ -4446,7 +4446,7 @@ func (f JsonField[T]) Set(path string, value any) JsonExpr {
 // SELECT JSON_INSERT('{"a":1}', '$.b', 2);
 // 示例: gsql.JsonOf(u.Profile).Insert("$.created_at", now)
 // 独立函数: gsql.JSON_INSERT(gsql.JsonOf(u.Profile), "$.created_at", now)
-func (f JsonField[T]) Insert(path string, value any) JsonExpr {
+func (f JsonField[T]) Insert(path string, value any) JsonExpr[T] {
 	return f.expr.Insert(path, value)
 }
 
@@ -4454,14 +4454,14 @@ func (f JsonField[T]) Insert(path string, value any) JsonExpr {
 // SELECT JSON_REPLACE('{"a":1}', '$.a', 2);
 // 示例: gsql.JsonOf(u.Profile).Replace("$.status", "inactive")
 // 独立函数: gsql.JSON_REPLACE(gsql.JsonOf(u.Profile), "$.status", "inactive")
-func (f JsonField[T]) Replace(path string, value any) JsonExpr {
+func (f JsonField[T]) Replace(path string, value any) JsonExpr[T] {
 	return f.expr.Replace(path, value)
 }
 
 // Remove 移除 JSON 元素 (JSON_REMOVE)
 // SELECT JSON_REMOVE('{"a":1,"b":2}', '$.a');
 // 示例: gsql.JsonOf(u.Profile).Remove("$.temp", "$.old")
-func (f JsonField[T]) Remove(paths ...string) JsonExpr {
+func (f JsonField[T]) Remove(paths ...string) JsonExpr[T] {
 	return f.expr.Remove(paths...)
 }
 
@@ -4469,7 +4469,7 @@ func (f JsonField[T]) Remove(paths ...string) JsonExpr {
 // SELECT JSON_ARRAY_APPEND('[1,2]', '$', 3);
 // 示例: gsql.JsonOf(u.Tags).ArrayAppend("$", "new_tag")
 // 独立函数: gsql.JSON_ARRAY_APPEND(gsql.JsonOf(u.Tags), "$", "new_tag")
-func (f JsonField[T]) ArrayAppend(path string, value any) JsonExpr {
+func (f JsonField[T]) ArrayAppend(path string, value any) JsonExpr[T] {
 	return f.expr.ArrayAppend(path, value)
 }
 
@@ -4477,7 +4477,7 @@ func (f JsonField[T]) ArrayAppend(path string, value any) JsonExpr {
 // SELECT JSON_ARRAY_INSERT('[1,2]', '$[0]', 0);
 // 示例: gsql.JsonOf(u.Images).ArrayInsert("$[0]", "cover.jpg")
 // 独立函数: gsql.JSON_ARRAY_INSERT(gsql.JsonOf(u.Images), "$[0]", "cover.jpg")
-func (f JsonField[T]) ArrayInsert(path string, value any) JsonExpr {
+func (f JsonField[T]) ArrayInsert(path string, value any) JsonExpr[T] {
 	return f.expr.ArrayInsert(path, value)
 }
 
@@ -4485,7 +4485,7 @@ func (f JsonField[T]) ArrayInsert(path string, value any) JsonExpr {
 // SELECT JSON_MERGE_PRESERVE('{"a":1}', '{"b":2}');
 // 示例: gsql.JsonOf(json1).MergePreserve(json2, json3)
 // 独立函数: gsql.JSON_MERGE_PRESERVE(json1, json2).Merge(json3)
-func (f JsonField[T]) MergePreserve(others ...JsonInput) JsonExpr {
+func (f JsonField[T]) MergePreserve(others ...JsonInput) JsonExpr[T] {
 	return f.expr.MergePreserve(others...)
 }
 
@@ -4493,7 +4493,7 @@ func (f JsonField[T]) MergePreserve(others ...JsonInput) JsonExpr {
 // SELECT JSON_MERGE_PATCH('{"a":1}', '{"a":2}');
 // 示例: gsql.JsonOf(json1).MergePatch(json2, json3)
 // 独立函数: gsql.JSON_MERGE_PATCH(json1, json2).Merge(json3)
-func (f JsonField[T]) MergePatch(others ...JsonInput) JsonExpr {
+func (f JsonField[T]) MergePatch(others ...JsonInput) JsonExpr[T] {
 	return f.expr.MergePatch(others...)
 }
 
@@ -4536,21 +4536,21 @@ func (f JsonField[T]) CountDistinct() IntExpr[int64] {
 
 // IfNull 如果表达式为NULL则返回默认值
 // 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
-func (f JsonField[T]) IfNull(defaultValue any) JsonExpr {
+func (f JsonField[T]) IfNull(defaultValue any) JsonExpr[T] {
 	return f.expr.IfNull(defaultValue)
 }
 
 // Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
 // 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
 // SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
-func (f JsonField[T]) Coalesce(values ...any) JsonExpr {
+func (f JsonField[T]) Coalesce(values ...any) JsonExpr[T] {
 	return f.expr.Coalesce(values...)
 }
 
 // NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
 // 数据库支持: MySQL, PostgreSQL, SQLite
 // SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
-func (f JsonField[T]) NullIf(value any) JsonExpr {
+func (f JsonField[T]) NullIf(value any) JsonExpr[T] {
 	return f.expr.NullIf(value)
 }
 

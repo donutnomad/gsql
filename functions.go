@@ -198,6 +198,6 @@ func CONVERT_CHARSET(expr Expression, charset string) field.ExpressionTo {
 //
 //	gsql.JsonOf(u.Profile).Extract("$.name")
 //	gsql.JsonOf(u.Profile).Length("$.skills")
-func JsonOf(expr clause.Expression) JsonExpr {
-	return fields.JsonOf(expr)
+func JsonOf(expr clause.Expression) JsonExpr[string] {
+	return fields.JsonOf[string](expr)
 }
