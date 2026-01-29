@@ -432,6 +432,40 @@ func (lte Lte) NegationBuild(builder Builder) {
 	Gt(lte).Build(builder)
 }
 
+// Between for BETWEEN ... AND ... conditions
+type Between struct {
+	Column Expression
+	From   any
+	To     any
+}
+
+func (b Between) Build(builder Builder) {
+	b.Column.Build(builder)
+	builder.WriteString(" BETWEEN ")
+	AddVarWithParens(builder, b.From)
+	builder.WriteString(" AND ")
+	AddVarWithParens(builder, b.To)
+}
+
+func (b Between) NegationBuild(builder Builder) {
+	NotBetween(b).Build(builder)
+}
+
+// NotBetween for NOT BETWEEN ... AND ... conditions
+type NotBetween Between
+
+func (nb NotBetween) Build(builder Builder) {
+	nb.Column.Build(builder)
+	builder.WriteString(" NOT BETWEEN ")
+	AddVarWithParens(builder, nb.From)
+	builder.WriteString(" AND ")
+	AddVarWithParens(builder, nb.To)
+}
+
+func (nb NotBetween) NegationBuild(builder Builder) {
+	Between(nb).Build(builder)
+}
+
 func eqNil(value any) bool {
 	if valuer, ok := value.(driver.Valuer); ok && !eqNilReflect(valuer) {
 		value, _ = valuer.Value()

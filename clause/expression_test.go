@@ -409,3 +409,384 @@ func (m *testMemBuilder) AddVar(writer Writer, vars ...any) {
 func (m *testMemBuilder) AddError(err error) error {
 	return err
 }
+
+func TestBetweenBuild(t *testing.T) {
+	tests := []struct {
+		name        string
+		between     Between
+		expectedSQL string
+	}{
+		{
+			name: "simple values",
+			between: Between{
+				Column: testExpr{sql: "`users`.`age`"},
+				From:   10,
+				To:     20,
+			},
+			expectedSQL: "`users`.`age` BETWEEN ? AND ?",
+		},
+		{
+			name: "expression values - arithmetic",
+			between: Between{
+				Column: testExpr{sql: "`users`.`age`"},
+				From:   testExpr{sql: "a + b"},
+				To:     testExpr{sql: "c - d"},
+			},
+			expectedSQL: "`users`.`age` BETWEEN (a + b) AND (c - d)",
+		},
+		{
+			name: "column expressions",
+			between: Between{
+				Column: testExpr{sql: "`orders`.`amount`"},
+				From:   testExpr{sql: "`limits`.`min`"},
+				To:     testExpr{sql: "`limits`.`max`"},
+			},
+			expectedSQL: "`orders`.`amount` BETWEEN `limits`.`min` AND `limits`.`max`",
+		},
+		{
+			name: "function expressions",
+			between: Between{
+				Column: testExpr{sql: "`events`.`created_at`"},
+				From:   testExpr{sql: "DATE_SUB(NOW())"},
+				To:     testExpr{sql: "NOW()"},
+			},
+			expectedSQL: "`events`.`created_at` BETWEEN DATE_SUB(NOW()) AND NOW()",
+		},
+		{
+			name: "mixed value and expression",
+			between: Between{
+				Column: testExpr{sql: "`products`.`price`"},
+				From:   100,
+				To:     testExpr{sql: "base_price * 2"},
+			},
+			expectedSQL: "`products`.`price` BETWEEN ? AND (base_price * 2)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mb := &testMemBuilder{}
+			tt.between.Build(mb)
+			got := mb.sql
+			if got != tt.expectedSQL {
+				t.Errorf("Between.Build() produced SQL = %q, want %q", got, tt.expectedSQL)
+			}
+		})
+	}
+}
+
+func TestNotBetweenBuild(t *testing.T) {
+	tests := []struct {
+		name        string
+		notBetween  NotBetween
+		expectedSQL string
+	}{
+		{
+			name: "simple values",
+			notBetween: NotBetween{
+				Column: testExpr{sql: "`users`.`age`"},
+				From:   10,
+				To:     20,
+			},
+			expectedSQL: "`users`.`age` NOT BETWEEN ? AND ?",
+		},
+		{
+			name: "expression values - arithmetic",
+			notBetween: NotBetween{
+				Column: testExpr{sql: "`users`.`age`"},
+				From:   testExpr{sql: "a + b"},
+				To:     testExpr{sql: "c - d"},
+			},
+			expectedSQL: "`users`.`age` NOT BETWEEN (a + b) AND (c - d)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mb := &testMemBuilder{}
+			tt.notBetween.Build(mb)
+			got := mb.sql
+			if got != tt.expectedSQL {
+				t.Errorf("NotBetween.Build() produced SQL = %q, want %q", got, tt.expectedSQL)
+			}
+		})
+	}
+}
+
+func TestExprWithExpressionVars(t *testing.T) {
+	// 测试 Expr 处理表达式变量时的行为
+	// 验证算术表达式如 "? / ?" 中的表达式参数是否正确添加括号
+	tests := []struct {
+		name        string
+		expr        Expr
+		expectedSQL string
+	}{
+		{
+			name: "division with simple values",
+			expr: Expr{
+				SQL:  "? / ?",
+				Vars: []any{testExpr{sql: "`a`.`x`"}, 10},
+			},
+			expectedSQL: "`a`.`x` / ?",
+		},
+		{
+			name: "division with arithmetic expression",
+			expr: Expr{
+				SQL:  "? / ?",
+				Vars: []any{testExpr{sql: "`a`.`x`"}, testExpr{sql: "b + c"}},
+			},
+			expectedSQL: "`a`.`x` / (b + c)",
+		},
+		{
+			name: "addition with both arithmetic expressions",
+			expr: Expr{
+				SQL:  "? + ?",
+				Vars: []any{testExpr{sql: "a * b"}, testExpr{sql: "c - d"}},
+			},
+			expectedSQL: "(a * b) + (c - d)",
+		},
+		{
+			name: "multiplication with column and function",
+			expr: Expr{
+				SQL:  "? * ?",
+				Vars: []any{testExpr{sql: "`price`"}, testExpr{sql: "COUNT(*)"}},
+			},
+			expectedSQL: "`price` * COUNT(*)",
+		},
+		{
+			name: "complex nested expression",
+			expr: Expr{
+				SQL:  "(? + ?) / ?",
+				Vars: []any{testExpr{sql: "`a`"}, testExpr{sql: "`b`"}, testExpr{sql: "x + y"}},
+			},
+			// 第一个和第二个 ? 在括号内，不需要额外括号
+			// 第三个 ? 不在括号内，需要括号
+			expectedSQL: "(`a` + `b`) / (x + y)",
+		},
+		{
+			name: "WithoutParentheses flag",
+			expr: Expr{
+				SQL:                "? + ?",
+				Vars:               []any{testExpr{sql: "a * b"}, testExpr{sql: "c - d"}},
+				WithoutParentheses: true,
+			},
+			// WithoutParentheses 标志禁用自动括号
+			expectedSQL: "a * b + c - d",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mb := &testMemBuilder{}
+			tt.expr.Build(mb)
+			got := mb.sql
+			if got != tt.expectedSQL {
+				t.Errorf("Expr.Build() produced SQL = %q, want %q", got, tt.expectedSQL)
+			}
+		})
+	}
+}
+
+func TestExprModOperator(t *testing.T) {
+	// 测试 MOD 操作符处理表达式变量时的行为
+	tests := []struct {
+		name        string
+		expr        Expr
+		expectedSQL string
+	}{
+		{
+			name: "MOD with simple values",
+			expr: Expr{
+				SQL:  "? MOD ?",
+				Vars: []any{testExpr{sql: "`id`"}, 2},
+			},
+			expectedSQL: "`id` MOD ?",
+		},
+		{
+			name: "MOD with arithmetic expression",
+			expr: Expr{
+				SQL:  "? MOD ?",
+				Vars: []any{testExpr{sql: "`a` + `b`"}, testExpr{sql: "c - d"}},
+			},
+			// 复杂表达式需要括号
+			expectedSQL: "(`a` + `b`) MOD (c - d)",
+		},
+		{
+			name: "MOD with column expressions",
+			expr: Expr{
+				SQL:  "? MOD ?",
+				Vars: []any{testExpr{sql: "`users`.`id`"}, testExpr{sql: "`config`.`value`"}},
+			},
+			// 简单列名不需要括号
+			expectedSQL: "`users`.`id` MOD `config`.`value`",
+		},
+		{
+			name: "MOD with function",
+			expr: Expr{
+				SQL:  "? MOD ?",
+				Vars: []any{testExpr{sql: "ABS(`value`)"}, 10},
+			},
+			expectedSQL: "ABS(`value`) MOD ?",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mb := &testMemBuilder{}
+			tt.expr.Build(mb)
+			got := mb.sql
+			if got != tt.expectedSQL {
+				t.Errorf("Expr.Build() produced SQL = %q, want %q", got, tt.expectedSQL)
+			}
+		})
+	}
+}
+
+func TestExprBetweenWithExpressions(t *testing.T) {
+	// 测试原来的 BETWEEN 模板是否能正确处理表达式
+	tests := []struct {
+		name        string
+		expr        Expr
+		expectedSQL string
+	}{
+		{
+			name: "BETWEEN with simple values",
+			expr: Expr{
+				SQL:  "? BETWEEN ? AND ?",
+				Vars: []any{testExpr{sql: "`age`"}, 10, 20},
+			},
+			expectedSQL: "`age` BETWEEN ? AND ?",
+		},
+		{
+			name: "BETWEEN with arithmetic expressions",
+			expr: Expr{
+				SQL:  "? BETWEEN ? AND ?",
+				Vars: []any{testExpr{sql: "`age`"}, testExpr{sql: "a + b"}, testExpr{sql: "c - d"}},
+			},
+			expectedSQL: "`age` BETWEEN (a + b) AND (c - d)",
+		},
+		{
+			name: "BETWEEN with IF function - real world case",
+			expr: Expr{
+				SQL: "? BETWEEN ? AND ?",
+				Vars: []any{
+					testExpr{sql: "FROM_UNIXTIME(`order`.`block_time`)"},
+					testExpr{sql: "`log`.`created_at`"},
+					testExpr{sql: "IF(`log`.`bind` = TRUE, '2026-01-29', `log`.`unbind_at`)"},
+				},
+			},
+			// IF() 是函数，不加括号
+			expectedSQL: "FROM_UNIXTIME(`order`.`block_time`) BETWEEN `log`.`created_at` AND IF(`log`.`bind` = TRUE, '2026-01-29', `log`.`unbind_at`)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mb := &testMemBuilder{}
+			tt.expr.Build(mb)
+			got := mb.sql
+			if got != tt.expectedSQL {
+				t.Errorf("Expr.Build() produced SQL = %q, want %q", got, tt.expectedSQL)
+			}
+		})
+	}
+}
+
+func TestExprWithComplexExpressions(t *testing.T) {
+	// 测试复杂表达式如 IF、CASE WHEN 作为变量时的行为
+	tests := []struct {
+		name        string
+		expr        Expr
+		between     Between
+		useBetween  bool
+		expectedSQL string
+	}{
+		{
+			name: "IF expression in arithmetic",
+			expr: Expr{
+				SQL:  "? + ?",
+				Vars: []any{testExpr{sql: "`base`"}, testExpr{sql: "IF(a > 0, a, 0)"}},
+			},
+			// IF() 是函数调用形式，不需要括号
+			expectedSQL: "`base` + IF(a > 0, a, 0)",
+		},
+		{
+			name: "CASE WHEN in arithmetic",
+			expr: Expr{
+				SQL:  "? * ?",
+				Vars: []any{testExpr{sql: "`price`"}, testExpr{sql: "CASE WHEN type = 1 THEN 0.9 ELSE 1 END"}},
+			},
+			// CASE WHEN 不是函数形式，需要括号
+			expectedSQL: "`price` * (CASE WHEN type = 1 THEN 0.9 ELSE 1 END)",
+		},
+		{
+			name: "CASE WHEN in BETWEEN",
+			between: Between{
+				Column: testExpr{sql: "`amount`"},
+				From:   testExpr{sql: "CASE WHEN level = 1 THEN 0 ELSE 100 END"},
+				To:     testExpr{sql: "CASE WHEN level = 1 THEN 1000 ELSE 5000 END"},
+			},
+			expectedSQL: "`amount` BETWEEN (CASE WHEN level = 1 THEN 0 ELSE 100 END) AND (CASE WHEN level = 1 THEN 1000 ELSE 5000 END)",
+			useBetween:  true,
+		},
+		{
+			name: "subquery in arithmetic",
+			expr: Expr{
+				SQL:  "? / ?",
+				Vars: []any{testExpr{sql: "`total`"}, testExpr{sql: "SELECT COUNT(*) FROM users"}},
+			},
+			// 子查询需要括号
+			expectedSQL: "`total` / (SELECT COUNT(*) FROM users)",
+		},
+		{
+			name: "already wrapped subquery",
+			expr: Expr{
+				SQL:  "? / ?",
+				Vars: []any{testExpr{sql: "`total`"}, testExpr{sql: "(SELECT COUNT(*) FROM users)"}},
+			},
+			// 已经有括号的子查询不重复添加
+			expectedSQL: "`total` / (SELECT COUNT(*) FROM users)",
+		},
+		{
+			name: "COALESCE function",
+			expr: Expr{
+				SQL:  "? + ?",
+				Vars: []any{testExpr{sql: "COALESCE(`a`, 0)"}, testExpr{sql: "COALESCE(`b`, 0)"}},
+			},
+			// 函数调用不需要括号
+			expectedSQL: "COALESCE(`a`, 0) + COALESCE(`b`, 0)",
+		},
+		{
+			name: "NULLIF function",
+			expr: Expr{
+				SQL:  "? / ?",
+				Vars: []any{testExpr{sql: "`total`"}, testExpr{sql: "NULLIF(`count`, 0)"}},
+			},
+			expectedSQL: "`total` / NULLIF(`count`, 0)",
+		},
+		{
+			name: "nested CASE in IF",
+			expr: Expr{
+				SQL:  "? + ?",
+				Vars: []any{testExpr{sql: "`base`"}, testExpr{sql: "IF(x > 0, CASE WHEN y = 1 THEN 10 ELSE 20 END, 0)"}},
+			},
+			// IF() 外层是函数形式
+			expectedSQL: "`base` + IF(x > 0, CASE WHEN y = 1 THEN 10 ELSE 20 END, 0)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mb := &testMemBuilder{}
+			if tt.useBetween {
+				tt.between.Build(mb)
+			} else {
+				tt.expr.Build(mb)
+			}
+			got := mb.sql
+			if got != tt.expectedSQL {
+				t.Errorf("Build() produced SQL = %q, want %q", got, tt.expectedSQL)
+			}
+		})
+	}
+}

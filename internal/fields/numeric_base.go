@@ -122,6 +122,13 @@ type Condition struct {
 
 var emptyCondition = Condition{clause.Expr{}}
 
+func (c Condition) IsEmptySQL() bool {
+	if v, ok := c.Expression.(clause.Expr); ok {
+		return len(v.SQL) == 0
+	}
+	return false
+}
+
 // baseComparableImpl 基础比较操作实现
 // 适用于所有类型（包括字符串），只包含等于、不等于、In、NotIn
 type baseComparableImpl[T any] struct {
@@ -263,11 +270,11 @@ func (f numericComparableImpl[T]) LteF(other clause.Expression) Condition {
 }
 
 func (f numericComparableImpl[T]) Between(from, to T) Condition {
-	return Condition{clause.Expr{SQL: "? BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}}
+	return Condition{clause.Between{Column: f.Expression, From: from, To: to}}
 }
 
 func (f numericComparableImpl[T]) NotBetween(from, to T) Condition {
-	return Condition{clause.Expr{SQL: "? NOT BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}}
+	return Condition{clause.NotBetween{Column: f.Expression, From: from, To: to}}
 }
 
 // BetweenPtr 使用指针参数的范围查询
@@ -301,7 +308,7 @@ func (f numericComparableImpl[T]) BetweenF(from, to clause.Expression) Condition
 	if to == nil {
 		return f.GteF(from)
 	}
-	return Condition{clause.Expr{SQL: "? BETWEEN ? AND ?", Vars: []any{f.Expression, from, to}}}
+	return Condition{clause.Between{Column: f.Expression, From: from, To: to}}
 }
 
 // NotBetweenPtr 使用指针参数的范围排除查询
