@@ -48,6 +48,7 @@ var fieldTypes = []FieldType{
 	newFieldType("DateExpr"),
 	newFieldType("TimeExpr"),
 	newFieldType("ScalarExpr"),
+	newFieldType("JsonExpr"),
 }
 
 func newFieldType(input string) FieldType {
@@ -572,6 +573,10 @@ func exprToTypeString(expr ast.Expr) string {
 	case *ast.IndexExpr:
 		return exprToTypeString(t.X) + "[" + exprToTypeString(t.Index) + "]"
 	case *ast.InterfaceType:
+		// Handle interface types with methods
+		if t.Methods != nil && len(t.Methods.List) > 0 {
+			return formatInterfaceType(t)
+		}
 		return "any"
 	case *ast.MapType:
 		return "map[" + exprToTypeString(t.Key) + "]" + exprToTypeString(t.Value)
@@ -604,6 +609,31 @@ func formatFuncType(ft *ast.FuncType) string {
 		result += " (" + strings.Join(results, ", ") + ")"
 	}
 	return result
+}
+
+// formatInterfaceType formats an interface type with methods
+func formatInterfaceType(it *ast.InterfaceType) string {
+	if it.Methods == nil || len(it.Methods.List) == 0 {
+		return "any"
+	}
+
+	var methods []string
+	for _, method := range it.Methods.List {
+		if len(method.Names) > 0 {
+			// This is a method
+			funcType, ok := method.Type.(*ast.FuncType)
+			if ok {
+				methodName := method.Names[0].Name
+				methodSig := methodName + formatFuncType(funcType)
+				methods = append(methods, methodSig)
+			}
+		} else {
+			// This is an embedded type
+			methods = append(methods, exprToTypeString(method.Type))
+		}
+	}
+
+	return "interface{ " + strings.Join(methods, "; ") + " }"
 }
 
 // extractComments extracts the comment text from a CommentGroup

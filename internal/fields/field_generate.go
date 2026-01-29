@@ -550,38 +550,70 @@ func (f IntField[T]) LteF(other clause.Expression) Condition {
 	return f.expr.LteF(other)
 }
 
-func (f IntField[T]) Between(from T, to T) Condition {
-	return f.expr.Between(from, to)
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f IntField[T]) Between(from *T, to *T, op ...string) Condition {
+	return f.expr.Between(from, to, op...)
 }
 
-func (f IntField[T]) NotBetween(from T, to T) Condition {
-	return f.expr.NotBetween(from, to)
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f IntField[T]) NotBetween(from *T, to *T, op ...string) Condition {
+	return f.expr.NotBetween(from, to, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f IntField[T]) BetweenPtr(from *T, to *T) Condition {
-	return f.expr.BetweenPtr(from, to)
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f IntField[T]) BetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.BetweenRange(rng, op...)
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f IntField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.BetweenOpt(from, to)
+func (f IntField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.BetweenOpt(from, to, op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f IntField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
-	return f.expr.BetweenF(from, to)
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f IntField[T]) BetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.BetweenF(from, to, op...)
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f IntField[T]) NotBetweenPtr(from *T, to *T) Condition {
-	return f.expr.NotBetweenPtr(from, to)
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f IntField[T]) NotBetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.NotBetweenRange(rng, op...)
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f IntField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.NotBetweenOpt(from, to)
+func (f IntField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.NotBetweenOpt(from, to, op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f IntField[T]) NotBetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.NotBetweenF(from, to, op...)
 }
 
 func (f IntField[T]) Eq(value T) Condition {
@@ -616,10 +648,14 @@ func (f IntField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
 func (f IntField[T]) InSubquery(subquery clause.Expression) Condition {
 	return f.expr.InSubquery(subquery)
 }
 
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
 func (f IntField[T]) NotInSubquery(subquery clause.Expression) Condition {
 	return f.expr.NotInSubquery(subquery)
 }
@@ -1146,38 +1182,70 @@ func (f FloatField[T]) LteF(other clause.Expression) Condition {
 	return f.expr.LteF(other)
 }
 
-func (f FloatField[T]) Between(from T, to T) Condition {
-	return f.expr.Between(from, to)
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f FloatField[T]) Between(from *T, to *T, op ...string) Condition {
+	return f.expr.Between(from, to, op...)
 }
 
-func (f FloatField[T]) NotBetween(from T, to T) Condition {
-	return f.expr.NotBetween(from, to)
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f FloatField[T]) NotBetween(from *T, to *T, op ...string) Condition {
+	return f.expr.NotBetween(from, to, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f FloatField[T]) BetweenPtr(from *T, to *T) Condition {
-	return f.expr.BetweenPtr(from, to)
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f FloatField[T]) BetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.BetweenRange(rng, op...)
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f FloatField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.BetweenOpt(from, to)
+func (f FloatField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.BetweenOpt(from, to, op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f FloatField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
-	return f.expr.BetweenF(from, to)
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f FloatField[T]) BetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.BetweenF(from, to, op...)
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f FloatField[T]) NotBetweenPtr(from *T, to *T) Condition {
-	return f.expr.NotBetweenPtr(from, to)
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f FloatField[T]) NotBetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.NotBetweenRange(rng, op...)
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f FloatField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.NotBetweenOpt(from, to)
+func (f FloatField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.NotBetweenOpt(from, to, op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f FloatField[T]) NotBetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.NotBetweenF(from, to, op...)
 }
 
 func (f FloatField[T]) Eq(value T) Condition {
@@ -1212,10 +1280,14 @@ func (f FloatField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
 func (f FloatField[T]) InSubquery(subquery clause.Expression) Condition {
 	return f.expr.InSubquery(subquery)
 }
 
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
 func (f FloatField[T]) NotInSubquery(subquery clause.Expression) Condition {
 	return f.expr.NotInSubquery(subquery)
 }
@@ -1683,38 +1755,70 @@ func (f DecimalField[T]) LteF(other clause.Expression) Condition {
 	return f.expr.LteF(other)
 }
 
-func (f DecimalField[T]) Between(from T, to T) Condition {
-	return f.expr.Between(from, to)
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f DecimalField[T]) Between(from *T, to *T, op ...string) Condition {
+	return f.expr.Between(from, to, op...)
 }
 
-func (f DecimalField[T]) NotBetween(from T, to T) Condition {
-	return f.expr.NotBetween(from, to)
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f DecimalField[T]) NotBetween(from *T, to *T, op ...string) Condition {
+	return f.expr.NotBetween(from, to, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f DecimalField[T]) BetweenPtr(from *T, to *T) Condition {
-	return f.expr.BetweenPtr(from, to)
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f DecimalField[T]) BetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.BetweenRange(rng, op...)
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f DecimalField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.BetweenOpt(from, to)
+func (f DecimalField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.BetweenOpt(from, to, op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f DecimalField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
-	return f.expr.BetweenF(from, to)
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f DecimalField[T]) BetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.BetweenF(from, to, op...)
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f DecimalField[T]) NotBetweenPtr(from *T, to *T) Condition {
-	return f.expr.NotBetweenPtr(from, to)
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f DecimalField[T]) NotBetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.NotBetweenRange(rng, op...)
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f DecimalField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.NotBetweenOpt(from, to)
+func (f DecimalField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.NotBetweenOpt(from, to, op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f DecimalField[T]) NotBetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.NotBetweenF(from, to, op...)
 }
 
 func (f DecimalField[T]) Eq(value T) Condition {
@@ -1749,10 +1853,14 @@ func (f DecimalField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
 func (f DecimalField[T]) InSubquery(subquery clause.Expression) Condition {
 	return f.expr.InSubquery(subquery)
 }
 
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
 func (f DecimalField[T]) NotInSubquery(subquery clause.Expression) Condition {
 	return f.expr.NotInSubquery(subquery)
 }
@@ -2179,10 +2287,14 @@ func (f StringField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
 func (f StringField[T]) InSubquery(subquery clause.Expression) Condition {
 	return f.expr.InSubquery(subquery)
 }
 
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
 func (f StringField[T]) NotInSubquery(subquery clause.Expression) Condition {
 	return f.expr.NotInSubquery(subquery)
 }
@@ -2704,38 +2816,70 @@ func (f DateTimeField[T]) LteF(other clause.Expression) Condition {
 	return f.expr.LteF(other)
 }
 
-func (f DateTimeField[T]) Between(from T, to T) Condition {
-	return f.expr.Between(from, to)
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f DateTimeField[T]) Between(from *T, to *T, op ...string) Condition {
+	return f.expr.Between(from, to, op...)
 }
 
-func (f DateTimeField[T]) NotBetween(from T, to T) Condition {
-	return f.expr.NotBetween(from, to)
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f DateTimeField[T]) NotBetween(from *T, to *T, op ...string) Condition {
+	return f.expr.NotBetween(from, to, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f DateTimeField[T]) BetweenPtr(from *T, to *T) Condition {
-	return f.expr.BetweenPtr(from, to)
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f DateTimeField[T]) BetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.BetweenRange(rng, op...)
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f DateTimeField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.BetweenOpt(from, to)
+func (f DateTimeField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.BetweenOpt(from, to, op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f DateTimeField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
-	return f.expr.BetweenF(from, to)
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f DateTimeField[T]) BetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.BetweenF(from, to, op...)
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f DateTimeField[T]) NotBetweenPtr(from *T, to *T) Condition {
-	return f.expr.NotBetweenPtr(from, to)
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f DateTimeField[T]) NotBetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.NotBetweenRange(rng, op...)
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f DateTimeField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.NotBetweenOpt(from, to)
+func (f DateTimeField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.NotBetweenOpt(from, to, op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f DateTimeField[T]) NotBetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.NotBetweenF(from, to, op...)
 }
 
 func (f DateTimeField[T]) Eq(value T) Condition {
@@ -2768,6 +2912,18 @@ func (f DateTimeField[T]) In(values ...T) Condition {
 
 func (f DateTimeField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
+}
+
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
+func (f DateTimeField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
+func (f DateTimeField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
 }
 
 func (f DateTimeField[T]) IsNull() Condition {
@@ -3178,38 +3334,70 @@ func (f DateField[T]) LteF(other clause.Expression) Condition {
 	return f.expr.LteF(other)
 }
 
-func (f DateField[T]) Between(from T, to T) Condition {
-	return f.expr.Between(from, to)
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f DateField[T]) Between(from *T, to *T, op ...string) Condition {
+	return f.expr.Between(from, to, op...)
 }
 
-func (f DateField[T]) NotBetween(from T, to T) Condition {
-	return f.expr.NotBetween(from, to)
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f DateField[T]) NotBetween(from *T, to *T, op ...string) Condition {
+	return f.expr.NotBetween(from, to, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f DateField[T]) BetweenPtr(from *T, to *T) Condition {
-	return f.expr.BetweenPtr(from, to)
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f DateField[T]) BetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.BetweenRange(rng, op...)
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f DateField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.BetweenOpt(from, to)
+func (f DateField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.BetweenOpt(from, to, op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f DateField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
-	return f.expr.BetweenF(from, to)
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f DateField[T]) BetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.BetweenF(from, to, op...)
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f DateField[T]) NotBetweenPtr(from *T, to *T) Condition {
-	return f.expr.NotBetweenPtr(from, to)
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f DateField[T]) NotBetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.NotBetweenRange(rng, op...)
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f DateField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.NotBetweenOpt(from, to)
+func (f DateField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.NotBetweenOpt(from, to, op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f DateField[T]) NotBetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.NotBetweenF(from, to, op...)
 }
 
 func (f DateField[T]) Eq(value T) Condition {
@@ -3242,6 +3430,18 @@ func (f DateField[T]) In(values ...T) Condition {
 
 func (f DateField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
+}
+
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
+func (f DateField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
+func (f DateField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
 }
 
 func (f DateField[T]) IsNull() Condition {
@@ -3589,38 +3789,70 @@ func (f TimeField[T]) LteF(other clause.Expression) Condition {
 	return f.expr.LteF(other)
 }
 
-func (f TimeField[T]) Between(from T, to T) Condition {
-	return f.expr.Between(from, to)
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f TimeField[T]) Between(from *T, to *T, op ...string) Condition {
+	return f.expr.Between(from, to, op...)
 }
 
-func (f TimeField[T]) NotBetween(from T, to T) Condition {
-	return f.expr.NotBetween(from, to)
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f TimeField[T]) NotBetween(from *T, to *T, op ...string) Condition {
+	return f.expr.NotBetween(from, to, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f TimeField[T]) BetweenPtr(from *T, to *T) Condition {
-	return f.expr.BetweenPtr(from, to)
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f TimeField[T]) BetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.BetweenRange(rng, op...)
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f TimeField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.BetweenOpt(from, to)
+func (f TimeField[T]) BetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.BetweenOpt(from, to, op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f TimeField[T]) BetweenF(from clause.Expression, to clause.Expression) Condition {
-	return f.expr.BetweenF(from, to)
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f TimeField[T]) BetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.BetweenF(from, to, op...)
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f TimeField[T]) NotBetweenPtr(from *T, to *T) Condition {
-	return f.expr.NotBetweenPtr(from, to)
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f TimeField[T]) NotBetweenRange(rng interface {
+	FromValue() *T
+	ToValue() *T
+}, op ...string) Condition {
+	return f.expr.NotBetweenRange(rng, op...)
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f TimeField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T]) Condition {
-	return f.expr.NotBetweenOpt(from, to)
+func (f TimeField[T]) NotBetweenOpt(from mo.Option[T], to mo.Option[T], op ...string) Condition {
+	return f.expr.NotBetweenOpt(from, to, op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f TimeField[T]) NotBetweenF(from clause.Expression, to clause.Expression, op ...string) Condition {
+	return f.expr.NotBetweenF(from, to, op...)
 }
 
 func (f TimeField[T]) Eq(value T) Condition {
@@ -3653,6 +3885,18 @@ func (f TimeField[T]) In(values ...T) Condition {
 
 func (f TimeField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
+}
+
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
+func (f TimeField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
+func (f TimeField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
 }
 
 func (f TimeField[T]) IsNull() Condition {
@@ -3902,10 +4146,462 @@ func (f ScalarField[T]) NotIn(values ...T) Condition {
 	return f.expr.NotIn(values...)
 }
 
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
+func (f ScalarField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
+func (f ScalarField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
+}
+
 func (f ScalarField[T]) IsNull() Condition {
 	return f.expr.IsNull()
 }
 
 func (f ScalarField[T]) IsNotNull() Condition {
+	return f.expr.IsNotNull()
+}
+
+// ==================== JsonField ====================
+
+type JsonField[T any] struct {
+	expr   JsonExpr[T]
+	flags  types.FieldFlag
+	column *clauses2.ColumnQuote
+}
+
+func JsonFieldOf[T any](tableName, name string, flags ...types.FieldFlag) JsonField[T] {
+	q := &clauses2.ColumnQuote{
+		TableName:  tableName,
+		ColumnName: name,
+		Alias:      "",
+	}
+	ret := JsonField[T]{
+		expr:   JsonOf[T](q),
+		column: q,
+		flags:  0,
+	}
+	if len(flags) > 0 {
+		ret.flags = flags[0]
+	}
+	return ret
+}
+
+func JsonColumn[T any](name string) JsonColumnBuilder[T] {
+	return JsonColumnBuilder[T]{name: name}
+}
+
+type JsonColumnBuilder[T any] struct {
+	name string
+}
+
+func (b JsonColumnBuilder[T]) From(source interface{ TableName() string }) JsonField[T] {
+	return JsonFieldOf[T](source.TableName(), b.name)
+}
+
+/////////////// base ///////////////
+
+func (f JsonField[T]) Build(builder clause.Builder) {
+	f.expr.Build(builder)
+}
+
+func (f JsonField[T]) ToExpr() clause.Expression {
+	return f.expr
+}
+
+func (f JsonField[T]) Unwrap() clause.Expression {
+	return f.expr
+}
+
+func (f JsonField[T]) Expr() JsonExpr[T] {
+	return f.expr
+}
+
+func (f JsonField[T]) Apply(functionName FunctionName) JsonExpr[T] {
+	var expr = f.expr.Unwrap()
+	if v, ok := expr.(*clauses2.ColumnQuote); ok {
+		v.NoAS()
+	}
+	e := clause.Expr{
+		SQL:  string(functionName) + "(?)",
+		Vars: []any{expr},
+	}
+	return JsonOf[T](e)
+}
+
+/////////////// column-name ///////////////
+
+// TableName 返回表名
+func (f JsonField[T]) TableName() string {
+	return f.column.TableName
+}
+
+// ColumnName 返回列名
+func (f JsonField[T]) ColumnName() string {
+	return f.column.ColumnName
+}
+
+// Name 返回字段名称
+// 对于expr，返回别名
+// 对于普通字段，有别名的返回别名，否则返回真实名字
+func (f JsonField[T]) Name() string {
+	return f.column.Name()
+}
+
+func (f JsonField[T]) Alias() string {
+	return f.column.Alias
+}
+
+func (f JsonField[T]) FullName() string {
+	return f.column.FullName()
+}
+
+func (f JsonField[T]) As(alias string) fieldi.IField {
+	return f.WithAlias(alias)
+}
+
+func (f JsonField[T]) WithAlias(alias string) JsonField[T] {
+	ret := JsonFieldOf[T](f.TableName(), f.ColumnName(), f.flags)
+	ret.column.Alias = alias
+	return ret
+}
+
+func (f JsonField[T]) WithTable(tableName interface{ TableName() string }, fieldNames ...string) JsonField[T] {
+	name := f.ColumnName()
+	if len(fieldNames) > 0 {
+		name = fieldNames[0]
+	}
+	return JsonFieldOf[T](tableName.TableName(), name, f.flags)
+}
+
+/////////////// flags ///////////////
+
+func (f JsonField[T]) FieldType() T {
+	var def T
+	return def
+}
+
+func (f JsonField[T]) Flags() types.FieldFlag {
+	return f.flags
+}
+
+func (f JsonField[T]) HasFlag(flag types.FieldFlag) bool {
+	return f.flags&flag != 0
+}
+
+func (f JsonField[T]) IsPrimaryKey() bool {
+	return f.HasFlag(types.FlagPrimaryKey)
+}
+
+func (f JsonField[T]) IsUniqueIndex() bool {
+	return f.HasFlag(types.FlagUniqueIndex)
+}
+
+/////////////// asc/desc ///////////////
+
+func (f JsonField[T]) Asc() types.OrderItem {
+	return types.NewOrder(f, true)
+}
+
+func (f JsonField[T]) Desc() types.OrderItem {
+	return types.NewOrder(f, false)
+}
+
+/////////////// re-exported methods from JsonExpr ///////////////
+
+// Extract 从 JSON 文档中提取数据 (JSON_EXTRACT)
+// SELECT JSON_EXTRACT('{"name":"John","age":30}', '$.name');
+// SELECT JSON_EXTRACT(data, '$.user.email') FROM profiles;
+// 示例: gsql.JsonOf(u.Profile).Extract("$.name", "$.age")
+func (f JsonField[T]) Extract(paths ...string) JsonExpr {
+	return f.expr.Extract(paths...)
+}
+
+// Unquote 去除 JSON 值的引号 (JSON_UNQUOTE)
+// SELECT JSON_UNQUOTE('"Hello World"');
+// SELECT JSON_UNQUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
+// 示例: gsql.JsonOf(u.Profile).Extract("$.name").Unquote()
+func (f JsonField[T]) Unquote() StringExpr[string] {
+	return f.expr.Unquote()
+}
+
+// Quote 为 JSON 值添加引号，使其成为有效的 JSON 字符串值 (JSON_QUOTE)
+// SELECT JSON_QUOTE('Hello World');
+// SELECT JSON_QUOTE(JSON_EXTRACT(data, '$.name')) FROM users;
+// 示例: gsql.JsonOf(u.Profile).Extract("$.name").Quote()
+func (f JsonField[T]) Quote() StringExpr[string] {
+	return f.expr.Quote()
+}
+
+// Keys 返回 JSON 对象的键 (JSON_KEYS)
+// SELECT JSON_KEYS('{"a":1,"b":2}');
+// SELECT JSON_KEYS('{"a":{"x":1,"y":2},"b":3}', '$.a');
+// 示例: gsql.JsonOf(u.Profile).Keys()
+// 独立函数: gsql.JSON_KEYS(gsql.JsonOf(u.Profile))
+func (f JsonField[T]) Keys(path ...string) JsonExpr {
+	return f.expr.Keys(path...)
+}
+
+// Length 返回 JSON 文档的长度 (JSON_LENGTH)
+// SELECT JSON_LENGTH('[1,2,3]');
+// SELECT JSON_LENGTH('{"a":1,"b":2}');
+// 示例: gsql.JsonOf(u.Profile).Length("$.skills")
+// 独立函数: gsql.JSON_LENGTH(gsql.JsonOf(u.Profile), "$.skills")
+func (f JsonField[T]) Length(path ...string) IntExpr[int64] {
+	return f.expr.Length(path...)
+}
+
+// Contains 检查是否包含指定值 (JSON_CONTAINS)
+// SELECT JSON_CONTAINS('{"a":1,"b":2}', '1', '$.a');
+// SELECT JSON_CONTAINS('[1,2,3]', '2');
+// 示例: gsql.JsonOf(u.Profile).Contains(gsql.JsonLit(`"go"`), "$.skills")
+// 独立函数: gsql.JSON_CONTAINS(gsql.JsonOf(u.Profile), gsql.JsonLit(`"go"`), "$.skills")
+func (f JsonField[T]) Contains(candidate JsonInput, path ...string) IntExpr[int64] {
+	return f.expr.Contains(candidate, path...)
+}
+
+// ContainsPath 检查路径是否存在 (JSON_CONTAINS_PATH)
+// SELECT JSON_CONTAINS_PATH('{"a":1,"b":2}', 'one', '$.a', '$.c');
+// SELECT JSON_CONTAINS_PATH('{"a":1,"b":2}', 'all', '$.a', '$.b');
+// mode: 'one' 或 'all'
+// 示例: gsql.JsonOf(u.Profile).ContainsPath("one", "$.name", "$.age")
+// 独立函数: gsql.JSON_CONTAINS_PATH(gsql.JsonOf(u.Profile), "one", "$.name", "$.age")
+func (f JsonField[T]) ContainsPath(mode string, paths ...string) IntExpr[int64] {
+	return f.expr.ContainsPath(mode, paths...)
+}
+
+// Type 返回 JSON 值的类型 (JSON_TYPE)
+// SELECT JSON_TYPE('{"a":1}');
+// SELECT JSON_TYPE('[1,2,3]');
+// 返回: OBJECT, ARRAY, INTEGER, DOUBLE, STRING, BOOLEAN, NULL
+// 示例: gsql.JsonOf(u.Profile).Type()
+// 独立函数: gsql.JSON_TYPE(gsql.JsonOf(u.Profile))
+// TODO: 内部的Field也需要这个方法
+func (f JsonField[T]) Type() StringExpr[string] {
+	return f.expr.Type()
+}
+
+// Depth 返回 JSON 文档的最大深度 (JSON_DEPTH)
+// SELECT JSON_DEPTH('{"a":{"b":{"c":1}}}');
+// SELECT JSON_DEPTH('[1,[2,[3]]]');
+// 示例: gsql.JsonOf(u.Profile).Depth()
+func (f JsonField[T]) Depth() IntExpr[int64] {
+	return f.expr.Depth()
+}
+
+// Valid 检查是否为有效 JSON (JSON_VALID)
+// SELECT JSON_VALID('{"a":1}');
+// SELECT JSON_VALID('invalid json');
+// 示例: gsql.JsonOf(u.Profile).Valid()
+// TODO: 内部的Field也需要这个方法
+func (f JsonField[T]) Valid() IntExpr[int64] {
+	return f.expr.Valid()
+}
+
+// Pretty 格式化输出 JSON (JSON_PRETTY)
+// SELECT JSON_PRETTY('{"a":1,"b":2}');
+// 示例: gsql.JsonOf(u.Profile).Pretty()
+// 独立函数: gsql.JSON_PRETTY(gsql.JsonOf(u.Profile))
+func (f JsonField[T]) Pretty() StringExpr[string] {
+	return f.expr.Pretty()
+}
+
+// StorageSize 返回存储 JSON 所需的字节数 (JSON_STORAGE_SIZE)
+// SELECT JSON_STORAGE_SIZE('{"a":1}');
+// SELECT JSON_STORAGE_SIZE('[1,2,3,4,5]');
+// 示例: gsql.JsonOf(u.Profile).StorageSize()
+// 独立函数: gsql.JSON_STORAGE_SIZE(gsql.JsonOf(u.Profile))
+func (f JsonField[T]) StorageSize() IntExpr[int64] {
+	return f.expr.StorageSize()
+}
+
+// StorageFree 返回部分更新后释放的空间 (JSON_STORAGE_FREE)
+// SELECT JSON_STORAGE_FREE(data) FROM users;
+// 示例: gsql.JsonOf(u.Profile).StorageFree()
+func (f JsonField[T]) StorageFree() IntExpr[int64] {
+	return f.expr.StorageFree()
+}
+
+// Search 在 JSON 中搜索字符串值 (JSON_SEARCH)
+// SELECT JSON_SEARCH('{"a":"abc","b":"def"}', 'one', 'abc');
+// SELECT JSON_SEARCH('["abc","def","abc"]', 'all', 'abc');
+// mode: 'one' 或 'all'
+// 示例: gsql.JsonOf(u.Profile).Search("one", "abc")
+func (f JsonField[T]) Search(mode string, searchStr any, escapePath ...any) StringExpr[string] {
+	return f.expr.Search(mode, searchStr, escapePath...)
+}
+
+// Set 设置 JSON 值 (JSON_SET) - 返回 JsonExpr，支持链式设置
+// SELECT JSON_SET('{"a":1}', '$.b', 2);
+// 示例: gsql.JsonOf(u.Profile).Set("$.name", "John").Set("$.age", 18)
+func (f JsonField[T]) Set(path string, value any) JsonExpr {
+	return f.expr.Set(path, value)
+}
+
+// Insert 插入 JSON 值，仅当路径不存在时 (JSON_INSERT)
+// SELECT JSON_INSERT('{"a":1}', '$.b', 2);
+// 示例: gsql.JsonOf(u.Profile).Insert("$.created_at", now)
+// 独立函数: gsql.JSON_INSERT(gsql.JsonOf(u.Profile), "$.created_at", now)
+func (f JsonField[T]) Insert(path string, value any) JsonExpr {
+	return f.expr.Insert(path, value)
+}
+
+// Replace 替换 JSON 值，仅当路径存在时 (JSON_REPLACE)
+// SELECT JSON_REPLACE('{"a":1}', '$.a', 2);
+// 示例: gsql.JsonOf(u.Profile).Replace("$.status", "inactive")
+// 独立函数: gsql.JSON_REPLACE(gsql.JsonOf(u.Profile), "$.status", "inactive")
+func (f JsonField[T]) Replace(path string, value any) JsonExpr {
+	return f.expr.Replace(path, value)
+}
+
+// Remove 移除 JSON 元素 (JSON_REMOVE)
+// SELECT JSON_REMOVE('{"a":1,"b":2}', '$.a');
+// 示例: gsql.JsonOf(u.Profile).Remove("$.temp", "$.old")
+func (f JsonField[T]) Remove(paths ...string) JsonExpr {
+	return f.expr.Remove(paths...)
+}
+
+// ArrayAppend 向 JSON 数组追加值 (JSON_ARRAY_APPEND)
+// SELECT JSON_ARRAY_APPEND('[1,2]', '$', 3);
+// 示例: gsql.JsonOf(u.Tags).ArrayAppend("$", "new_tag")
+// 独立函数: gsql.JSON_ARRAY_APPEND(gsql.JsonOf(u.Tags), "$", "new_tag")
+func (f JsonField[T]) ArrayAppend(path string, value any) JsonExpr {
+	return f.expr.ArrayAppend(path, value)
+}
+
+// ArrayInsert 向 JSON 数组插入值 (JSON_ARRAY_INSERT)
+// SELECT JSON_ARRAY_INSERT('[1,2]', '$[0]', 0);
+// 示例: gsql.JsonOf(u.Images).ArrayInsert("$[0]", "cover.jpg")
+// 独立函数: gsql.JSON_ARRAY_INSERT(gsql.JsonOf(u.Images), "$[0]", "cover.jpg")
+func (f JsonField[T]) ArrayInsert(path string, value any) JsonExpr {
+	return f.expr.ArrayInsert(path, value)
+}
+
+// MergePreserve 合并 JSON，保留重复键 (JSON_MERGE_PRESERVE)
+// SELECT JSON_MERGE_PRESERVE('{"a":1}', '{"b":2}');
+// 示例: gsql.JsonOf(json1).MergePreserve(json2, json3)
+// 独立函数: gsql.JSON_MERGE_PRESERVE(json1, json2).Merge(json3)
+func (f JsonField[T]) MergePreserve(others ...JsonInput) JsonExpr {
+	return f.expr.MergePreserve(others...)
+}
+
+// MergePatch 合并 JSON，覆盖重复键 (JSON_MERGE_PATCH)
+// SELECT JSON_MERGE_PATCH('{"a":1}', '{"a":2}');
+// 示例: gsql.JsonOf(json1).MergePatch(json2, json3)
+// 独立函数: gsql.JSON_MERGE_PATCH(json1, json2).Merge(json3)
+func (f JsonField[T]) MergePatch(others ...JsonInput) JsonExpr {
+	return f.expr.MergePatch(others...)
+}
+
+// Overlaps 检查两个 JSON 是否有重叠元素 (JSON_OVERLAPS, MySQL 8.0.17+)
+// SELECT JSON_OVERLAPS('[1,3,5]', '[2,3,4]');
+// SELECT JSON_OVERLAPS('{"a":1}', '{"a":1,"b":2}');
+// 示例: gsql.JsonOf(u.Tags).Overlaps(gsql.JsonLit(`["go","python"]`))
+func (f JsonField[T]) Overlaps(other JsonInput) IntExpr[int64] {
+	return f.expr.Overlaps(other)
+}
+
+// Value 从 JSON 文档中提取标量值 (JSON_VALUE, MySQL 8.0.21+)
+// SELECT JSON_VALUE('{"name":"John"}', '$.name');
+// SELECT JSON_VALUE('{"age":30}', '$.age' RETURNING SIGNED);
+// 示例: gsql.JsonOf(u.Profile).Value("$.name")
+// 注意: 比 Extract + Unquote 更简洁，直接返回标量值
+func (f JsonField[T]) Value(path string) StringExpr[string] {
+	return f.expr.Value(path)
+}
+
+func (f JsonField[T]) ToScalar() ScalarExpr[string] {
+	return f.expr.ToScalar()
+}
+
+// Count 计算非NULL值的数量 (COUNT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(id) FROM users;
+// SELECT status, COUNT(id) FROM orders GROUP BY status;
+func (f JsonField[T]) Count() IntExpr[int64] {
+	return f.expr.Count()
+}
+
+// CountDistinct 计算不重复非NULL值的数量 (COUNT DISTINCT)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT COUNT(DISTINCT status) FROM orders;
+// SELECT user_id, COUNT(DISTINCT product_id) FROM cart GROUP BY user_id;
+func (f JsonField[T]) CountDistinct() IntExpr[int64] {
+	return f.expr.CountDistinct()
+}
+
+// IfNull 如果表达式为NULL则返回默认值
+// 内部使用 COALESCE 实现，等价于 Coalesce(defaultValue)
+func (f JsonField[T]) IfNull(defaultValue any) JsonExpr {
+	return f.expr.IfNull(defaultValue)
+}
+
+// Coalesce 返回参数列表中第一个非NULL的值 (COALESCE)
+// 数据库支持: MySQL, PostgreSQL, SQLite (SQL 标准函数)
+// SELECT COALESCE(nickname, username, 'Anonymous') FROM users;
+func (f JsonField[T]) Coalesce(values ...any) JsonExpr {
+	return f.expr.Coalesce(values...)
+}
+
+// NullIf 如果两个表达式相等则返回NULL，否则返回第一个表达式 (NULLIF)
+// 数据库支持: MySQL, PostgreSQL, SQLite
+// SELECT NULLIF(username, ") FROM users; -- 空字符串转为NULL
+func (f JsonField[T]) NullIf(value any) JsonExpr {
+	return f.expr.NullIf(value)
+}
+
+func (f JsonField[T]) Eq(value T) Condition {
+	return f.expr.Eq(value)
+}
+
+func (f JsonField[T]) EqF(other clause.Expression) Condition {
+	return f.expr.EqF(other)
+}
+
+func (f JsonField[T]) EqOpt(value mo.Option[T]) Condition {
+	return f.expr.EqOpt(value)
+}
+
+func (f JsonField[T]) Not(value T) Condition {
+	return f.expr.Not(value)
+}
+
+func (f JsonField[T]) NotF(other clause.Expression) Condition {
+	return f.expr.NotF(other)
+}
+
+func (f JsonField[T]) NotOpt(value mo.Option[T]) Condition {
+	return f.expr.NotOpt(value)
+}
+
+func (f JsonField[T]) In(values ...T) Condition {
+	return f.expr.In(values...)
+}
+
+func (f JsonField[T]) NotIn(values ...T) Condition {
+	return f.expr.NotIn(values...)
+}
+
+// InSubquery 用于子查询的 IN 条件
+// 示例: WHERE id IN (SELECT customer_id FROM orders)
+func (f JsonField[T]) InSubquery(subquery clause.Expression) Condition {
+	return f.expr.InSubquery(subquery)
+}
+
+// NotInSubquery 用于子查询的 NOT IN 条件
+// 示例: WHERE id NOT IN (SELECT customer_id FROM orders)
+func (f JsonField[T]) NotInSubquery(subquery clause.Expression) Condition {
+	return f.expr.NotInSubquery(subquery)
+}
+
+func (f JsonField[T]) IsNull() Condition {
+	return f.expr.IsNull()
+}
+
+func (f JsonField[T]) IsNotNull() Condition {
 	return f.expr.IsNotNull()
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	gsql "github.com/donutnomad/gsql"
+	"github.com/samber/lo"
 )
 
 // ==================== Between Tests ====================
@@ -28,7 +29,7 @@ func TestBetween(t *testing.T) {
 		var results []Product
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
-			Where(p.Price.Between(40, 110)).
+			Where(p.Price.Between(lo.ToPtr[float64](40), lo.ToPtr[float64](110), ">=", "<=")).
 			OrderBy(p.Price.Asc()).
 			Find(db, &results)
 		if err != nil {
@@ -43,7 +44,7 @@ func TestBetween(t *testing.T) {
 		var results []Product
 		err := gsql.Select(p.AllFields()...).
 			From(&p).
-			Where(p.Price.NotBetween(40, 110)).
+			Where(p.Price.NotBetween(lo.ToPtr[float64](40), lo.ToPtr[float64](110), "<", ">")).
 			OrderBy(p.Price.Asc()).
 			Find(db, &results)
 		if err != nil {

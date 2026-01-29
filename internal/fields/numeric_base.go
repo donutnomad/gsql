@@ -269,65 +269,166 @@ func (f numericComparableImpl[T]) LteF(other clause.Expression) Condition {
 	return f.operateValue(other, "<=")
 }
 
-func (f numericComparableImpl[T]) Between(from, to T) Condition {
-	return Condition{clause.Between{Column: f.Expression, From: from, To: to}}
+// Between 范围查询（使用组合条件而非 SQL BETWEEN 语法）
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+// 默认形成左闭右开区间: from <= field < to
+// 示例: field.Between(1, 10) => field >= 1 AND field < 10
+// 示例: field.Between(1, 10, ">", "<=") => field > 1 AND field <= 10
+func (f numericComparableImpl[T]) Between(from, to *T, op ...string) Condition {
+	return f.BetweenRange(types.Range[T]{
+		From: mo.PointerToOption(from),
+		To:   mo.PointerToOption(to),
+	}, op...)
 }
 
-func (f numericComparableImpl[T]) NotBetween(from, to T) Condition {
-	return Condition{clause.NotBetween{Column: f.Expression, From: from, To: to}}
+// NotBetween 范围排除查询（使用 OR 组合条件）
+// opFrom: >=, >, =, <=, < 默认: <（NotBetween 的 from 条件是小于）
+// opTo: >=, >, =, <=, < 默认: >=（NotBetween 的 to 条件是大于等于）
+// 默认: field < from OR field >= to
+// 示例: field.NotBetween(1, 10) => field < 1 OR field >= 10
+func (f numericComparableImpl[T]) NotBetween(from, to *T, op ...string) Condition {
+	return f.NotBetweenRange(types.Range[T]{
+		From: mo.PointerToOption(from),
+		To:   mo.PointerToOption(to),
+	}, op...)
 }
 
-// BetweenPtr 使用指针参数的范围查询
-// 如果 from 或 to 为 nil，则使用 >= 或 <= 替代
-func (f numericComparableImpl[T]) BetweenPtr(from, to *T) Condition {
+// BetweenRange 使用 Range 参数的范围查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f numericComparableImpl[T]) BetweenRange(rng interface{ FromValue() *T; ToValue() *T }, op ...string) Condition {
+	from := rng.FromValue()
+	to := rng.ToValue()
 	if from == nil && to == nil {
 		return emptyCondition
 	}
-	if from == nil {
-		return f.Lte(*to)
+
+	opFrom, opTo := ">=", "<"
+	if len(op) > 0 && op[0] != "" {
+		opFrom = op[0]
 	}
-	if to == nil {
-		return f.Gte(*from)
+	if len(op) > 1 && op[1] != "" {
+		opTo = op[1]
 	}
-	return f.Between(*from, *to)
+
+	var conditions []clause.Expression
+	if from != nil {
+		conditions = append(conditions, f.operateValue(*from, opFrom).Expression)
+	}
+	if to != nil {
+		conditions = append(conditions, f.operateValue(*to, opTo).Expression)
+	}
+
+	if len(conditions) == 1 {
+		return Condition{conditions[0]}
+	}
+	return Condition{clause.And(conditions...)}
 }
 
 // BetweenOpt 使用 Option 参数的范围查询
-func (f numericComparableImpl[T]) BetweenOpt(from, to mo.Option[T]) Condition {
-	return f.BetweenPtr(from.ToPointer(), to.ToPointer())
+func (f numericComparableImpl[T]) BetweenOpt(from, to mo.Option[T], op ...string) Condition {
+	return f.Between(from.ToPointer(), to.ToPointer(), op...)
 }
 
 // BetweenF 使用字段参数的范围查询
-func (f numericComparableImpl[T]) BetweenF(from, to clause.Expression) Condition {
-	if from == nil && to == nil {
+// opFrom: >=, >, =, <=, < 默认: >=
+// opTo: >=, >, =, <=, < 默认: <
+func (f numericComparableImpl[T]) BetweenF(from, to clause.Expression, op ...string) Condition {
+	if lo.IsNil(from) && lo.IsNil(to) {
 		return emptyCondition
 	}
-	if from == nil {
-		return f.LteF(to)
+
+	opFrom, opTo := ">=", "<"
+	if len(op) > 0 && op[0] != "" {
+		opFrom = op[0]
 	}
-	if to == nil {
-		return f.GteF(from)
+	if len(op) > 1 && op[1] != "" {
+		opTo = op[1]
 	}
-	return Condition{clause.Between{Column: f.Expression, From: from, To: to}}
+
+	var conditions []clause.Expression
+	if !lo.IsNil(from) {
+		conditions = append(conditions, f.operateValue(from, opFrom).Expression)
+	}
+	if !lo.IsNil(to) {
+		conditions = append(conditions, f.operateValue(to, opTo).Expression)
+	}
+
+	if len(conditions) == 1 {
+		return Condition{conditions[0]}
+	}
+	return Condition{clause.And(conditions...)}
 }
 
-// NotBetweenPtr 使用指针参数的范围排除查询
-func (f numericComparableImpl[T]) NotBetweenPtr(from, to *T) Condition {
+// NotBetweenRange 使用 Range 参数的范围排除查询
+// rng: 任何实现 FromValue() *T 和 ToValue() *T 方法的类型
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+// 示例: field < from OR field >= to
+func (f numericComparableImpl[T]) NotBetweenRange(rng interface{ FromValue() *T; ToValue() *T }, op ...string) Condition {
+	from := rng.FromValue()
+	to := rng.ToValue()
 	if from == nil && to == nil {
 		return emptyCondition
 	}
-	if from == nil {
-		return f.Gt(*to)
+
+	opFrom, opTo := "<", ">="
+	if len(op) > 0 && op[0] != "" {
+		opFrom = op[0]
 	}
-	if to == nil {
-		return f.Lt(*from)
+	if len(op) > 1 && op[1] != "" {
+		opTo = op[1]
 	}
-	return f.NotBetween(*from, *to)
+
+	var conditions []clause.Expression
+	if from != nil {
+		conditions = append(conditions, f.operateValue(*from, opFrom).Expression)
+	}
+	if to != nil {
+		conditions = append(conditions, f.operateValue(*to, opTo).Expression)
+	}
+
+	if len(conditions) == 1 {
+		return Condition{conditions[0]}
+	}
+	return Condition{clause.Or(conditions...)}
 }
 
 // NotBetweenOpt 使用 Option 参数的范围排除查询
-func (f numericComparableImpl[T]) NotBetweenOpt(from, to mo.Option[T]) Condition {
-	return f.NotBetweenPtr(from.ToPointer(), to.ToPointer())
+func (f numericComparableImpl[T]) NotBetweenOpt(from, to mo.Option[T], op ...string) Condition {
+	return f.NotBetween(from.ToPointer(), to.ToPointer(), op...)
+}
+
+// NotBetweenF 使用字段参数的范围排除查询
+// opFrom: >=, >, =, <=, < 默认: <（小于 from）
+// opTo: >=, >, =, <=, < 默认: >=（大于等于 to）
+func (f numericComparableImpl[T]) NotBetweenF(from, to clause.Expression, op ...string) Condition {
+	if lo.IsNil(from) && lo.IsNil(to) {
+		return emptyCondition
+	}
+
+	opFrom, opTo := "<", ">="
+	if len(op) > 0 && op[0] != "" {
+		opFrom = op[0]
+	}
+	if len(op) > 1 && op[1] != "" {
+		opTo = op[1]
+	}
+
+	var conditions []clause.Expression
+	if !lo.IsNil(from) {
+		conditions = append(conditions, f.operateValue(from, opFrom).Expression)
+	}
+	if !lo.IsNil(to) {
+		conditions = append(conditions, f.operateValue(to, opTo).Expression)
+	}
+
+	if len(conditions) == 1 {
+		return Condition{conditions[0]}
+	}
+	return Condition{clause.Or(conditions...)}
 }
 
 // ==================== 算术运算的 SQL 生成 ====================

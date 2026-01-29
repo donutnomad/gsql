@@ -59,3 +59,4 @@ func (e JsonExpr) Coalesce(values ...any) JsonExpr {
 func (e JsonExpr) NullIf(value any) JsonExpr {
 	return JsonOf(e.nullifExpr(value))
 }
+

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
+	"github.com/samber/lo"
 )
 
 // ==================== JOIN Tests ====================
@@ -1130,7 +1131,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		// MySQL: SELECT products.category, AVG(products.price) AS avg_price
 		//        FROM products
 		//        GROUP BY products.category
-		//        HAVING AVG(products.price) BETWEEN 50 AND 2000
+		//        HAVING AVG(products.price) >= 50 AND AVG(products.price) <= 2000
 		var results []struct {
 			Category string  `gorm:"column:category"`
 			AvgPrice float64 `gorm:"column:avg_price"`
@@ -1142,7 +1143,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			).
 			From(p).
 			GroupBy(p.Category).
-			Having(p.Price.Avg().Between(50.0, 2000.0)).
+			Having(p.Price.Avg().Between(lo.ToPtr[float64](50.0), lo.ToPtr[float64](2000.0), ">=", "<=")).
 			Find(db, &results)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
@@ -1160,7 +1161,7 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 			).
 			From(p).
 			GroupBy(p.Category).
-			Having(p.Price.Avg().Between(50.0, 2000.0)).
+			Having(p.Price.Avg().Between(lo.ToPtr[float64](50.0), lo.ToPtr[float64](2000.0), ">=", "<=")).
 			ToSQL()
 
 		t.Logf("AVG().Between SQL: %s", sql)
@@ -1170,8 +1171,9 @@ func TestTypedExpr_Comparisons(t *testing.T) {
 		if !strings.Contains(sql, "AVG(") {
 			t.Error("SQL should contain AVG(")
 		}
-		if !strings.Contains(sql, "BETWEEN") {
-			t.Error("SQL should contain BETWEEN")
+		// 新 API 不再使用 BETWEEN，而是使用 >= 和 <=
+		if !strings.Contains(sql, ">=") || !strings.Contains(sql, "<=") {
+			t.Error("SQL should contain >= and <= operators")
 		}
 	})
 

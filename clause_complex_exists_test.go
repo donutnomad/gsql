@@ -6,6 +6,7 @@ import (
 
 	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/fields"
+	"github.com/samber/lo"
 )
 
 // ==================== Complex EXISTS + JOIN + Aggregation SQL Generation Tests ====================
@@ -454,7 +455,7 @@ func TestComplexWhereWithMultipleConditionTypes(t *testing.T) {
 		Where(
 			bb.BlockNumber.Eq(uint64(12345)),
 			bb.Account.In("0xabc", "0xdef"),
-			bb.TotalHold.Between(100, 1000),
+			bb.TotalHold.Between(lo.ToPtr[float64](100), lo.ToPtr[float64](1000)),
 			Or(
 				Exists(existsROR),
 				Exists(existsNFT),

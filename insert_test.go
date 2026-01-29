@@ -8,6 +8,7 @@ import (
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/clause"
 	"github.com/donutnomad/gsql/field"
+	"github.com/samber/lo"
 )
 
 // TestValues 测试泛型 Values 函数
@@ -84,8 +85,8 @@ func TestValues_ComparisonMethods(t *testing.T) {
 		},
 		{
 			name:       "Between",
-			buildExpr:  func() clause.Expression { return countF.Between(10, 100) },
-			expectLike: "VALUES(`t`.`count`) BETWEEN 10 AND 100",
+			buildExpr:  func() clause.Expression { return countF.Between(lo.ToPtr[int64](10), lo.ToPtr[int64](100)) },
+			expectLike: "VALUES(`t`.`count`) >= 10",
 		},
 	}
 

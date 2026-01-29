@@ -22,6 +22,10 @@ func BoolColumn(name string) fields.ScalarColumnBuilder[bool] {
 	return fields.BoolColumn(name)
 }
 
+func CastExpr[Expr interface{ ExprType() R }, R any](v clause.Expression) Expr {
+	return fields.CastExpr[Expr, R](v)
+}
+
 func Column[T any](name string) fields.ScalarColumnBuilder[T] {
 	return fields.Column[T](name)
 }
@@ -193,6 +197,14 @@ func JsonArrayAgg(expr clause.Expression) fields.JsonExpr {
 	return fields.JsonArrayAgg(expr)
 }
 
+func JsonColumn[T any](name string) fields.JsonColumnBuilder[T] {
+	return fields.JsonColumn[T](name)
+}
+
+func JsonFieldOf[T any](tableName, name string, flags ...types.FieldFlag) fields.JsonField[T] {
+	return fields.JsonFieldOf[T](tableName, name, flags...)
+}
+
 func JsonFrom[T any](field interface{ FieldType() T }) fields.JsonExpr {
 	return fields.JsonFrom[T](field)
 }
@@ -345,7 +357,9 @@ type (
 	IntConstraint                = fields.IntConstraint
 	IntExpr[T any]               = fields.IntExpr[T]
 	IntField[T any]              = fields.IntField[T]
+	JsonColumnBuilder[T any]     = fields.JsonColumnBuilder[T]
 	JsonExpr                     = fields.JsonExpr
+	JsonField[T any]             = fields.JsonField[T]
 	JsonInput                    = fields.JsonInput
 	LitExpr                      = fields.LitExpr
 	ScalarColumnBuilder[T any]   = fields.ScalarColumnBuilder[T]
