@@ -5,7 +5,6 @@ import (
 	"time"
 
 	gsql "github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
 )
 
 // ==================== Complex UNION ALL with Subquery Tests ====================
@@ -98,8 +97,8 @@ func TestComplexUnionAllWithSubquery(t *testing.T) {
 		derivedTable := gsql.DefineTable[any, CombinedResult]("combined", CombinedResult{}, unionAll)
 
 		// Query from derived table with filtering
-		nameCol := field.NewPattern[string]("combined", "name")
-		statusCol := field.NewComparable[string]("combined", "status")
+		nameCol := gsql.StringFieldOf[string]("combined", "name")
+		statusCol := gsql.IntFieldOf[string]("combined", "status")
 
 		var results []CombinedResult
 		err := gsql.Select(
@@ -316,9 +315,9 @@ func TestComplexUnionWithDynamicFiltering(t *testing.T) {
 
 		derivedTable := gsql.DefineTable[any, CombinedResult]("combined", CombinedResult{}, baseQuery)
 
-		nameCol := field.NewPattern[string]("combined", "name")
-		statusCol := field.NewComparable[string]("combined", "status")
-		priceCol := field.NewComparable[float64]("combined", "total_price")
+		nameCol := gsql.StringFieldOf[string]("combined", "name")
+		statusCol := gsql.IntFieldOf[string]("combined", "status")
+		priceCol := gsql.IntFieldOf[float64]("combined", "total_price")
 
 		// Simulate dynamic filtering (like scopes)
 		filterName := "Alice"       // Could be empty in real scenario

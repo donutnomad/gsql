@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
@@ -32,13 +31,13 @@ func (t UserWalletLogSchemaType) Alias() string {
 
 var UserWalletLogSchema = UserWalletLogSchemaType{
 	tableName:  "client_wallet_log",
-	UserID:     field.NewComparable[uint64]("client_wallet_log", "client_id"), // << client_id
-	BusinessID: field.NewComparable[uint64]("client_wallet_log", "business_id"),
-	Address:    field.NewComparable[string]("client_wallet_log", "address"),
-	CreatedAt:  field.NewComparable[time.Time]("client_wallet_log", "created_at"),
-	UpdatedAt:  field.NewComparable[time.Time]("client_wallet_log", "updated_at"),
-	Bind:       field.NewComparable[bool]("client_wallet_log", "bind"),
-	UnbindAt:   field.NewComparable[time.Time]("client_wallet_log", "unbind_at"),
+	UserID:     gsql.IntFieldOf[uint64]("client_wallet_log", "client_id"), // << client_id
+	BusinessID: gsql.IntFieldOf[uint64]("client_wallet_log", "business_id"),
+	Address:    gsql.IntFieldOf[string]("client_wallet_log", "address"),
+	CreatedAt:  gsql.IntFieldOf[time.Time]("client_wallet_log", "created_at"),
+	UpdatedAt:  gsql.IntFieldOf[time.Time]("client_wallet_log", "updated_at"),
+	Bind:       gsql.IntFieldOf[bool]("client_wallet_log", "bind"),
+	UnbindAt:   gsql.IntFieldOf[time.Time]("client_wallet_log", "unbind_at"),
 }
 
 func TestMod(t *testing.T) {

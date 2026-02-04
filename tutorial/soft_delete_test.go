@@ -92,9 +92,9 @@ var SoftDeleteModelSchema = SoftDeleteModelSchemaType{
 	ID:        fields.IntFieldOf[uint64]("soft_delete_models", "id", field.FlagPrimaryKey),
 	Name:      fields.StringFieldOf[string]("soft_delete_models", "name"),
 	Status:    fields.StringFieldOf[string]("soft_delete_models", "status"),
-	CreatedAt: field.NewComparable[time.Time]("soft_delete_models", "created_at"),
-	UpdatedAt: field.NewComparable[time.Time]("soft_delete_models", "updated_at"),
-	DeletedAt: field.NewComparable[gorm.DeletedAt]("soft_delete_models", "deleted_at"),
+	CreatedAt: gsql.IntFieldOf[time.Time]("soft_delete_models", "created_at"),
+	UpdatedAt: gsql.IntFieldOf[time.Time]("soft_delete_models", "updated_at"),
+	DeletedAt: gsql.IntFieldOf[gorm.DeletedAt]("soft_delete_models", "deleted_at"),
 	fieldType: SoftDeleteModel{},
 }
 

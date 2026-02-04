@@ -6,7 +6,6 @@ import (
 
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
-	"github.com/donutnomad/gsql/internal/fields"
 	"gorm.io/gorm"
 )
 
@@ -14,9 +13,9 @@ import (
 
 type UserSchemaType struct {
 	ID        gsql.IntField[uint]
-	CreatedAt gsql.IntField[time.Time]
-	UpdatedAt gsql.IntField[time.Time]
-	DeletedAt gsql.IntField[gorm.DeletedAt]
+	CreatedAt gsql.DateTimeField[time.Time]
+	UpdatedAt gsql.DateTimeField[time.Time]
+	DeletedAt gsql.ScalarField[gorm.DeletedAt]
 	Name      gsql.StringField[string]
 	Age       gsql.IntField[int32]
 	fieldType User
@@ -77,23 +76,23 @@ func (t UserSchemaType) Star() field.IField {
 
 var UserSchema = UserSchemaType{
 	tableName: "users",
-	ID:        field.NewComparable[uint]("users", "id", field.FlagPrimaryKey),
-	CreatedAt: field.NewComparable[time.Time]("users", "created_at"),
-	UpdatedAt: field.NewComparable[time.Time]("users", "updated_at"),
-	DeletedAt: field.NewComparable[gorm.DeletedAt]("users", "deleted_at", field.FlagIndex),
-	Name:      field.NewPattern[string]("users", "name", field.FlagUniqueIndex),
-	Age:       field.NewComparable[int32]("users", "age"),
+	ID:        gsql.IntFieldOf[uint]("users", "id", field.FlagPrimaryKey),
+	CreatedAt: gsql.DateTimeFieldOf[time.Time]("users", "created_at"),
+	UpdatedAt: gsql.DateTimeFieldOf[time.Time]("users", "updated_at"),
+	DeletedAt: gsql.ScalarFieldOf[gorm.DeletedAt]("users", "deleted_at", field.FlagIndex),
+	Name:      gsql.StringFieldOf[string]("users", "name", field.FlagUniqueIndex),
+	Age:       gsql.IntFieldOf[int32]("users", "age"),
 	fieldType: User{},
 }
 
 type User2SchemaType struct {
-	ID        fields.IntField[uint]
-	CreatedAt fields.IntField[time.Time]
-	UpdatedAt fields.IntField[time.Time]
-	DeletedAt fields.IntField[gorm.DeletedAt]
-	Name      fields.StringField[string]
-	Age       fields.IntField[int32]
-	OrderTime fields.IntField[time.Time]
+	ID        gsql.IntField[uint]
+	CreatedAt gsql.DateTimeField[time.Time]
+	UpdatedAt gsql.DateTimeField[time.Time]
+	DeletedAt gsql.ScalarField[gorm.DeletedAt]
+	Name      gsql.StringField[string]
+	Age       gsql.IntField[int32]
+	OrderTime gsql.DateTimeField[time.Time]
 	fieldType User2
 	alias     string
 	tableName string
@@ -154,12 +153,12 @@ func (t User2SchemaType) Star() field.IField {
 
 var User2Schema = User2SchemaType{
 	tableName: "user2s",
-	ID:        field.NewComparable[uint]("user2s", "id", field.FlagPrimaryKey),
-	CreatedAt: field.NewComparable[time.Time]("user2s", "created_at"),
-	UpdatedAt: field.NewComparable[time.Time]("user2s", "updated_at"),
-	DeletedAt: field.NewComparable[gorm.DeletedAt]("user2s", "deleted_at", field.FlagIndex),
-	Name:      field.NewPattern[string]("user2s", "name", field.FlagUniqueIndex),
-	Age:       field.NewComparable[int32]("user2s", "age"),
-	OrderTime: field.NewComparable[time.Time]("user2s", "order_time"),
+	ID:        gsql.IntFieldOf[uint]("user2s", "id", field.FlagPrimaryKey),
+	CreatedAt: gsql.DateTimeFieldOf[time.Time]("user2s", "created_at"),
+	UpdatedAt: gsql.DateTimeFieldOf[time.Time]("user2s", "updated_at"),
+	DeletedAt: gsql.ScalarFieldOf[gorm.DeletedAt]("user2s", "deleted_at", field.FlagIndex),
+	Name:      gsql.StringFieldOf[string]("user2s", "name", field.FlagUniqueIndex),
+	Age:       gsql.IntFieldOf[int32]("user2s", "age"),
+	OrderTime: gsql.DateTimeFieldOf[time.Time]("user2s", "order_time"),
 	fieldType: User2{},
 }

@@ -121,3 +121,27 @@ type Transaction struct {
 }
 
 func (Transaction) TableName() string { return "transactions" }
+
+// ==================== JSON_TABLE Test Models ====================
+
+// WorkflowJob 工作流任务 - 用于嵌套 JSON_TABLE 测试（模拟用户业务场景）
+// @Gsql
+type WorkflowJob struct {
+	ID         uint64 `gorm:"column:id;primaryKey;autoIncrement"`
+	BusinessID uint64 `gorm:"column:business_id;index"`
+	RefType    string `gorm:"column:ref_type;size:50"`
+	Status     string `gorm:"column:status;size:20;default:'pending'"`
+	Step2      string `gorm:"column:step2;type:json"` // 嵌套 JSON: {"flow":[{"members":[{"ext_id":1001},...]},...]}
+}
+
+func (WorkflowJob) TableName() string { return "workflow_jobs" }
+
+// TokenExchange Token 兑换配置 - 用于基础 JSON_TABLE 测试
+// @Gsql
+type TokenExchange struct {
+	ID            uint64 `gorm:"column:id;primaryKey;autoIncrement"`
+	Name          string `gorm:"column:name;size:100;not null"`
+	ExchangeRules string `gorm:"column:exchange_rules;type:json"` // JSON 数组: [{"token_symbol":"BTC","rate":1.0},...]
+}
+
+func (TokenExchange) TableName() string { return "token_exchanges" }

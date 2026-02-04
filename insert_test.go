@@ -7,7 +7,6 @@ import (
 
 	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/clause"
-	"github.com/donutnomad/gsql/field"
 	"github.com/samber/lo"
 )
 
@@ -45,7 +44,7 @@ func TestValues(t *testing.T) {
 
 // TestValues_ComparisonMethods 测试 Values 的各种比较方法
 func TestValues_ComparisonMethods(t *testing.T) {
-	count := field.NewComparable[int64]("t", "count")
+	count := gsql.IntFieldOf[int64]("t", "count")
 
 	countF := gsql.IntFieldOf[int64]("t", "count").Apply(gsql.VALUES)
 	testCases := []struct {

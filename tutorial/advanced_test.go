@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
 )
 
 // ==================== CTE Tests ====================
@@ -822,7 +821,7 @@ func TestDerivedTable_WithTypedColumn(t *testing.T) {
 
 		// 4. Use typed column from derived table
 		orderCount := gsql.IntColumn[int]("order_count").From(&derivedTable)
-		customerID := field.NewComparable[uint64]("sub", "customer_id")
+		customerID := gsql.IntFieldOf[uint64]("sub", "customer_id")
 
 		// 5. Build main query with typed column comparison
 		var results []CustomerOrderCount

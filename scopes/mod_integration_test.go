@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/samber/mo"
 	"github.com/stretchr/testify/assert"
@@ -94,9 +93,9 @@ func (t EventLogSchema) Alias() string {
 
 var eventLogSchema = EventLogSchema{
 	tableName: "event_logs",
-	ID:        field.NewComparable[uint64]("event_logs", "id"),
-	EventName: field.NewComparable[string]("event_logs", "event_name"),
-	CreatedAt: field.NewComparable[time.Time]("event_logs", "created_at"),
+	ID:        gsql.IntFieldOf[uint64]("event_logs", "id"),
+	EventName: gsql.IntFieldOf[string]("event_logs", "event_name"),
+	CreatedAt: gsql.IntFieldOf[time.Time]("event_logs", "created_at"),
 }
 
 // Transaction 交易表 - 使用 int64 类型的 created_at (Unix 时间戳)
@@ -128,9 +127,9 @@ func (t TransactionSchema) Alias() string {
 
 var transactionSchema = TransactionSchema{
 	tableName: "transactions",
-	ID:        field.NewComparable[uint64]("transactions", "id"),
-	Amount:    field.NewComparable[int64]("transactions", "amount"),
-	CreatedAt: field.NewComparable[int64]("transactions", "created_at"),
+	ID:        gsql.IntFieldOf[uint64]("transactions", "id"),
+	Amount:    gsql.IntFieldOf[int64]("transactions", "amount"),
+	CreatedAt: gsql.IntFieldOf[int64]("transactions", "created_at"),
 }
 
 // ==================== 测试辅助函数 ====================

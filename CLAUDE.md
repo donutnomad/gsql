@@ -189,3 +189,6 @@ query.From(table).
 2. **MySQL 特定功能**: 某些功能（如 CTE）需要 MySQL 8.0+
 3. **性能考虑**: 大型 IN 查询应使用 `BatchIn` 优化器
 4. **类型约束**: 泛型参数 T 必须是可以被 GORM 处理的类型
+5. **沙盒模式命令限制**: 在沙盒模式中执行 go 命令时，必须直接使用 `go` 开头，组合命令会被阻止
+   - ✅ `go test -v -run TestName ./tutorial/...`
+   - ❌ `cd tutorial && go test -v -run TestName ./...`

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/donutnomad/gsql"
-	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/donutnomad/gsql/internal/utils"
 )
@@ -154,7 +153,7 @@ func ExampleRowNumber() {
 	fmt.Println(query2.ToSQL())
 
 	// 示例 3: 多个 PARTITION BY 字段
-	createdAt := field.NewComparable[string]("products", "created_at")
+	createdAt := gsql.IntFieldOf[string]("products", "created_at")
 	rn3 := gsql.RowNumber().
 		PartitionBy(category, createdAt). // 按多个字段分组
 		OrderBy(price.Asc()).             // 升序排序
