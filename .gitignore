@@ -1,7 +1,9 @@
-CLAUDE.md
 .worktrees/
 tutorial/test_log
 .idea
 docs/plans
 .claude/settings.local.json
 .trash
+.env
+.env.local
+.claude
