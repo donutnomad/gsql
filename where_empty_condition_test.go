@@ -1,9 +1,10 @@
-package gsql
+package gsql_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/samber/mo"
 )
@@ -19,8 +20,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	priceField := fields.FloatFieldOf[float64]("test_table", "price")
 
 	t.Run("EqOpt with None should not produce AND AND", func(t *testing.T) {
-		sql := Select(idField, nameField, statusField, clientIDField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField, nameField, statusField, clientIDField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				nameField.EqOpt(mo.None[string]()), // 空条件
@@ -45,8 +46,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("Multiple Opt methods with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.EqOpt(mo.None[int64]()),       // 空
 				nameField.EqOpt(mo.None[string]()),    // 空
@@ -66,8 +67,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("NotOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				nameField.NotOpt(mo.None[string]()), // 空条件
@@ -82,8 +83,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("GtOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.GtOpt(mo.None[int]()), // 空条件
@@ -98,8 +99,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("GteOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.GteOpt(mo.None[int]()), // 空条件
@@ -114,8 +115,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("LtOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.LtOpt(mo.None[int]()), // 空条件
@@ -130,8 +131,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("LteOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.LteOpt(mo.None[int]()), // 空条件
@@ -146,8 +147,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("BetweenOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.BetweenOpt(mo.None[int](), mo.None[int]()), // 空条件
@@ -162,8 +163,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("Between with nil", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.Between(nil, nil), // 空条件
@@ -178,8 +179,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("LikeOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				nameField.LikeOpt(mo.None[string]()), // 空条件
@@ -194,8 +195,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("ContainsOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				nameField.ContainsOpt(mo.None[string]()), // 空条件
@@ -210,8 +211,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("HasPrefixOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				nameField.HasPrefixOpt(mo.None[string]()), // 空条件
@@ -226,8 +227,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("HasSuffixOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				nameField.HasSuffixOpt(mo.None[string]()), // 空条件
@@ -242,8 +243,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("All conditions are None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.EqOpt(mo.None[int64]()),
 				nameField.EqOpt(mo.None[string]()),
@@ -263,8 +264,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("Empty In slice", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.In(), // 空切片
@@ -279,8 +280,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("Empty NotIn slice", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				statusField.NotIn(), // 空切片
@@ -296,8 +297,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 
 	t.Run("Mixed valid and empty conditions with OrderBy - real world case", func(t *testing.T) {
 		// 这是报告的真实场景
-		sql := Select(idField, nameField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField, nameField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.EqOpt(mo.None[int64]()),   // 空
 				clientIDField.Eq(1),               // 有效
@@ -323,8 +324,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("First condition is None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.EqOpt(mo.None[int64]()), // 空条件在最前
 				clientIDField.Eq(1),
@@ -340,8 +341,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("Last condition is None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				clientIDField.Eq(100),
@@ -357,8 +358,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("NotBetween with nil", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				priceField.NotBetween(nil, nil), // 空条件
@@ -373,8 +374,8 @@ func TestWhereEmptyConditions(t *testing.T) {
 	})
 
 	t.Run("NotBetweenOpt with None", func(t *testing.T) {
-		sql := Select(idField).
-			From(TN("test_table")).
+		sql := gsql.Select(idField).
+			From(gsql.TN("test_table")).
 			Where(
 				idField.Eq(1),
 				priceField.NotBetweenOpt(mo.None[float64](), mo.None[float64]()), // 空条件

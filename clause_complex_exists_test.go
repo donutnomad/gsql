@@ -1,9 +1,10 @@
-package gsql
+package gsql_test
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/donutnomad/gsql"
 	"github.com/donutnomad/gsql/field"
 	"github.com/donutnomad/gsql/internal/fields"
 	"github.com/samber/lo"
@@ -43,7 +44,7 @@ type balanceRecordSchema struct {
 func (t balanceRecordSchema) TableName() string { return t.tableName }
 func (t balanceRecordSchema) Alias() string     { return t.alias }
 func (t *balanceRecordSchema) WithTable(tableName string) {
-	tn := TN(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.Contract = t.Contract.WithTable(&tn)
 	t.Account = t.Account.WithTable(&tn)
@@ -74,7 +75,7 @@ type rorRecordSchema struct {
 func (t rorRecordSchema) TableName() string { return t.tableName }
 func (t rorRecordSchema) Alias() string     { return t.alias }
 func (t *rorRecordSchema) WithTable(tableName string) {
-	tn := TN(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.NFTContract = t.NFTContract.WithTable(&tn)
 	t.NFTID = t.NFTID.WithTable(&tn)
@@ -101,7 +102,7 @@ type nftTokenSchema struct {
 func (t nftTokenSchema) TableName() string { return t.tableName }
 func (t nftTokenSchema) Alias() string     { return t.alias }
 func (t *nftTokenSchema) WithTable(tableName string) {
-	tn := TN(tableName)
+	tn := gsql.TN(tableName)
 	t.ID = t.ID.WithTable(&tn)
 	t.NFTContract = t.NFTContract.WithTable(&tn)
 	t.Account = t.Account.WithTable(&tn)
@@ -156,7 +157,7 @@ func TestComplexExistsJoinAggregationSQL(t *testing.T) {
 	nt := nftTokenSchemaBase.As("nt")
 
 	// 构建第一个 EXISTS 子查询
-	existsSubquery1 := Select(Lit(1).As("_")).
+	existsSubquery1 := gsql.Select(gsql.Lit(1).As("_")).
 		From(&ror).
 		Where(
 			bb.Contract.EqF(ror.NFTContract),
@@ -165,7 +166,7 @@ func TestComplexExistsJoinAggregationSQL(t *testing.T) {
 		)
 
 	// 构建第二个 EXISTS 子查询
-	existsSubquery2 := Select(Lit(1).As("_")).
+	existsSubquery2 := gsql.Select(gsql.Lit(1).As("_")).
 		From(&nt).
 		Where(
 			bb.Contract.EqF(nt.NFTContract),
@@ -175,21 +176,21 @@ func TestComplexExistsJoinAggregationSQL(t *testing.T) {
 		)
 
 	// 构建主查询
-	sql := Select(
+	sql := gsql.Select(
 		bb.TotalHold.Sum().As("hold"),
 		bb.Realized.Sum().As("realized"),
 		bb.Committed.Sum().As("committed"),
 		bb.Balance.Sum().As("balance"),
 	).From(&bb).
-		Join(LeftJoin(&rorTable).On(rorTable.NFTID.EqF(bb.NFTID))).
+		Join(gsql.LeftJoin(&rorTable).On(rorTable.NFTID.EqF(bb.NFTID))).
 		Where(
 			rorTable.NFTStatus.Eq(1),
 			bb.BlockNumber.Eq(uint64(12345)),
 			bb.Account.Eq("0xabcdef"),
 			bb.Contract.Eq("0x123456"),
-			Or(
-				Exists(existsSubquery1),
-				Exists(existsSubquery2),
+			gsql.Or(
+				gsql.Exists(existsSubquery1),
+				gsql.Exists(existsSubquery2),
 			),
 		).
 		ToSQL()
@@ -239,27 +240,27 @@ func TestMultipleExistsWithOR(t *testing.T) {
 	reviewRating := fields.IntFieldOf[int]("reviews", "rating")
 
 	// EXISTS 1: 有高价值订单
-	exists1 := Select(Lit(1).As("_")).
-		From(TN("orders")).
+	exists1 := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("orders")).
 		Where(
 			orderUserID.EqF(userID),
 			orderTotal.Gt(1000),
 		)
 
 	// EXISTS 2: 有好评
-	exists2 := Select(Lit(1).As("_")).
-		From(TN("reviews")).
+	exists2 := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("reviews")).
 		Where(
 			reviewUserID.EqF(userID),
 			reviewRating.Gte(4),
 		)
 
-	sql := Select(userID, userName).
-		From(TN("users")).
+	sql := gsql.Select(userID, userName).
+		From(gsql.TN("users")).
 		Where(
-			Or(
-				Exists(exists1),
-				Exists(exists2),
+			gsql.Or(
+				gsql.Exists(exists1),
+				gsql.Exists(exists2),
 			),
 		).
 		ToSQL()
@@ -294,26 +295,26 @@ func TestMultipleExistsWithAND(t *testing.T) {
 	reviewUserID := fields.IntFieldOf[uint64]("reviews", "user_id")
 	reviewRating := fields.IntFieldOf[int]("reviews", "rating")
 
-	exists1 := Select(Lit(1).As("_")).
-		From(TN("orders")).
+	exists1 := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("orders")).
 		Where(
 			orderUserID.EqF(userID),
 			orderTotal.Gt(1000),
 		)
 
-	exists2 := Select(Lit(1).As("_")).
-		From(TN("reviews")).
+	exists2 := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("reviews")).
 		Where(
 			reviewUserID.EqF(userID),
 			reviewRating.Gte(4),
 		)
 
-	sql := Select(userID, userName).
-		From(TN("users")).
+	sql := gsql.Select(userID, userName).
+		From(gsql.TN("users")).
 		Where(
-			And(
-				Exists(exists1),
-				Exists(exists2),
+			gsql.And(
+				gsql.Exists(exists1),
+				gsql.Exists(exists2),
 			),
 		).
 		ToSQL()
@@ -335,26 +336,26 @@ func TestNestedORAndConditions(t *testing.T) {
 	reviewUserID := fields.IntFieldOf[uint64]("reviews", "user_id")
 
 	// 查询: (status = 'vip' AND EXISTS(高价值订单)) OR NOT EXISTS(任何评论)
-	existsHighValue := Select(Lit(1).As("_")).
-		From(TN("orders")).
+	existsHighValue := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("orders")).
 		Where(
 			orderUserID.EqF(userID),
 			orderTotal.Gt(1000),
 		)
 
-	existsAnyReview := Select(Lit(1).As("_")).
-		From(TN("reviews")).
+	existsAnyReview := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("reviews")).
 		Where(reviewUserID.EqF(userID))
 
-	sql := Select(userID, userName).
-		From(TN("users")).
+	sql := gsql.Select(userID, userName).
+		From(gsql.TN("users")).
 		Where(
-			Or(
-				And(
+			gsql.Or(
+				gsql.And(
 					userStatus.Eq("vip"),
-					Exists(existsHighValue),
+					gsql.Exists(existsHighValue),
 				),
-				NotExists(existsAnyReview),
+				gsql.NotExists(existsAnyReview),
 			),
 		).
 		ToSQL()
@@ -393,20 +394,20 @@ func TestExistsInJoinedSubquery(t *testing.T) {
 	productCategory := fields.StringFieldOf[string]("p", "category")
 
 	// 构建带 JOIN 的 EXISTS 子查询
-	existsSubquery := Select(Lit(1).As("_")).
-		From(TN("orders AS o")).
+	existsSubquery := gsql.Select(gsql.Lit(1).As("_")).
+		From(gsql.TN("orders AS o")).
 		Join(
-			InnerJoin(TN("order_items AS oi")).On(orderID.EqF(oiOrderID)),
-			InnerJoin(TN("products AS p")).On(oiProductID.EqF(productID)),
+			gsql.InnerJoin(gsql.TN("order_items AS oi")).On(orderID.EqF(oiOrderID)),
+			gsql.InnerJoin(gsql.TN("products AS p")).On(oiProductID.EqF(productID)),
 		).
 		Where(
 			orderUserID.EqF(userID),
 			productCategory.Eq("Electronics"),
 		)
 
-	sql := Select(userID, userName).
-		From(TN("users")).
-		Where(Exists(existsSubquery)).
+	sql := gsql.Select(userID, userName).
+		From(gsql.TN("users")).
+		Where(gsql.Exists(existsSubquery)).
 		ToSQL()
 
 	t.Logf("EXISTS with JOIN subquery:\n%s", sql)
@@ -432,7 +433,7 @@ func TestComplexWhereWithMultipleConditionTypes(t *testing.T) {
 	ror := rorRecordSchemaBase.As("ror")
 	nt := nftTokenSchemaBase.As("nt")
 
-	existsROR := Select(Lit(1).As("_")).
+	existsROR := gsql.Select(gsql.Lit(1).As("_")).
 		From(&ror).
 		Where(
 			bb.Contract.EqF(ror.NFTContract),
@@ -440,7 +441,7 @@ func TestComplexWhereWithMultipleConditionTypes(t *testing.T) {
 			bb.NFTID.EqF(ror.NFTID),
 		)
 
-	existsNFT := Select(Lit(1).As("_")).
+	existsNFT := gsql.Select(gsql.Lit(1).As("_")).
 		From(&nt).
 		Where(
 			bb.Contract.EqF(nt.NFTContract),
@@ -450,15 +451,15 @@ func TestComplexWhereWithMultipleConditionTypes(t *testing.T) {
 		)
 
 	// 复杂条件: 基本条件 + IN + BETWEEN + (EXISTS OR EXISTS)
-	sql := Select(bb.TotalHold.Sum().As("total")).
+	sql := gsql.Select(bb.TotalHold.Sum().As("total")).
 		From(&bb).
 		Where(
 			bb.BlockNumber.Eq(uint64(12345)),
 			bb.Account.In("0xabc", "0xdef"),
 			bb.TotalHold.Between(lo.ToPtr[float64](100), lo.ToPtr[float64](1000)),
-			Or(
-				Exists(existsROR),
-				Exists(existsNFT),
+			gsql.Or(
+				gsql.Exists(existsROR),
+				gsql.Exists(existsNFT),
 			),
 		).
 		ToSQL()
@@ -485,7 +486,7 @@ func TestTableAliasConsistency(t *testing.T) {
 	bb := balanceRecordSchemaBase.As("bb")
 
 	// 确保同一个 schema 的别名在 SELECT, FROM, WHERE 中一致
-	sql := Select(
+	sql := gsql.Select(
 		bb.ID,
 		bb.Contract,
 		bb.TotalHold,
