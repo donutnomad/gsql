@@ -141,18 +141,18 @@ func addSelects(stmt interface {
 	if len(selects) == 0 {
 		return
 	}
-	var m = make(map[string]struct{}, len(selects))
-	for _, s := range selects {
-		name := s.Name()
-		if len(name) == 0 {
-			continue
-		}
-		_, ok := m[name]
-		if ok {
-			panic(fmt.Sprintf("conflict select field name: `%s`, check your select fields", name))
-		}
-		m[name] = struct{}{}
-	}
+	//var m = make(map[string]struct{}, len(selects))
+	//for _, s := range selects {
+	//	name := s.Name()
+	//	if len(name) == 0 {
+	//		continue
+	//	}
+	//_, ok := m[name]
+	//if ok {
+	//	panic(fmt.Sprintf("conflict select field name: `%s`, check your select fields", name))
+	//}
+	//	m[name] = struct{}{}
+	//}
 
 	stmt.AddClause(clause.Select{
 		Distinct: distinct,
