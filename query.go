@@ -17,7 +17,7 @@ func Select(fields ...field.IField) *baseQueryBuilder {
 // SelectOne
 // SELECT 1 FROM XXX
 func SelectOne() *baseQueryBuilder {
-	return Select(Field("1"))
+	return Select(Lit(1))
 }
 
 func Pluck(f field.IField) *baseQueryBuilder {

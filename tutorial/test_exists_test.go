@@ -104,4 +104,52 @@ func TestExistsNotExists(t *testing.T) {
 			t.Errorf("Expected Bob, got %s", results[0].Name)
 		}
 	})
+
+	t.Run("SelectOne in NOT EXISTS with Find", func(t *testing.T) {
+		// 使用 SelectOne() 构建 NOT EXISTS 子查询，通过 Find 执行
+		subquery := gsql.SelectOne().
+			From(&o).
+			Where(o.CustomerID.EqF(c.ID))
+
+		var results []Customer
+		err := gsql.Select(c.AllFields()...).
+			From(&c).
+			Where(gsql.NotExists(subquery)).
+			Find(db, &results)
+		if err != nil {
+			t.Fatalf("Query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 customer without orders, got %d", len(results))
+		}
+		if results[0].Name != "NoOrders" {
+			t.Errorf("Expected NoOrders, got %s", results[0].Name)
+		}
+	})
+
+	t.Run("SelectOne in NOT EXISTS with ToSQL and Raw", func(t *testing.T) {
+		// 使用 SelectOne() + ToSQL() + Raw() 执行，验证生成的 SQL 字面量正确
+		subquery := gsql.SelectOne().
+			From(&o).
+			Where(o.CustomerID.EqF(c.ID))
+
+		sql := gsql.Select(c.AllFields()...).
+			From(&c).
+			Where(gsql.NotExists(subquery)).
+			ToSQL()
+
+		t.Logf("Generated SQL: %s", sql)
+
+		var results []Customer
+		err := db.Raw(sql).Scan(&results).Error
+		if err != nil {
+			t.Fatalf("Raw SQL query failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Errorf("Expected 1 customer without orders, got %d", len(results))
+		}
+		if results[0].Name != "NoOrders" {
+			t.Errorf("Expected NoOrders, got %s", results[0].Name)
+		}
+	})
 }

@@ -30,6 +30,24 @@ type LitExpr struct {
 	clause.Expression
 }
 
+var _ fieldi.IField = (*LitExpr)(nil)
+
 func (e *LitExpr) As(alias string) fieldi.IField {
 	return ScalarOf[any](e.Expression).As(alias)
+}
+
+func (e *LitExpr) ToExpr() clause.Expression {
+	return e.Expression
+}
+
+func (e *LitExpr) FullName() string {
+	return ""
+}
+
+func (e *LitExpr) Name() string {
+	return ""
+}
+
+func (e *LitExpr) Alias() string {
+	return ""
 }
