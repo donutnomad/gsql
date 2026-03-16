@@ -22,6 +22,10 @@ func Join(table ITableName) joiner {
 	return joiner{joinType: "JOIN", table: table}
 }
 
+func CrossJoin(table ITableName) joiner {
+	return joiner{joinType: "CROSS JOIN", table: table}
+}
+
 type JoinClause struct {
 	JoinType string
 	Table    ITableName

@@ -126,15 +126,25 @@ func GROUP_CONCAT(expr Expression, separator ...string) fields.StringExpr[string
 
 // ==================== 流程控制函数 ====================
 
-// IF 条件判断函数，如果条件为真返回第一个值，否则返回第二个值
-// 数据库支持: MySQL (PostgreSQL/SQLite 使用 CASE WHEN 替代)
-// SELECT IF(score >= 60, '及格', '不及格') FROM students;
-// SELECT IF(stock > 0, 'In Stock', 'Out of Stock') FROM products;
-// SELECT name, IF(age >= 18, '成年', '未成年') FROM users;
-// SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
+//// IF 条件判断函数，如果条件为真返回第一个值，否则返回第二个值
+//// 数据库支持: MySQL (PostgreSQL/SQLite 使用 CASE WHEN 替代)
+//// SELECT IF(score >= 60, '及格', '不及格') FROM students;
+//// SELECT IF(stock > 0, 'In Stock', 'Out of Stock') FROM products;
+//// SELECT name, IF(age >= 18, '成年', '未成年') FROM users;
+//// SELECT SUM(IF(status = 'completed', amount, 0)) FROM orders;
+//func IF[Result interface{ ExprType() R }, R any](condition Condition, valueIfTrue, valueIfFalse Result) Result {
+//	return fields.CastExpr[Result](clause.Expr{
+//		SQL:  "IF(?, ?, ?)",
+//		Vars: []any{condition, valueIfTrue, valueIfFalse},
+//	})
+//}
+
+// IF 使用CASE WHEN实现的条件判断，兼容所有数据库， 如果条件为真返回第一个值，否则返回第二个值
+// SELECT CASE WHEN score >= 60 THEN '及格' ELSE '不及格' END FROM students;
+// SELECT CASE WHEN stock > 0 THEN 'In Stock' ELSE 'Out of Stock' END FROM products;
 func IF[Result interface{ ExprType() R }, R any](condition Condition, valueIfTrue, valueIfFalse Result) Result {
 	return fields.CastExpr[Result](clause.Expr{
-		SQL:  "IF(?, ?, ?)",
+		SQL:  "CASE WHEN ? THEN ? ELSE ? END",
 		Vars: []any{condition, valueIfTrue, valueIfFalse},
 	})
 }
