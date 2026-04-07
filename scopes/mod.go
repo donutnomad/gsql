@@ -103,9 +103,12 @@ func List[Model any](db gsql.IDB, query *gsql.QueryBuilderG[Model], paginate gsq
 	if err != nil {
 		return nil, 0, err
 	}
-	pos, err := query.Paginate(paginate).ScopeG(scopes...).Find(db)
-	if err != nil {
-		return nil, 0, err
+	var pos []*Model
+	if paginate.PageSize > 0 {
+		pos, err = query.Paginate(paginate).ScopeG(scopes...).Find(db)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 	return pos, total, nil
 }
@@ -115,9 +118,12 @@ func ListMap[Model any, OUT any](db gsql.IDB, query *gsql.QueryBuilderG[Model], 
 	if err != nil {
 		return nil, 0, err
 	}
-	pos, err := query.Paginate(paginate).Scope(scopes...).Find(db)
-	if err != nil {
-		return nil, 0, err
+	var pos []*Model
+	if paginate.PageSize > 0 {
+		pos, err = query.Paginate(paginate).Scope(scopes...).Find(db)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 	return mapper(pos), total, nil
 }

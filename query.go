@@ -207,11 +207,16 @@ type Paginate struct {
 }
 
 func NewPaginate[P1 constraints.Integer, P2 constraints.Integer](offset P1, limit P2) Paginate {
+	var v int
+	if int(limit) != 0 {
+		v = int(offset) / int(limit)
+	}
 	return Paginate{
-		Page:     (int(offset) / int(limit)) + 1,
+		Page:     v + 1,
 		PageSize: int(limit),
 	}
 }
+
 func NewPaginateWith(p interface {
 	GetOffset() uint64
 	GetLimit() uint64
@@ -221,7 +226,7 @@ func NewPaginateWith(p interface {
 
 func (b *QueryBuilder) Paginate(p Paginate) *QueryBuilder {
 	page := max(1, p.Page)
-	pageSize := max(1, p.PageSize)
+	pageSize := max(0, p.PageSize)
 	b.Offset((page - 1) * pageSize)
 	b.Limit(pageSize)
 	return b
